@@ -1,764 +1,1882 @@
 ﻿(function () {
+
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
 
-        function getProjectId() {
+        /* =====================================================
+           REAL BACKEND DATA
+        ===================================================== */
 
-            const path =
-                window.location.pathname;
+        const projectId =
+            Number(window.currentProjectId || 0);
 
-            const match =
-                path.match(/\/Admin\/Tasks\/Project\/(\d+)/i);
+        const tasks =
+            Array.isArray(window.projectTaskData)
+                ? window.projectTaskData
+                : [];
 
-            if (match && match[1]) {
-                return Number(match[1]);
+
+        console.log('Project ID:', projectId);
+        console.log('REAL TASK DATA:', tasks);
+
+
+        /* =====================================================
+           ELEMENTS
+        ===================================================== */
+
+        const board =
+            document.getElementById('taskBoard');
+
+        const searchInput =
+            document.getElementById('taskSearch');
+
+        const statusFilter =
+            document.getElementById('taskStatusFilter');
+
+        const priorityFilter =
+            document.getElementById('taskPriorityFilter');
+
+        const assigneeFilter =
+            document.getElementById('taskAssigneeFilter');
+
+        const resetButton =
+            document.getElementById('resetTaskFilters');
+
+
+        /* =====================================================
+           HELPERS
+        ===================================================== */
+
+        function escapeHtml(value) {
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return '';
             }
 
-            return 0;
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
         }
 
-        const projectId = getProjectId();
 
-        console.log(
-            'Current Project ID:',
-            projectId
-        );
+        function formatDate(value) {
 
-    /*
-     * ---------------------------------------------------------
-     * COMMON HELPERS
-     * ---------------------------------------------------------
-     */
+            if (!value) {
+                return '-';
+            }
 
-    function getAntiForgeryToken() {
-        return document.querySelector(
-            'input[name="__RequestVerificationToken"]'
-        )?.value || '';
-    }
+            const date = new Date(value);
 
-    function showError(elementId, message) {
-        const element = document.getElementById(elementId);
+            if (Number.isNaN(date.getTime())) {
+                return '-';
+            }
 
-        if (!element) {
-            return;
-        }
-
-        element.textContent = message || 'Something went wrong.';
-        element.style.display = 'block';
-    }
-
-    function hideError(elementId) {
-        const element = document.getElementById(elementId);
-
-        if (!element) {
-            return;
-        }
-
-        element.textContent = '';
-        element.style.display = 'none';
-    }
-
-    function formatDateForInput(value) {
-        if (!value) {
-            return '';
-        }
-
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return '';
-        }
-
-        return date.toISOString().substring(0, 10);
-    }
-
-    async function readJsonResponse(response) {
-        try {
-            return await response.json();
-        } catch {
-            return null;
-        }
-    }
-
-    /*
-     * ---------------------------------------------------------
-     * LOAD PROJECT MEMBERS
-     * ---------------------------------------------------------
-     */
-
-    async function loadMembers(selectElement) {
-
-        if (!selectElement) {
-            console.error('Assigned To select element not found.');
-            return;
-        }
-
-        if (!projectId) {
-            console.error('Project ID not found.');
-            return;
-        }
-
-        try {
-
-            // Show loading state
-            selectElement.innerHTML =
-                '<option value="">Loading users...</option>';
-
-            const response = await fetch(
-                '/Admin/Tasks/Users?_=' + Date.now(),
+            return date.toLocaleDateString(
+                'en-GB',
                 {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    cache: 'no-store'
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
                 }
             );
+        }
 
-            console.log(
-                'Members API status:',
-                response.status
-            );
 
-            if (!response.ok) {
-                throw new Error(
-                    'Members API failed: ' +
-                    response.status
-                );
+        function formatInputDate(value) {
+
+            if (!value) {
+                return '';
             }
 
-            const data =
-                await response.json();
+            const date = new Date(value);
 
-            console.log(
-                'Members API response:',
-                data
-            );
-
-            // Support both { success: true, users: [...] } and legacy { success: true, data: [...] }
-            const usersArray = Array.isArray(data?.users) ? data.users : Array.isArray(data?.data) ? data.data : null;
-
-            if (!data || data.success !== true || !Array.isArray(usersArray)) {
-                selectElement.innerHTML =
-                    '<option value="">No users found</option>';
-
-                return;
+            if (Number.isNaN(date.getTime())) {
+                return '';
             }
 
-            // Clear loading option and store fetched users for client-side searching
-            selectElement.innerHTML = '<option value="">Select User</option>';
+            return date.toISOString().substring(0, 10);
+        }
 
-            // Save original users on the select element for later searching/reordering
+
+        function getInitials(name) {
+
+            if (!name) {
+                return '?';
+            }
+
+            return name
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map(x => x.charAt(0))
+                .join('')
+                .toUpperCase();
+        }
+
+
+        function priorityClass(priority) {
+
+            return String(priority || 'Low')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '-');
+        }
+
+
+        function getToken() {
+
+            return document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value || '';
+        }
+
+
+        async function readJson(response) {
+
             try {
-                selectElement._users = usersArray.slice();
-            } catch (e) {
-                selectElement._users = [];
+                return await response.json();
             }
-
-            // Ensure a small search input is available above the select (non-intrusive)
-            (function ensureSearchInput(sel) {
-                const parent = sel.parentNode;
-                if (!parent) return;
-
-                let search = parent.querySelector('.assigned-to-search');
-                if (!search) {
-                    search = document.createElement('input');
-                    search.type = 'search';
-                    search.className = 'form-control assigned-to-search';
-                    search.placeholder = 'Type name or email to search...';
-                    search.style.marginBottom = '6px';
-                    parent.insertBefore(search, sel);
-
-                    // Hook up search handler
-                    search.addEventListener('input', function () {
-                        const q = (this.value || '').trim().toLowerCase();
-                        const users = sel._users || [];
-
-                        if (!q) {
-                            // restore original order
-                            populateOptions(sel, users);
-                            return;
-                        }
-
-                        const matched = [];
-                        const others = [];
-
-                        users.forEach(function (u) {
-                            const hay = ((u.fullName || '') + ' ' + (u.email || '')).toLowerCase();
-                            if (hay.indexOf(q) !== -1) matched.push(u);
-                            else others.push(u);
-                        });
-
-                        // matched users first, then others
-                        populateOptions(sel, matched.concat(others));
-                    });
-                }
-            })(selectElement);
-
-            // Populate select with users
-            function populateOptions(sel, usersList) {
-                sel.innerHTML = '<option value="">Select User</option>';
-                usersList.forEach(function (user) {
-                    const option = document.createElement('option');
-                    // Support both shapes: { id, fullName, email } and legacy { userId, fullName, email }
-                    option.value = user.id || user.userId || '';
-                    const name = user.fullName || user.FullName || '';
-                    const email = user.email || user.Email || '';
-                    option.textContent = name ? (email ? (name + ' (' + email + ')') : name) : (email || user.id || user.userId || '');
-                    sel.appendChild(option);
-                });
-
-                if ((usersList || []).length === 0) {
-                    sel.innerHTML = '<option value="">No users available</option>';
-                }
+            catch {
+                return null;
             }
-
-            populateOptions(selectElement, selectElement._users || []);
-
-        } catch (error) {
-
-            console.error(
-                'Unable to load users:',
-                error
-            );
-
-            selectElement.innerHTML =
-                '<option value="">Unable to load users</option>';
-        }
-    }
-
-    /*
-     * ---------------------------------------------------------
-     * ADD TASK
-     * ---------------------------------------------------------
-     */
-
-    const addTaskButton = document.getElementById('addTaskBtn');
-    const addTaskForm = document.getElementById('addTaskForm');
-    const addAssignedTo = document.getElementById('addAssignedTo');
-
-    /*
- * ADD TASK MODAL
- * Load users after Bootstrap completely opens the modal.
- */
-    const addTaskModal =
-        document.getElementById('addTaskModal');
-
-    if (addTaskModal) {
-
-        addTaskModal.addEventListener(
-            'shown.bs.modal',
-            function () {
-
-                hideError('addTaskError');
-
-                loadMembers(addAssignedTo);
-
-            }
-        );
-    }
-
-    addTaskForm?.addEventListener('submit', async function (event) {
-        event.preventDefault();
-
-        hideError('addTaskError');
-
-        const submitButton = addTaskForm.querySelector(
-            'button[type="submit"]'
-        );
-
-        const originalText = submitButton?.textContent;
-
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Saving...';
         }
 
-        try {
-            const formData = new FormData(addTaskForm);
+
+        /* =====================================================
+           IMPORTANT:
+           NORMALIZE REAL BACKEND STATUS
+           
+           This is the actual fix.
+        ===================================================== */
+
+        function normalizeStatus(status) {
+
+            const value =
+                String(status || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[_-]/g, ' ')
+                    .replace(/\s+/g, ' ');
+
+
+            if (
+                value === 'pending' ||
+                value === 'todo' ||
+                value === 'to do' ||
+                value === 'not started' ||
+                value === 'new'
+            ) {
+                return 'Pending';
+            }
+
+
+            if (
+                value === 'in progress' ||
+                value === 'inprogress' ||
+                value === 'working' ||
+                value === 'started'
+            ) {
+                return 'In Progress';
+            }
+
+
+            if (
+                value === 'on hold' ||
+                value === 'onhold' ||
+                value === 'hold' ||
+                value === 'paused'
+            ) {
+                return 'On Hold';
+            }
+
+
+            if (
+                value === 'completed' ||
+                value === 'complete' ||
+                value === 'done' ||
+                value === 'finished'
+            ) {
+                return 'Completed';
+            }
+
+
+            if (
+                value === 'cancelled' ||
+                value === 'canceled'
+            ) {
+                return 'Cancelled';
+            }
+
 
             /*
-             * Project ID is taken from the current
-             * Project Tasks page and explicitly sent
-             * with the task form.
+             * Unknown status:
+             * keep it as Pending visually instead of
+             * losing the task from the board.
              */
-            formData.set('ProjectId', projectId);
+            return 'Pending';
+        }
 
-            const response = await fetch(
-                addTaskForm.getAttribute('action'),
-                {
-                    method: 'POST',
-                    headers: {
-                        'RequestVerificationToken':
-                            getAntiForgeryToken(),
-                        'X-Requested-With':
-                            'XMLHttpRequest'
-                    },
-                    body: formData
-                }
-            );
 
-            const data = await readJsonResponse(response);
+        /* =====================================================
+           PROJECT DETAILS
+        ===================================================== */
 
-            if (response.ok && data && data.success) {
+        async function loadProject() {
 
-                const modalElement =
-                    document.getElementById('addTaskModal');
-
-                const modal =
-                    bootstrap.Modal.getInstance(modalElement);
-
-                modal?.hide();
-
-                window.location.reload();
-
+            if (!projectId) {
                 return;
-            }
-
-            showError(
-                'addTaskError',
-                data?.message || 'Unable to create task.'
-            );
-
-        } catch (error) {
-            console.error('Add task error:', error);
-
-            showError(
-                'addTaskError',
-                'Unable to create task.'
-            );
-        } finally {
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent =
-                    originalText || 'Save Task';
-            }
-        }
-    });
-
-    /*
-     * ---------------------------------------------------------
-     * EDIT TASK
-     * ---------------------------------------------------------
-     */
-
-    document.addEventListener('click', async function (event) {
-
-        const button =
-            event.target.closest('.task-edit-btn');
-
-        if (!button) {
-            return;
-        }
-
-        const taskId =
-            button.getAttribute('data-task-id');
-
-        if (!taskId) {
-            return;
-        }
-
-        try {
-            const response = await fetch(
-                '/Admin/Tasks/Get?id=' +
-                encodeURIComponent(taskId),
-                {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With':
-                            'XMLHttpRequest'
-                    }
-                }
-            );
-
-            if (!response.ok) {
-                alert('Unable to load task.');
-                return;
-            }
-
-            const task = await readJsonResponse(response);
-
-            if (!task) {
-                alert('Task not found.');
-                return;
-            }
-
-            document.getElementById('editTaskId').value =
-                task.id;
-
-            document.getElementById('editTitle').value =
-                task.title || '';
-
-            document.getElementById('editScenario').value =
-                task.scenario || '';
-
-            document.getElementById('editPriority').value =
-                task.priority || 'Low';
-
-            document.getElementById('editStatus').value =
-                task.status || 'Pending';
-
-            document.getElementById('editStartDate').value =
-                formatDateForInput(task.startDate);
-
-            document.getElementById('editExpectedEndDate').value =
-                formatDateForInput(task.expectedEndDate);
-
-            document.getElementById('editAmount').value =
-                task.amount ?? '';
-
-            const editAssignedTo =
-                document.getElementById('editAssignedTo');
-
-            await loadMembers(editAssignedTo);
-
-            // Ensure the select value is the actual user id (for edit submission)
-            editAssignedTo.value =
-                task.assignedToUserId || '';
-
-            hideError('editTaskError');
-
-            const modalElement =
-                document.getElementById('editTaskModal');
-
-            const modal =
-                bootstrap.Modal.getOrCreateInstance(
-                    modalElement
-                );
-
-            modal.show();
-
-        } catch (error) {
-            console.error('Edit task load error:', error);
-
-            alert('Unable to load task.');
-        }
-    });
-
-    /*
-     * ---------------------------------------------------------
-     * UPDATE TASK
-     * ---------------------------------------------------------
-     */
-
-    const editTaskForm =
-        document.getElementById('editTaskForm');
-
-    editTaskForm?.addEventListener(
-        'submit',
-        async function (event) {
-
-            event.preventDefault();
-
-            hideError('editTaskError');
-
-            const submitButton =
-                editTaskForm.querySelector(
-                    'button[type="submit"]'
-                );
-
-            const originalText =
-                submitButton?.textContent;
-
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.textContent = 'Saving...';
             }
 
             try {
-                const formData =
-                    new FormData(editTaskForm);
 
-                const response = await fetch(
-                    editTaskForm.getAttribute('action'),
-                    {
-                        method: 'POST',
-                        headers: {
-                            'RequestVerificationToken':
-                                getAntiForgeryToken(),
-                            'X-Requested-With':
-                                'XMLHttpRequest'
-                        },
-                        body: formData
-                    }
-                );
+                const response =
+                    await fetch(
+                        '/Admin/Projects/GetById?id=' +
+                        encodeURIComponent(projectId),
+                        {
+                            headers: {
+                                'X-Requested-With':
+                                    'XMLHttpRequest'
+                            }
+                        }
+                    );
 
-                const data =
-                    await readJsonResponse(response);
 
-                if (response.ok &&
-                    data &&
-                    data.success) {
-
-                    const modalElement =
-                        document.getElementById(
-                            'editTaskModal'
-                        );
-
-                    const modal =
-                        bootstrap.Modal.getInstance(
-                            modalElement
-                        );
-
-                    modal?.hide();
-
-                    window.location.reload();
-
+                if (!response.ok) {
                     return;
                 }
 
-                showError(
-                    'editTaskError',
-                    data?.message ||
-                    'Unable to update task.'
+
+                const project =
+                    await response.json();
+
+
+                document.getElementById(
+                    'projectTitle'
+                ).textContent =
+                    project.projectTitle ||
+                    'Project';
+
+
+                document.getElementById(
+                    'projectInitial'
+                ).textContent =
+                    getInitials(
+                        project.projectTitle
+                    ).charAt(0);
+
+
+                document.getElementById(
+                    'projectDescription'
+                ).textContent =
+                    project.description ||
+                    'No project description';
+
+
+                document.getElementById(
+                    'projectStatus'
+                ).textContent =
+                    project.status || '-';
+
+
+                document.getElementById(
+                    'projectStart'
+                ).textContent =
+                    formatDate(
+                        project.startDate
+                    );
+
+
+                document.getElementById(
+                    'projectEnd'
+                ).textContent =
+                    formatDate(
+                        project.endDate
+                    );
+
+
+                document.getElementById(
+                    'projectTech'
+                ).textContent =
+                    project.techStack || '-';
+
+
+                calculateProjectProgress(
+                    project
                 );
 
-            } catch (error) {
+            }
+            catch (error) {
+
                 console.error(
-                    'Update task error:',
+                    'Project loading error:',
                     error
                 );
 
-                showError(
-                    'editTaskError',
-                    'Unable to update task.'
+            }
+        }
+
+
+        /* =====================================================
+           PROJECT PROGRESS
+        ===================================================== */
+
+        function calculateProjectProgress(project) {
+
+            const total =
+                tasks.length;
+
+
+            const completed =
+                tasks.filter(
+                    task =>
+                        normalizeStatus(
+                            task.status
+                        ) === 'Completed'
+                ).length;
+
+
+            const percent =
+                total === 0
+                    ? 0
+                    : Math.round(
+                        (completed / total) * 100
+                    );
+
+
+            document.getElementById(
+                'projectProgressPercent'
+            ).textContent =
+                percent + '%';
+
+
+            document.getElementById(
+                'projectProgressBar'
+            ).style.width =
+                percent + '%';
+
+
+            if (project.endDate) {
+
+                const end =
+                    new Date(
+                        project.endDate
+                    );
+
+                const today =
+                    new Date();
+
+                today.setHours(
+                    0,
+                    0,
+                    0,
+                    0
                 );
-            } finally {
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.textContent =
-                        originalText || 'Save';
+
+                end.setHours(
+                    0,
+                    0,
+                    0,
+                    0
+                );
+
+
+                const days =
+                    Math.ceil(
+                        (end - today) /
+                        (1000 * 60 * 60 * 24)
+                    );
+
+
+                const element =
+                    document.getElementById(
+                        'daysRemaining'
+                    );
+
+
+                if (days < 0) {
+
+                    element.textContent =
+                        Math.abs(days) +
+                        ' days overdue';
+
+                }
+                else if (days === 0) {
+
+                    element.textContent =
+                        'Due today';
+
+                }
+                else {
+
+                    element.textContent =
+                        days +
+                        ' days left';
+
                 }
             }
         }
-    );
 
-    /*
-     * ---------------------------------------------------------
-     * TASK DETAILS
-     * ---------------------------------------------------------
-     */
 
-    document.addEventListener('click', async function (event) {
+        /* =====================================================
+           STATS
+        ===================================================== */
 
-        const button =
-            event.target.closest('.task-details-btn');
+        function renderStats() {
 
-        if (!button) {
-            return;
+            const normalized =
+                tasks.map(
+                    task => ({
+                        ...task,
+                        normalizedStatus:
+                            normalizeStatus(
+                                task.status
+                            )
+                    })
+                );
+
+
+            document.getElementById(
+                'totalTasks'
+            ).textContent =
+                normalized.length;
+
+
+            document.getElementById(
+                'pendingTasks'
+            ).textContent =
+                normalized.filter(
+                    x =>
+                        x.normalizedStatus ===
+                        'Pending'
+                ).length;
+
+
+            document.getElementById(
+                'progressTasks'
+            ).textContent =
+                normalized.filter(
+                    x =>
+                        x.normalizedStatus ===
+                        'In Progress'
+                ).length;
+
+
+            document.getElementById(
+                'holdTasks'
+            ).textContent =
+                normalized.filter(
+                    x =>
+                        x.normalizedStatus ===
+                        'On Hold'
+                ).length;
+
+
+            document.getElementById(
+                'completedTasks'
+            ).textContent =
+                normalized.filter(
+                    x =>
+                        x.normalizedStatus ===
+                        'Completed'
+                ).length;
         }
 
-        const taskId =
-            button.getAttribute('data-task-id');
 
-        const currentRow =
-            button.closest('tr');
+        /* =====================================================
+           ASSIGNEE FILTER
+        ===================================================== */
 
-        if (!currentRow || !taskId) {
-            return;
-        }
+        function populateAssignees() {
 
-        const existingRow =
-            currentRow.nextElementSibling;
+            const people =
+                new Map();
 
-        if (
-            existingRow &&
-            existingRow.classList.contains('task-expanded')
-        ) {
-            existingRow.remove();
-            return;
-        }
 
-        try {
-            const response = await fetch(
-                '/Admin/Tasks/Details?id=' +
-                encodeURIComponent(taskId),
-                {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With':
-                            'XMLHttpRequest'
+            tasks.forEach(
+                task => {
+
+                    const id =
+                        task.assignedToUserId;
+
+
+                    if (!id) {
+                        return;
                     }
+
+
+                    const name =
+                        task.assignedToUserName ||
+                        id;
+
+
+                    people.set(
+                        id,
+                        name
+                    );
                 }
             );
 
-            const data =
-                await readJsonResponse(response);
 
-            if (
-                !response.ok ||
-                !data ||
-                !data.success
-            ) {
-                alert(
-                    data?.message ||
-                    'Unable to load details.'
+            people.forEach(
+                function (name, id) {
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+
+                    option.value =
+                        id;
+
+
+                    option.textContent =
+                        name;
+
+
+                    assigneeFilter.appendChild(
+                        option
+                    );
+                }
+            );
+        }
+
+
+        /* =====================================================
+           KANBAN COLUMNS
+        ===================================================== */
+
+        const columns = [
+
+            {
+                status: 'Pending',
+                title: 'To Do',
+                className: ''
+            },
+
+            {
+                status: 'In Progress',
+                title: 'In Progress',
+                className: 'in-progress'
+            },
+
+            {
+                status: 'On Hold',
+                title: 'On Hold',
+                className: 'on-hold'
+            },
+
+            {
+                status: 'Completed',
+                title: 'Completed',
+                className: 'completed'
+            }
+
+        ];
+
+
+        /* =====================================================
+           CREATE TASK CARD
+        ===================================================== */
+
+        function createTaskCard(task) {
+
+            const card = document.createElement('article');
+
+            const assignee =
+                task.assignedToUserName ||
+                task.assignedToUserId ||
+                'Unassigned';
+
+            card.className = 'task-card';
+
+            card.innerHTML = `
+        
+        <div class="task-card-top">
+
+            <div>
+                <span class="task-id">
+                    TASK-${task.id}
+                </span>
+
+                <h4 class="task-card-title">
+                    ${escapeHtml(task.title || 'Untitled Task')}
+                </h4>
+            </div>
+
+            <span class="task-priority priority-${priorityClass(task.priority)}">
+                ${escapeHtml(task.priority || 'Low')}
+            </span>
+
+        </div>
+
+
+        <p class="task-card-scenario">
+            ${escapeHtml(
+                task.scenario ||
+                'No scenario provided.'
+            )}
+        </p>
+
+
+        <div class="task-card-info">
+
+            <div>
+                <span class="info-label">
+                    Assigned To
+                </span>
+
+                <span class="task-assignee">
+                    <span class="assignee-avatar">
+                        ${escapeHtml(getInitials(assignee))}
+                    </span>
+
+                    ${escapeHtml(assignee)}
+                </span>
+            </div>
+
+
+            <div>
+                <span class="info-label">
+                    Deadline
+                </span>
+
+                <span>
+                    ${formatDate(task.expectedEndDate)}
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="task-card-bottom">
+
+            <strong class="task-amount">
+                ₹ ${Number(task.amount || 0).toFixed(2)}
+            </strong>
+
+            <div class="task-actions">
+
+                <button
+                    type="button"
+                    class="task-action task-details-btn"
+                    data-task-id="${task.id}">
+                    Details
+                </button>
+
+                <button
+                    type="button"
+                    class="task-action task-edit-btn"
+                    data-task-id="${task.id}">
+                    Edit
+                </button>
+
+                <button
+                    type="button"
+                    class="task-action task-delete-btn delete"
+                    data-task-id="${task.id}">
+                    Delete
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+            return card;
+        }
+
+        const allTasksTrigger =
+            document.getElementById('allTasksTrigger');
+
+
+        if (allTasksTrigger) {
+
+            allTasksTrigger.addEventListener(
+                'click',
+                function () {
+
+                    const container =
+                        document.getElementById(
+                            'allTasksContainer'
+                        );
+
+                    const count =
+                        document.getElementById(
+                            'allTasksCount'
+                        );
+
+
+                    container.innerHTML = '';
+
+
+                    if (!tasks.length) {
+
+                        container.innerHTML = `
+                    <div class="all-tasks-empty">
+                        <div class="empty-icon">✓</div>
+                        <h4>No tasks found</h4>
+                        <p>
+                            This project does not have
+                            any tasks yet.
+                        </p>
+                    </div>
+                `;
+
+                        count.textContent =
+                            '0 tasks';
+
+                    }
+                    else {
+
+                        tasks.forEach(
+                            function (task) {
+
+                                const assignee =
+                                    task.assignedToUserName ||
+                                    task.assignedToUserId ||
+                                    'Unassigned';
+
+
+                                const row =
+                                    document.createElement(
+                                        'div'
+                                    );
+
+
+                                row.className =
+                                    'all-task-row';
+
+
+                                row.innerHTML = `
+
+                            <div class="all-task-main">
+
+                                <span class="all-task-id">
+                                    TASK-${task.id}
+                                </span>
+
+                                <strong>
+                                    ${escapeHtml(
+                                    task.title ||
+                                    'Untitled Task'
+                                )}
+                                </strong>
+
+                                <small>
+                                    ${escapeHtml(
+                                    task.scenario ||
+                                    'No scenario'
+                                )}
+                                </small>
+
+                            </div>
+
+
+                            <span class="all-task-status">
+                                ${escapeHtml(
+                                    task.status ||
+                                    'Pending'
+                                )}
+                            </span>
+
+
+                            <span class="all-task-priority">
+                                ${escapeHtml(
+                                    task.priority ||
+                                    'Low'
+                                )}
+                            </span>
+
+
+                            <span class="all-task-assignee">
+                                ${escapeHtml(
+                                    assignee
+                                )}
+                            </span>
+
+
+                            <strong class="all-task-amount">
+                                ₹ ${Number(
+                                    task.amount || 0
+                                ).toFixed(2)}
+                            </strong>
+
+
+                            <button
+                                type="button"
+                                class="all-task-view task-details-btn"
+                                data-task-id="${task.id}">
+
+                                View
+
+                            </button>
+
+                        `;
+
+
+                                container.appendChild(
+                                    row
+                                );
+
+                            }
+                        );
+
+
+                        count.textContent =
+                            tasks.length +
+                            (
+                                tasks.length === 1
+                                    ? ' task'
+                                    : ' tasks'
+                            );
+
+                    }
+
+
+                    bootstrap.Modal
+                        .getOrCreateInstance(
+                            document.getElementById(
+                                'allTasksModal'
+                            )
+                        )
+                        .show();
+
+                }
+            );
+
+        }
+
+        /* =====================================================
+           RENDER BOARD
+        ===================================================== */
+
+        function renderBoard() {
+
+            if (!board) {
+                return;
+            }
+
+
+            const search =
+                (
+                    searchInput.value ||
+                    ''
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            const selectedStatus =
+                statusFilter.value;
+
+
+            const selectedPriority =
+                priorityFilter.value;
+
+
+            const selectedAssignee =
+                assigneeFilter.value;
+
+
+            const filtered =
+                tasks.filter(
+                    function (task) {
+
+                        const title =
+                            String(
+                                task.title || ''
+                            ).toLowerCase();
+
+
+                        const scenario =
+                            String(
+                                task.scenario || ''
+                            ).toLowerCase();
+
+
+                        const normalizedStatus =
+                            normalizeStatus(
+                                task.status
+                            );
+
+
+                        const matchesSearch =
+                            !search ||
+                            title.includes(search) ||
+                            scenario.includes(search);
+
+
+                        const matchesStatus =
+                            !selectedStatus ||
+                            normalizedStatus ===
+                            selectedStatus;
+
+
+                        const matchesPriority =
+                            !selectedPriority ||
+                            task.priority ===
+                            selectedPriority;
+
+
+                        const matchesAssignee =
+                            !selectedAssignee ||
+                            task.assignedToUserId ===
+                            selectedAssignee;
+
+
+                        return (
+                            matchesSearch &&
+                            matchesStatus &&
+                            matchesPriority &&
+                            matchesAssignee
+                        );
+                    }
                 );
 
-                return;
-            }
 
-            const task = data.data;
+            board.innerHTML = '';
 
-            const expandedRow =
-                document.createElement('tr');
 
-            expandedRow.className =
-                'task-expanded';
+            columns.forEach(
+                function (column) {
 
-            const cell =
-                document.createElement('td');
+                    const columnTasks =
+                        filtered.filter(
+                            task =>
+                                normalizeStatus(
+                                    task.status
+                                ) === column.status
+                        );
 
-            cell.colSpan = 8;
 
-            const container =
-                document.createElement('div');
+                    const columnElement =
+                        document.createElement(
+                            'div'
+                        );
 
-            const scenarioTitle =
-                document.createElement('strong');
 
-            scenarioTitle.textContent =
-                'Scenario:';
+                    columnElement.className =
+                        'task-column ' +
+                        column.className;
 
-            const scenario =
-                document.createElement('p');
 
-            scenario.textContent =
-                task.scenario || '-';
+                    columnElement.innerHTML = `
 
-            const assignedTitle =
-                document.createElement('strong');
+                        <div class="task-column-header">
 
-            assignedTitle.textContent =
-                'Assigned To:';
+                            <span class="column-dot"></span>
 
-            const assigned =
-                document.createElement('p');
+                            <h3>
+                                ${column.title}
+                            </h3>
 
-            assigned.textContent =
-                task.assignedToUserName || task.assignedToUserId || '-';
+                            <span class="column-count">
+                                ${columnTasks.length}
+                            </span>
 
-            const amountTitle =
-                document.createElement('strong');
+                            <button type="button"
+                                    class="column-add"
+                                    data-column-status="${column.status}">
+                                +
+                            </button>
 
-            amountTitle.textContent =
-                'Amount:';
+                        </div>
 
-            const amount =
-                document.createElement('p');
 
-            amount.textContent =
-                task.amount ?? '0.00';
+                        <div class="task-column-body"></div>
 
-            container.appendChild(scenarioTitle);
-            container.appendChild(scenario);
+                    `;
 
-            container.appendChild(assignedTitle);
-            container.appendChild(assigned);
 
-            container.appendChild(amountTitle);
-            container.appendChild(amount);
+                    const body =
+                        columnElement.querySelector(
+                            '.task-column-body'
+                        );
 
-            cell.appendChild(container);
-            expandedRow.appendChild(cell);
 
-            currentRow.parentNode.insertBefore(
-                expandedRow,
-                currentRow.nextSibling
-            );
+                    if (
+                        columnTasks.length === 0
+                    ) {
 
-        } catch (error) {
-            console.error(
-                'Task details error:',
-                error
-            );
+                        body.innerHTML = `
 
-            alert('Unable to load details.');
-        }
-    });
+                            <div class="column-empty">
 
-    /*
-     * ---------------------------------------------------------
-     * DELETE TASK
-     * ---------------------------------------------------------
-     */
+                                <span>
+                                    ○
+                                </span>
 
-    document.addEventListener('click', async function (event) {
+                                <strong>
+                                    No tasks here
+                                </strong>
 
-        const button =
-            event.target.closest('.task-delete-btn');
+                                <small>
+                                    Tasks will appear here.
+                                </small>
 
-        if (!button) {
-            return;
-        }
+                            </div>
 
-        const taskId =
-            button.getAttribute('data-task-id');
+                        `;
 
-        if (!taskId) {
-            return;
-        }
+                    }
+                    else {
 
-        const confirmed =
-            window.confirm(
-                'Are you sure you want to delete this task?'
-            );
+                        columnTasks.forEach(
+                            function (task) {
 
-        if (!confirmed) {
-            return;
-        }
+                                body.appendChild(
+                                    createTaskCard(
+                                        task
+                                    )
+                                );
 
-        try {
-            const body =
-                'id=' +
-                encodeURIComponent(taskId) +
-                '&projectId=' +
-                encodeURIComponent(projectId);
+                            }
+                        );
 
-            const response = await fetch(
-                '/Admin/Tasks/Delete',
-                {
-                    method: 'POST',
-                    headers: {
-                        'RequestVerificationToken':
-                            getAntiForgeryToken(),
-                        'X-Requested-With':
-                            'XMLHttpRequest',
-                        'Content-Type':
-                            'application/x-www-form-urlencoded'
-                    },
-                    body: body
+                    }
+
+
+                    board.appendChild(
+                        columnElement
+                    );
+
                 }
             );
 
-            const data =
-                await readJsonResponse(response);
 
-            if (
-                response.ok &&
-                data &&
-                data.success
-            ) {
-                window.location.reload();
+            const emptyState =
+                document.getElementById(
+                    'taskEmptyState'
+                );
+
+
+            if (filtered.length === 0) {
+
+                board.style.display =
+                    'none';
+
+                emptyState.style.display =
+                    'block';
+
+            }
+            else {
+
+                board.style.display =
+                    'grid';
+
+                emptyState.style.display =
+                    'none';
+
+            }
+        }
+
+
+        /* =====================================================
+           FILTERS
+        ===================================================== */
+
+        searchInput.addEventListener(
+            'input',
+            renderBoard
+        );
+
+
+        statusFilter.addEventListener(
+            'change',
+            renderBoard
+        );
+
+
+        priorityFilter.addEventListener(
+            'change',
+            renderBoard
+        );
+
+
+        assigneeFilter.addEventListener(
+            'change',
+            renderBoard
+        );
+
+
+        resetButton.addEventListener(
+            'click',
+            function () {
+
+                searchInput.value =
+                    '';
+
+                statusFilter.value =
+                    '';
+
+                priorityFilter.value =
+                    '';
+
+                assigneeFilter.value =
+                    '';
+
+                renderBoard();
+
+            }
+        );
+
+
+        /* =====================================================
+           ADD TASK
+        ===================================================== */
+
+        const addTaskForm =
+            document.getElementById(
+                'addTaskForm'
+            );
+
+
+        const addAssignedTo =
+            document.getElementById(
+                'addAssignedTo'
+            );
+
+
+        async function loadMembers(select) {
+
+            if (!select) {
                 return;
             }
 
-            alert(
-                data?.message ||
-                'Unable to delete task.'
-            );
 
-        } catch (error) {
-            console.error(
-                'Delete task error:',
-                error
-            );
+            select.innerHTML =
+                '<option value="">Loading users...</option>';
 
-            alert('Unable to delete task.');
+
+            try {
+
+                const response =
+                    await fetch(
+                        '/Admin/Tasks/Users?_=' +
+                        Date.now(),
+                        {
+                            headers: {
+                                'X-Requested-With':
+                                    'XMLHttpRequest',
+                                'Accept':
+                                    'application/json'
+                            },
+                            cache: 'no-store'
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                const users =
+                    Array.isArray(data?.users)
+                        ? data.users
+                        : [];
+
+
+                select.innerHTML =
+                    '<option value="">Select User</option>';
+
+
+                users.forEach(
+                    function (user) {
+
+                        const option =
+                            document.createElement(
+                                'option'
+                            );
+
+
+                        option.value =
+                            user.id ||
+                            user.userId ||
+                            '';
+
+
+                        option.textContent =
+                            user.fullName ||
+                            user.email ||
+                            'User';
+
+
+                        select.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    'User loading error:',
+                    error
+                );
+
+                select.innerHTML =
+                    '<option value="">Unable to load users</option>';
+
+            }
         }
-    });
+
+
+        document.getElementById(
+            'addTaskModal'
+        )?.addEventListener(
+            'shown.bs.modal',
+            function () {
+
+                loadMembers(
+                    addAssignedTo
+                );
+
+            }
+        );
+
+
+        addTaskForm?.addEventListener(
+            'submit',
+            async function (event) {
+
+                event.preventDefault();
+
+
+                const formData =
+                    new FormData(
+                        addTaskForm
+                    );
+
+
+                formData.set(
+                    'ProjectId',
+                    projectId
+                );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            addTaskForm.action,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With':
+                                        'XMLHttpRequest'
+                                },
+                                body:
+                                    formData
+                            }
+                        );
+
+
+                    const data =
+                        await readJson(
+                            response
+                        );
+
+
+                    if (
+                        response.ok &&
+                        data?.success
+                    ) {
+
+                        window.location.reload();
+
+                        return;
+                    }
+
+
+                    const error =
+                        document.getElementById(
+                            'addTaskError'
+                        );
+
+
+                    error.textContent =
+                        data?.message ||
+                        'Unable to create task.';
+
+
+                    error.style.display =
+                        'block';
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Create task error:',
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =====================================================
+           EDIT
+        ===================================================== */
+
+        document.addEventListener(
+            'click',
+            async function (event) {
+
+                const button =
+                    event.target.closest(
+                        '.task-edit-btn'
+                    );
+
+
+                if (!button) {
+                    return;
+                }
+
+
+                const taskId =
+                    button.dataset.taskId;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            '/Admin/Tasks/Get?id=' +
+                            encodeURIComponent(
+                                taskId
+                            )
+                        );
+
+
+                    const task =
+                        await response.json();
+
+
+                    document.getElementById(
+                        'editTaskId'
+                    ).value =
+                        task.id;
+
+
+                    document.getElementById(
+                        'editProjectId'
+                    ).value =
+                        projectId;
+
+
+                    document.getElementById(
+                        'editTitle'
+                    ).value =
+                        task.title || '';
+
+
+                    document.getElementById(
+                        'editScenario'
+                    ).value =
+                        task.scenario || '';
+
+
+                    document.getElementById(
+                        'editPriority'
+                    ).value =
+                        task.priority || 'Low';
+
+
+                    document.getElementById(
+                        'editStatus'
+                    ).value =
+                        task.status || 'Pending';
+
+
+                    document.getElementById(
+                        'editStartDate'
+                    ).value =
+                        formatInputDate(
+                            task.startDate
+                        );
+
+
+                    document.getElementById(
+                        'editExpectedEndDate'
+                    ).value =
+                        formatInputDate(
+                            task.expectedEndDate
+                        );
+
+
+                    document.getElementById(
+                        'editAmount'
+                    ).value =
+                        task.amount ?? '';
+
+
+                    const select =
+                        document.getElementById(
+                            'editAssignedTo'
+                        );
+
+
+                    await loadMembers(
+                        select
+                    );
+
+
+                    select.value =
+                        task.assignedToUserId ||
+                        '';
+
+
+                    bootstrap.Modal
+                        .getOrCreateInstance(
+                            document.getElementById(
+                                'editTaskModal'
+                            )
+                        )
+                        .show();
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Edit error:',
+                        error
+                    );
+
+                    alert(
+                        'Unable to load task.'
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =====================================================
+           UPDATE
+        ===================================================== */
+
+        document.getElementById(
+            'editTaskForm'
+        )?.addEventListener(
+            'submit',
+            async function (event) {
+
+                event.preventDefault();
+
+
+                const formData =
+                    new FormData(
+                        this
+                    );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            this.action,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With':
+                                        'XMLHttpRequest'
+                                },
+                                body:
+                                    formData
+                            }
+                        );
+
+
+                    const data =
+                        await readJson(
+                            response
+                        );
+
+
+                    if (
+                        response.ok &&
+                        data?.success
+                    ) {
+
+                        window.location.reload();
+
+                        return;
+                    }
+
+
+                    const error =
+                        document.getElementById(
+                            'editTaskError'
+                        );
+
+
+                    error.textContent =
+                        data?.message ||
+                        'Unable to update task.';
+
+
+                    error.style.display =
+                        'block';
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Update error:',
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =====================================================
+           DELETE
+        ===================================================== */
+
+        document.addEventListener(
+            'click',
+            async function (event) {
+
+                const button =
+                    event.target.closest(
+                        '.task-delete-btn'
+                    );
+
+
+                if (!button) {
+                    return;
+                }
+
+
+                const taskId =
+                    button.dataset.taskId;
+
+
+                if (
+                    !confirm(
+                        'Are you sure you want to delete this task?'
+                    )
+                ) {
+                    return;
+                }
+
+
+                const body =
+                    new URLSearchParams();
+
+
+                body.append(
+                    'id',
+                    taskId
+                );
+
+
+                body.append(
+                    'projectId',
+                    projectId
+                );
+
+
+                body.append(
+                    '__RequestVerificationToken',
+                    getToken()
+                );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            '/Admin/Tasks/Delete',
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With':
+                                        'XMLHttpRequest',
+                                    'Content-Type':
+                                        'application/x-www-form-urlencoded'
+                                },
+                                body:
+                                    body.toString()
+                            }
+                        );
+
+
+                    const data =
+                        await readJson(
+                            response
+                        );
+
+
+                    if (
+                        response.ok &&
+                        data?.success
+                    ) {
+
+                        window.location.reload();
+
+                        return;
+                    }
+
+
+                    alert(
+                        data?.message ||
+                        'Unable to delete task.'
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Delete error:',
+                        error
+                    );
+
+                    alert(
+                        'Unable to delete task.'
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =====================================================
+           DETAILS
+        ===================================================== */
+
+        document.addEventListener(
+            'click',
+            async function (event) {
+
+                const button =
+                    event.target.closest(
+                        '.task-details-btn'
+                    );
+
+
+                if (!button) {
+                    return;
+                }
+
+
+                const taskId =
+                    button.dataset.taskId;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            '/Admin/Tasks/Details?id=' +
+                            encodeURIComponent(
+                                taskId
+                            )
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (
+                        !result.success
+                    ) {
+
+                        alert(
+                            result.message ||
+                            'Task not found.'
+                        );
+
+                        return;
+                    }
+
+
+                    const task =
+                        result.data;
+
+
+                    document.addEventListener('click', async function (event) {
+
+                        const button = event.target.closest('.task-details-btn');
+
+                        if (!button) return;
+
+                        const taskId = button.dataset.taskId;
+
+                        try {
+
+                            const response = await fetch(
+                                '/Admin/Tasks/Details?id=' +
+                                encodeURIComponent(taskId)
+                            );
+
+                            const result = await response.json();
+
+                            if (!result.success) {
+                                alert(result.message || 'Task not found.');
+                                return;
+                            }
+
+                            const task = result.data;
+
+                            document.getElementById('detailTaskId').textContent =
+                                'TASK-' + task.id;
+
+                            document.getElementById('detailTaskTitle').textContent =
+                                task.title || '-';
+
+                            document.getElementById('detailTaskScenario').textContent =
+                                task.scenario || '-';
+
+                            document.getElementById('detailTaskAssignee').textContent =
+                                task.assignedToUserName ||
+                                task.assignedToUserId ||
+                                'Unassigned';
+
+                            document.getElementById('detailTaskPriority').textContent =
+                                task.priority || '-';
+
+                            document.getElementById('detailTaskStatus').textContent =
+                                task.status || '-';
+
+                            document.getElementById('detailTaskAmount').textContent =
+                                '₹ ' + Number(task.amount || 0).toFixed(2);
+
+                            document.getElementById('detailTaskStart').textContent =
+                                formatDate(task.startDate);
+
+                            document.getElementById('detailTaskEnd').textContent =
+                                formatDate(task.expectedEndDate);
+
+                            const allTasksModalElement =
+                                document.getElementById('allTasksModal');
+
+                            const allTasksModal =
+                                bootstrap.Modal.getInstance(
+                                    allTasksModalElement
+                                );
+
+                            if (allTasksModal) {
+                                allTasksModal.hide();
+                            }
+
+
+
+                            const modalElement =
+                                document.getElementById('taskDetailsModal');
+
+                            const modal =
+                                bootstrap.Modal.getOrCreateInstance(
+                                    modalElement
+                                );
+
+                            modal.show();
+
+                        }
+                        catch (error) {
+
+                            console.error('Details error:', error);
+
+                            alert('Unable to load task details.');
+
+                        }
+
+                    });
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Details error:',
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =====================================================
+           COLUMN ADD BUTTON
+        ===================================================== */
+
+        document.addEventListener(
+            'click',
+            function (event) {
+
+                const button =
+                    event.target.closest(
+                        '.column-add'
+                    );
+
+
+                if (!button) {
+                    return;
+                }
+
+
+                const status =
+                    button.dataset.columnStatus;
+
+
+                const modal =
+                    document.getElementById(
+                        'addTaskModal'
+                    );
+
+
+                const statusSelect =
+                    modal.querySelector(
+                        'select[name="Status"]'
+                    );
+
+
+                statusSelect.value =
+                    status;
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        modal
+                    )
+                    .show();
+
+            }
+        );
+
+
+        /* =====================================================
+           START
+        ===================================================== */
+
+        populateAssignees();
+
+        renderStats();
+
+        loadProject();
+
+        renderBoard();
 
     });
+
 })();
