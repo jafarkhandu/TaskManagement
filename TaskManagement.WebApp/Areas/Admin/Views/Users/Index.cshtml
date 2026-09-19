@@ -1,0 +1,350 @@
+﻿@using TaskManagement.Infrastructure.Identity
+@model List<ApplicationUser>
+
+@{
+    ViewData["Title"] = "Users";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>TaskManager - Users</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/admin-dashboard.css"
+          asp-append-version="true" />
+
+</head>
+
+<body class="admin-dashboard">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+
+            <div class="brand-logo">
+                ✓
+            </div>
+
+            <div class="brand-text">
+
+                <strong>
+                    TaskManager
+                </strong>
+
+                <span>
+                    Plan · Assign · Track
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <a href="@Url.Action(
+                                      "Index",
+                                      "Dashboard",
+                                      new { area = "Admin" })"
+               class="sidebar-link">
+
+                <span class="nav-icon">⌂</span>
+
+                <span>Dashboard</span>
+
+            </a>
+
+
+            <a href="@Url.Action(
+                                      "Index",
+                                      "Projects",
+                                      new { area = "Admin" })"
+               class="sidebar-link">
+
+                <span class="nav-icon">▣</span>
+
+                <span>Projects</span>
+
+            </a>
+
+
+            <a href="@Url.Action(
+                "Index",
+                "Users",
+                new { area = "Admin" })"
+               class="sidebar-link active">
+
+                <span class="nav-icon">♙</span>
+
+                <span>Users</span>
+
+            </a>
+
+
+            <a href="#"
+               class="sidebar-link">
+
+                <span class="nav-icon">⚿</span>
+
+                <span>Manage Roles</span>
+
+            </a>
+
+
+            <a href="#"
+               class="sidebar-link">
+
+                <span class="nav-icon">▣</span>
+
+                <span>Calendar</span>
+
+            </a>
+
+
+            <a href="#"
+               class="sidebar-link">
+
+                <span class="nav-icon">▥</span>
+
+                <span>Reports</span>
+
+            </a>
+
+
+            <a href="#"
+               class="sidebar-link">
+
+                <span class="nav-icon">⚙</span>
+
+                <span>Settings</span>
+
+            </a>
+
+        </nav>
+
+
+        <div class="admin-card">
+
+            <div class="admin-card-icon">
+                ♛
+            </div>
+
+            <div class="admin-card-content">
+
+                <strong>
+                    Admin Panel
+                </strong>
+
+                <span>
+                    Manage projects, users
+                    and tasks in one place.
+                </span>
+
+            </div>
+
+            <span class="admin-arrow">
+                →
+            </span>
+
+        </div>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div class="search-box">
+
+                <span class="search-icon">
+                    ⌕
+                </span>
+
+                <input type="text"
+                       placeholder="Search users..." />
+
+                <span class="search-shortcut">
+                    Ctrl K
+                </span>
+
+            </div>
+
+        </header>
+
+
+        <div class="dashboard-container">
+
+            <section class="welcome-section">
+
+                <div>
+
+                    <div class="welcome-small">
+                        Administration
+                    </div>
+
+                    <h1>
+                        Users
+                    </h1>
+
+                    <p>
+                        Manage users and their accounts.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section class="dashboard-card projects-card">
+
+                <div class="card-header">
+
+                    <div class="card-title">
+
+                        <span class="title-icon">
+                            ♙
+                        </span>
+
+                        <h2>
+                            User Management
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        @Model.Count Users
+                    </span>
+
+                </div>
+
+
+                <div class="table-responsive">
+
+                    <table class="project-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    User
+                                </th>
+
+                                <th>
+                                    Email
+                                </th>
+
+                                <th>
+                                    Phone
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @if (Model.Any())
+                            {
+                                foreach (var user in Model)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <strong>
+                                                @(string.IsNullOrWhiteSpace(user.FullName)
+                                                    ? "Unnamed User"
+                                                    : user.FullName)
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+                                            @user.Email
+                                        </td>
+
+
+                                        <td>
+                                            @(string.IsNullOrWhiteSpace(user.PhoneNumber)
+                                                ? "-"
+                                                : user.PhoneNumber)
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="status status-completed">
+                                                Active
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary">
+                                                Manage
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+
+                                    <td colspan="5"
+                                        class="text-center">
+
+                                        No users found.
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
