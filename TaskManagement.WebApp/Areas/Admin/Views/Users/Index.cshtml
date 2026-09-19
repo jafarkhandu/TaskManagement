@@ -1,4 +1,6 @@
 ﻿@using TaskManagement.Infrastructure.Identity
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> _userManager
 @model List<ApplicationUser>
 
 @{
@@ -93,14 +95,7 @@
             </a>
 
 
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">⚿</span>
-
-                <span>Manage Roles</span>
-
-            </a>
+            <!-- Manage Roles removed - role management merged into Users -->
 
 
             <a href="#"
@@ -252,6 +247,10 @@
                                 </th>
 
                                 <th>
+                                    Role
+                                </th>
+
+                                <th>
                                     Status
                                 </th>
 
@@ -270,7 +269,7 @@
                             {
                                 foreach (var user in Model)
                                 {
-                                    <tr>
+                                <tr>
 
                                         <td>
 
@@ -296,9 +295,15 @@
 
 
                                         <td>
+                                            @{ var userRoles = _userManager.GetRolesAsync(user).Result; var role = userRoles.FirstOrDefault() ?? "User"; }
+                                            @role
+                                        </td>
+
+
+                                        <td>
 
                                             <span class="status status-completed">
-                                                Active
+                                                A
                                             </span>
 
                                         </td>
@@ -306,10 +311,19 @@
 
                                         <td>
 
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-primary">
+                                            <a href="@Url.Action(
+                                                          "Manage",
+                                                          "Users",
+                                                          new
+                                                          {
+                                                              area = "Admin",
+                                                              id = user.Id
+                                                          })"
+                                               class="btn btn-sm btn-outline-primary">
+
                                                 Manage
-                                            </button>
+
+                                            </a>
 
                                         </td>
 

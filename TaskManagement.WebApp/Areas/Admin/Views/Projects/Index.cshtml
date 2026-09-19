@@ -130,25 +130,12 @@
             </a>
 
 
-            <!-- Tasks -->
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    ✓
-                </span>
-
-                <span>
-                    Tasks
-                </span>
-
-            </a>
-
-
             <!-- Users -->
 
-            <a href="#"
+            <a href="@Url.Action(
+                    "Index",
+                    "Users",
+                    new { area = "Admin" })"
                class="sidebar-link">
 
                 <span class="nav-icon">
@@ -164,18 +151,7 @@
 
             <!-- Manage Roles -->
 
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    ⚿
-                </span>
-
-                <span>
-                    Manage Roles
-                </span>
-
-            </a>
+            <!-- Manage Roles removed - role management merged into Users -->
 
 
             <!-- Calendar -->
