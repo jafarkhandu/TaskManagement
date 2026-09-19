@@ -145,9 +145,12 @@ namespace TaskManagement.Web.Controllers
         {
             await _authService.LogoutAsync();
 
-            return RedirectToAction(
-                 "Login",
-                 "Account");
+            return Ok(new
+            {
+                success = true,
+                message = "Logout successful.",
+                redirectUrl = "/Account/Login"
+            });
         }
 
         // GET: /Account/AccessDenied
