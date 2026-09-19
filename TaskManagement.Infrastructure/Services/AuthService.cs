@@ -36,7 +36,8 @@ namespace TaskManagement.Infrastructure.Services
             {
                 UserName = model.Email,
                 Email = model.Email,
-                FullName = model.FullName
+                FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber
             };
 
             var result = await _userManager.CreateAsync(
