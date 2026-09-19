@@ -2,6 +2,8 @@ using TaskManagement.Application.DTOs;
 
 namespace TaskManagement.Application.Interfaces
 {
+    using TaskManagement.Application.DTOs;
+
     public interface ITaskService
     {
         Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId);
@@ -15,11 +17,6 @@ namespace TaskManagement.Application.Interfaces
         Task<(bool Success, string Error)> UpdateAsync(TaskDto model);
 
         Task<(bool Success, string Error)> DeleteAsync(int id);
-
-        Task<List<(string UserId, string Email, string FullName)>> GetProjectMembersAsync(int projectId);
-
-        Task<(bool Success, string Error)> AddProjectMemberAsync(int projectId, string userId);
-
-        Task<(bool Success, string Error)> RemoveProjectMemberAsync(int projectId, string userId);
+        Task<List<UserLookupDto>> GetAssignableUsersAsync();
     }
 }

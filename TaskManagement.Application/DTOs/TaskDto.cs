@@ -19,6 +19,9 @@ namespace TaskManagement.Application.DTOs
         [Required]
         public string AssignedToUserId { get; set; } = string.Empty;
 
+        // Display-only: populated with the user's FullName or email as a fallback
+        public string AssignedToUserName { get; set; } = string.Empty;
+
         [Required]
         public string Priority { get; set; } = "Low";
 

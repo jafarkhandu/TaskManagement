@@ -401,17 +401,7 @@
                             </div>
 
 
-                            <div>
-                                <strong>
-                                    Members
-                                </strong>
-
-                                <p>
-                                    ${project.membersCount ??
-                    "-"
-                    }
-                                </p>
-                            </div>
+                            // Members count removed
 
 
                             <div>
@@ -713,10 +703,7 @@
                     project.status
                 );
 
-                setInputValue(
-                    "EditMembersCount",
-                    project.membersCount
-                );
+                // Edit members count removed
 
                 setInputValue(
                     "EditStartDate",
@@ -1306,15 +1293,7 @@
                 "Planning";
         }
 
-        const membersCount =
-            document.getElementById(
-                "MembersCount"
-            );
-
-        if (membersCount) {
-            membersCount.value =
-                "1";
-        }
+        // Members count field removed from create form
 
     }
 

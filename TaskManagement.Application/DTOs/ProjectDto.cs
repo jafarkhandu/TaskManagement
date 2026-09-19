@@ -22,7 +22,5 @@ namespace TaskManagement.Application.DTOs
         [Required]
         public DateTime EndDate { get; set; }
 
-        [Range(1, 100)]
-        public int MembersCount { get; set; }
     }
 }

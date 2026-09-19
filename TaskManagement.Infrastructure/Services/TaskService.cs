@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Domain.Entities;
@@ -10,14 +11,16 @@ namespace TaskManagement.Infrastructure.Services
     public class TaskService : ITaskService
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         private static readonly string[] AllowedPriorities = new[] { "Low", "Medium", "High", "Critical" };
 
         private static readonly string[] AllowedStatuses = new[] { "Pending", "In Progress", "Completed", "On Hold", "Cancelled" };
 
-        public TaskService(ApplicationDbContext db)
+        public TaskService(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         public async Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId)
@@ -33,6 +36,11 @@ namespace TaskManagement.Infrastructure.Services
                     Title = t.Title,
                     Scenario = t.Scenario,
                     AssignedToUserId = t.AssignedToUserId,
+                    // Project to the user's display name (FullName or Email)
+                    AssignedToUserName = _db.Users
+                        .Where(u => u.Id == t.AssignedToUserId)
+                        .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                        .FirstOrDefault() ?? string.Empty,
                     Priority = t.Priority,
                     Status = t.Status,
                     StartDate = t.StartDate,
@@ -44,21 +52,27 @@ namespace TaskManagement.Infrastructure.Services
 
         public async Task<TaskDto?> GetByIdAsync(int id)
         {
-            var t = await _db.TaskItems.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-            if (t == null) return null;
-            return new TaskDto
-            {
-                Id = t.Id,
-                ProjectId = t.ProjectId,
-                Title = t.Title,
-                Scenario = t.Scenario,
-                AssignedToUserId = t.AssignedToUserId,
-                Priority = t.Priority,
-                Status = t.Status,
-                StartDate = t.StartDate,
-                ExpectedEndDate = t.ExpectedEndDate,
-                Amount = t.Amount
-            };
+            return await _db.TaskItems
+                .AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(t => new TaskDto
+                {
+                    Id = t.Id,
+                    ProjectId = t.ProjectId,
+                    Title = t.Title,
+                    Scenario = t.Scenario,
+                    AssignedToUserId = t.AssignedToUserId,
+                    AssignedToUserName = _db.Users
+                        .Where(u => u.Id == t.AssignedToUserId)
+                        .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                        .FirstOrDefault() ?? string.Empty,
+                    Priority = t.Priority,
+                    Status = t.Status,
+                    StartDate = t.StartDate,
+                    ExpectedEndDate = t.ExpectedEndDate,
+                    Amount = t.Amount
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task<TaskDto?> GetDetailsAsync(int id)
@@ -88,10 +102,17 @@ namespace TaskManagement.Infrastructure.Services
             if (model.ExpectedEndDate > project.EndDate)
                 return (false, "Task expected end date cannot be after project end date.");
 
-            // Assigned user must be a project member
-            var isMember = await _db.ProjectMembers.AnyAsync(pm => pm.ProjectId == model.ProjectId && pm.UserId == model.AssignedToUserId);
-            if (!isMember)
-                return (false, "Assigned user is not a member of the project.");
+            // Assigned user must exist and must be in the 'User' role.
+            var assignedUser = await _userManager.FindByIdAsync(model.AssignedToUserId);
+            if (assignedUser == null)
+                return (false, "Assigned user not found.");
+
+            // Ensure the user is not an Admin even if they also have the User role
+            if (await _userManager.IsInRoleAsync(assignedUser, "Admin"))
+                return (false, "Assigned user cannot be an administrator.");
+
+            if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
+                return (false, "Only users can be assigned to tasks.");
 
             var task = new TaskItem
             {
@@ -138,8 +159,16 @@ namespace TaskManagement.Infrastructure.Services
             if (model.ExpectedEndDate > project.EndDate)
                 return (false, "Task expected end date cannot be after project end date.");
 
-            var isMember = await _db.ProjectMembers.AnyAsync(pm => pm.ProjectId == model.ProjectId && pm.UserId == model.AssignedToUserId);
-            if (!isMember) return (false, "Assigned user is not a member of the project.");
+            // Assigned user must exist and must be in the 'User' role.
+            var assignedUser = await _userManager.FindByIdAsync(model.AssignedToUserId);
+            if (assignedUser == null) return (false, "Assigned user not found.");
+
+            // Ensure the user is not an Admin even if they also have the User role
+            if (await _userManager.IsInRoleAsync(assignedUser, "Admin"))
+                return (false, "Assigned user cannot be an administrator.");
+
+            if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
+                return (false, "Only users can be assigned to tasks.");
 
             task.Title = model.Title;
             task.Scenario = model.Scenario;
@@ -155,6 +184,32 @@ namespace TaskManagement.Infrastructure.Services
             return (true, string.Empty);
         }
 
+        public async Task<List<UserLookupDto>> GetAssignableUsersAsync()
+        {
+            var usersInUserRole = await _userManager.GetUsersInRoleAsync("User");
+
+            var output = new List<UserLookupDto>();
+
+            foreach (var u in usersInUserRole)
+            {
+                // Exclude administrators even if they also have the User role
+                if (await _userManager.IsInRoleAsync(u, "Admin"))
+                    continue;
+
+                output.Add(new UserLookupDto
+                {
+                    Id = u.Id,
+                    Email = u.Email ?? string.Empty,
+                    FullName = u.FullName ?? string.Empty
+                });
+            }
+
+            return output
+                .OrderBy(u => u.FullName)
+                .ThenBy(u => u.Email)
+                .ToList();
+        }
+
         public async Task<(bool Success, string Error)> DeleteAsync(int id)
         {
             var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == id);
@@ -166,48 +221,6 @@ namespace TaskManagement.Infrastructure.Services
             return (true, string.Empty);
         }
 
-        public async Task<List<(string UserId, string Email, string FullName)>> GetProjectMembersAsync(int projectId)
-        {
-            // Join project members with users to return basic info
-            var members = await (from pm in _db.ProjectMembers
-                                 join u in _db.Users on pm.UserId equals u.Id
-                                 where pm.ProjectId == projectId
-                                 select new { u.Id, u.Email, u.FullName })
-                                .AsNoTracking()
-                                .ToListAsync();
 
-            return members.Select(m => (m.Id, m.Email, m.FullName)).ToList();
-        }
-
-        public async Task<(bool Success, string Error)> AddProjectMemberAsync(int projectId, string userId)
-        {
-            var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
-            if (project == null) return (false, "Project not found.");
-
-            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return (false, "User not found.");
-
-            var exists = await _db.ProjectMembers.AnyAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
-            if (exists) return (false, "User is already a member of this project.");
-
-            var count = await _db.ProjectMembers.CountAsync(pm => pm.ProjectId == projectId);
-            if (count >= project.MembersCount) return (false, "Project members limit reached.");
-
-            _db.ProjectMembers.Add(new ProjectMember { ProjectId = projectId, UserId = userId, AssignedDate = DateTime.UtcNow });
-            await _db.SaveChangesAsync();
-
-            return (true, string.Empty);
-        }
-
-        public async Task<(bool Success, string Error)> RemoveProjectMemberAsync(int projectId, string userId)
-        {
-            var pm = await _db.ProjectMembers.FirstOrDefaultAsync(p => p.ProjectId == projectId && p.UserId == userId);
-            if (pm == null) return (false, "Project member not found.");
-
-            _db.ProjectMembers.Remove(pm);
-            await _db.SaveChangesAsync();
-
-            return (true, string.Empty);
-        }
     }
 }

@@ -34,7 +34,7 @@ namespace TaskManagement.Infrastructure.Services
                 TechStack = model.TechStack,
                 StartDate = model.StartDate,
                 EndDate = model.EndDate,
-                MembersCount = model.MembersCount
+                
             };
 
             _db.Projects.Add(project);
@@ -57,8 +57,7 @@ namespace TaskManagement.Infrastructure.Services
                     Status = x.Status,
                     TechStack = x.TechStack,
                     StartDate = x.StartDate,
-                    EndDate = x.EndDate,
-                    MembersCount = x.MembersCount
+                    EndDate = x.EndDate
                 })
                 .ToListAsync();
         }
@@ -80,7 +79,6 @@ namespace TaskManagement.Infrastructure.Services
                 TechStack = project.TechStack,
                 StartDate = project.StartDate,
                 EndDate = project.EndDate,
-                MembersCount = project.MembersCount
             };
         }
 
@@ -110,7 +108,7 @@ namespace TaskManagement.Infrastructure.Services
             project.TechStack = model.TechStack;
             project.StartDate = model.StartDate;
             project.EndDate = model.EndDate;
-            project.MembersCount = model.MembersCount;
+            
 
             await _db.SaveChangesAsync();
 

@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
+using TaskManagement.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
 {
@@ -10,27 +13,28 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
     public class TasksController : Controller
     {
         private readonly ITaskService _taskService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TasksController(ITaskService taskService)
+        public TasksController(ITaskService taskService, UserManager<ApplicationUser> userManager)
         {
             _taskService = taskService;
+            _userManager = userManager;
         }
 
-        // GET: /Admin/Tasks/Project/{projectId}
+        // GET: /Admin/Tasks/Project/{id}
         [HttpGet]
-        public async Task<IActionResult> Project(int projectId)
+        public async Task<IActionResult> Project(int id)
         {
             // Verify project exists by attempting to get tasks (service will validate existence in Create but here we check quickly)
-            var tasks = await _taskService.GetTasksByProjectIdAsync(projectId);
+            var tasks = await _taskService.GetTasksByProjectIdAsync(id);
 
-            // If project does not exist, service would return empty list; check project existence via members retrieval
-            var members = await _taskService.GetProjectMembersAsync(projectId);
-            if (tasks == null && (members == null || !members.Any()))
+            // If project does not exist the service may return null. If tasks is null, treat as NotFound.
+            if (tasks == null)
             {
                 return NotFound();
             }
 
-            ViewBag.ProjectId = projectId;
+            ViewBag.ProjectId = id;
             return View("ProjectTasks", tasks);
         }
 
@@ -51,10 +55,15 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Members(int projectId)
+        public async Task<IActionResult> Users()
         {
-            var members = await _taskService.GetProjectMembersAsync(projectId);
-            return Json(new { success = true, data = members });
+            var users = await _taskService.GetAssignableUsersAsync();
+
+            return Json(new
+            {
+                success = true,
+                users
+            });
         }
 
         [HttpPost]
@@ -63,13 +72,35 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new { success = false, message = string.Join(" | ", errors) });
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage);
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = string.Join(" | ", errors)
+                });
             }
 
+            // AssignedToUserId is posted from the form and will be validated by the service.
+
             var result = await _taskService.CreateAsync(model);
-            if (!result.Success) return Json(new { success = false, message = result.Error });
-            return Json(new { success = true, message = "Task created successfully." });
+
+            if (!result.Success)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = result.Error
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                message = "Task created successfully."
+            });
         }
 
         [HttpPost]
@@ -101,22 +132,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             return Json(new { success = true, message = "Task deleted successfully." });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddMember(int projectId, string userId)
-        {
-            var result = await _taskService.AddProjectMemberAsync(projectId, userId);
-            if (!result.Success) return Json(new { success = false, message = result.Error });
-            return Json(new { success = true, message = "Member added successfully." });
-        }
+        
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveMember(int projectId, string userId)
-        {
-            var result = await _taskService.RemoveProjectMemberAsync(projectId, userId);
-            if (!result.Success) return Json(new { success = false, message = result.Error });
-            return Json(new { success = true, message = "Member removed successfully." });
-        }
+        
     }
 }
