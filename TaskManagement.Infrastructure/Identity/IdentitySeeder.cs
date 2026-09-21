@@ -19,6 +19,7 @@ namespace TaskManagement.Infrastructure.Data
 
             const string adminRole = "Admin";
             const string userRole = "User";
+            const string managerRole = "Manager";
 
             // Create Admin role if it does not exist
             if (!await roleManager.RoleExistsAsync(adminRole))
@@ -32,6 +33,13 @@ namespace TaskManagement.Infrastructure.Data
             {
                 await roleManager.CreateAsync(
                     new IdentityRole(userRole));
+            }
+
+            // Create Manager role if it does not exist
+            if (!await roleManager.RoleExistsAsync(managerRole))
+            {
+                await roleManager.CreateAsync(
+                    new IdentityRole(managerRole));
             }
 
             // Read Admin configuration

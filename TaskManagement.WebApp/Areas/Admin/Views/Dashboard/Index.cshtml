@@ -84,7 +84,10 @@
             </a>
 
 
-            <a href="#"
+            <a href="@Url.Action(
+                          "Index",
+                          "Users",
+                          new { area = "Admin" })"
                class="sidebar-link">
 
                 <span class="nav-icon">♙</span>
@@ -94,14 +97,7 @@
             </a>
 
 
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">⚿</span>
-
-                <span>Manage Roles</span>
-
-            </a>
+            <!-- Manage Roles removed - role management merged into Users -->
 
 
             <a href="#"

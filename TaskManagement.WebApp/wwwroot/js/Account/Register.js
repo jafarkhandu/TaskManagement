@@ -26,6 +26,9 @@
     const confirmPasswordInput =
         document.getElementById("ConfirmPassword");
 
+    const phoneInput =
+        document.getElementById("PhoneNumber");
+
 
     /*
      * ========================================
@@ -71,6 +74,9 @@
     const confirmPasswordError =
         document.getElementById("confirmPasswordError");
 
+    const phoneError =
+        document.getElementById("phoneError");
+
 
     /*
      * ========================================
@@ -113,6 +119,9 @@
             const confirmPassword =
                 confirmPasswordInput.value;
 
+            const phone =
+                phoneInput ? phoneInput.value.trim() : "";
+
 
             /*
              * ====================================
@@ -127,6 +136,28 @@
 
                 fullNameError.textContent =
                     "Please enter your full name.";
+
+                isValid = false;
+
+            }
+
+            // Phone validation
+            if (!phone) {
+
+                if (phoneError) {
+                    phoneError.textContent =
+                        "Please enter your phone number.";
+                }
+
+                isValid = false;
+
+            }
+            else if (!isValidPhone(phone)) {
+
+                if (phoneError) {
+                    phoneError.textContent =
+                        "Please enter a valid phone number.";
+                }
 
                 isValid = false;
 
@@ -245,6 +276,8 @@
                 fullName: fullName,
 
                 email: email,
+
+                phoneNumber: phone,
 
                 password: password,
 
@@ -614,6 +647,18 @@
         passwordError.textContent = "";
 
         confirmPasswordError.textContent = "";
+
+        if (phoneError) {
+            phoneError.textContent = "";
+        }
+
+    }
+
+
+    function isValidPhone(phone) {
+
+        // Basic phone validation: digits, spaces, dashes, parentheses, plus sign
+        return /^[0-9\s\-()+]+$/.test(phone) && phone.replace(/\D/g, '').length >= 7;
 
     }
 
