@@ -132,7 +132,7 @@ namespace TaskManagement.Web.Controllers
             return Ok(new
             {
                 success = true,
-                message = "Registration successful.",
+                message = "Account request submitted successfully. You will be notified when your account is activated.",
                 redirectUrl = "/Account/Login"
             });
         }

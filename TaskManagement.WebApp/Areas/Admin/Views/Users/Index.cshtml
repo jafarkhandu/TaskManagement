@@ -181,6 +181,7 @@
 
 
         <div class="dashboard-container">
+            @Html.AntiForgeryToken()
 
             <section class="welcome-section">
 
@@ -302,9 +303,14 @@
 
                                         <td>
 
-                                            <span class="status status-completed">
-                                                A
-                                            </span>
+                                            @if (user.IsActive)
+                                            {
+                                                <span class="status status-completed">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status status-pending">Pending</span>
+                                            }
 
                                         </td>
 
@@ -324,6 +330,14 @@
                                                 Manage
 
                                             </a>
+                                            @if (!user.IsActive)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-sm btn-success activate-account-btn"
+                                                        data-user-id="@user.Id">
+                                                    Activate Account
+                                                </button>
+                                            }
 
                                         </td>
 
@@ -358,6 +372,89 @@
 
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+            document.addEventListener("DOMContentLoaded", () => {
+
+                const tokenElement = document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                );
+
+                document
+                    .querySelectorAll(".activate-account-btn")
+                    .forEach(button => {
+
+                        button.addEventListener("click", async () => {
+
+                            const userId = button.dataset.userId;
+
+                            if (!userId) {
+                                return;
+                            }
+
+                            if (!confirm("Are you sure you want to activate this account?")) {
+                                return;
+                            }
+
+                            button.disabled = true;
+                            button.textContent = "Activating...";
+
+                            try {
+
+                                const response = await fetch(
+                                    `/Admin/Users/Activate?id=${encodeURIComponent(userId)}`,
+                                    {
+                                        method: "POST",
+                                        headers: {
+                                            "RequestVerificationToken":
+                                                tokenElement.value
+                                        }
+                                    }
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok || !result.success) {
+
+                                    alert(
+                                        result.message ||
+                                        "Unable to activate account."
+                                    );
+
+                                    button.disabled = false;
+                                    button.textContent = "Activate Account";
+
+                                    return;
+                                }
+
+                                alert(
+                                    "Account activated successfully."
+                                );
+
+                                window.location.reload();
+
+                            }
+                            catch (error) {
+
+                                console.error(
+                                    "Account activation failed:",
+                                    error
+                                );
+
+                                alert(
+                                    "Unable to connect to the server."
+                                );
+
+                                button.disabled = false;
+                                button.textContent = "Activate Account";
+                            }
+
+                        });
+
+                    });
+
+            });
+    </script>
 
 </body>
 

@@ -32,37 +32,30 @@ namespace TaskManagement.Infrastructure.Services
                 return (false, "Email already exists.");
             }
 
+            var existingUsername =
+                await _userManager.FindByNameAsync(model.FullName);
+
+            if (existingUsername != null)
+            {
+                return (false, "This Full Name is already registered.");
+            }
+
             var user = new ApplicationUser
             {
-                UserName = model.Email,
+                UserName = model.FullName,
                 Email = model.Email,
                 FullName = model.FullName,
-                PhoneNumber = model.PhoneNumber
+                IsActive = false
             };
 
-            var result = await _userManager.CreateAsync(
-                user,
-                model.Password);
+            // Create pending user without password.
+            var result = await _userManager.CreateAsync(user);
 
             if (!result.Succeeded)
             {
                 var errors = string.Join(
                     " ",
                     result.Errors.Select(x => x.Description));
-
-                return (false, errors);
-            }
-
-            var roleResult =
-                await _userManager.AddToRoleAsync(
-                    user,
-                    "User");
-
-            if (!roleResult.Succeeded)
-            {
-                var errors = string.Join(
-                    " ",
-                    roleResult.Errors.Select(x => x.Description));
 
                 return (false, errors);
             }
@@ -79,6 +72,17 @@ namespace TaskManagement.Infrastructure.Services
             if (user == null)
             {
                 return (false, "Invalid email or password.");
+            }
+
+            var isUser =
+                await _userManager.IsInRoleAsync(user, "User");
+
+            if (isUser && !user.IsActive)
+            {
+                return (
+                    false,
+                    "Your account is pending activation. You will be notified when your account is activated."
+                );
             }
 
             var result =

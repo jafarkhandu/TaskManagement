@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TaskManagement.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using TaskManagement.Infrastructure.Identity;
+using TaskManagement.Infrastructure.Services;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
 {
@@ -12,13 +14,16 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly EmailService _emailService;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+             EmailService emailService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _emailService = emailService;
         }
 
         // GET: /Admin/Users
@@ -294,6 +299,141 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 "Index",
                 "Users",
             new { area = "Admin" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activate(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            if (user.IsActive)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "This account is already active."
+                });
+            }
+
+            user.UserName = user.FullName;
+            
+
+            var password = GenerateSecurePassword();
+
+            var passwordResult =
+                await _userManager.AddPasswordAsync(user, password);
+
+            if (!passwordResult.Succeeded)
+            {
+                var errors = string.Join(
+                    " ",
+                    passwordResult.Errors.Select(x => x.Description));
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = errors
+                });
+            }
+
+            var roleResult =
+                await _userManager.AddToRoleAsync(user, "User");
+
+            if (!roleResult.Succeeded)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Account activated, but User role could not be assigned."
+                });
+            }
+
+            user.IsActive = true;
+
+            var updateResult = await _userManager.UpdateAsync(user);
+
+            if (!updateResult.Succeeded)
+            {
+                var errors = string.Join(
+                    " ",
+                    updateResult.Errors.Select(x => x.Description));
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = errors
+                });
+            }
+
+            var emailBody = 
+                $"""
+                <h2>Account Activated</h2>
+
+                <p>Hello <strong>{user.FullName}</strong>,</p>
+
+                <p>Your TaskManager account has been activated successfully.</p>
+
+                <p><strong>Login Details:</strong></p>
+
+                <p>
+                    Username: <strong>{user.Email}</strong><br />
+                    Password: <strong>{password}</strong>
+                </p>
+
+                <p>
+                    You can now login to TaskManager using these credentials.
+                </p>
+
+                <p>Regards,<br />TaskManager Team</p>
+                """;
+
+            await _emailService.SendEmailAsync(
+                user.Email!,
+                "TaskManager Account Activated",
+                emailBody);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Account activated successfully.",
+                username = user.UserName,
+                password = password
+            });
+        }
+
+        private static string GenerateSecurePassword()
+        {
+            const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+            const string lower = "abcdefghijkmnopqrstuvwxyz";
+            const string numbers = "23456789";
+
+            var random = System.Security.Cryptography.RandomNumberGenerator.Create();
+
+            var chars = new List<char>
+            {
+                upper[RandomNumberGenerator.GetInt32(upper.Length)],
+                lower[RandomNumberGenerator.GetInt32(lower.Length)],
+                numbers[RandomNumberGenerator.GetInt32(numbers.Length)]
+            };
+
+            const string all = upper + lower + numbers;
+
+            while (chars.Count < 12)
+            {
+                chars.Add(
+                    all[RandomNumberGenerator.GetInt32(all.Length)]
+                );
+            }
+
+            return new string(chars
+                .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
+                .ToArray());
         }
     }
 }
