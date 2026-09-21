@@ -72,7 +72,8 @@ namespace TaskManagement.Infrastructure.Data
                     UserName = adminEmail,
                     Email = adminEmail,
                     FullName = adminFullName,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    IsActive = true
                 };
 
                 var createResult =
@@ -88,6 +89,24 @@ namespace TaskManagement.Infrastructure.Data
 
                     throw new InvalidOperationException(
                         $"Admin account creation failed: {errors}");
+                }
+            }
+            else if (!adminUser.IsActive)
+            {
+                // The configured System Administrator must always remain active.
+                adminUser.IsActive = true;
+
+                var updateResult =
+                    await userManager.UpdateAsync(adminUser);
+
+                if (!updateResult.Succeeded)
+                {
+                    var errors = string.Join(
+                        " | ",
+                        updateResult.Errors.Select(e => e.Description));
+
+                    throw new InvalidOperationException(
+                        $"Admin account activation failed: {errors}");
                 }
             }
 
