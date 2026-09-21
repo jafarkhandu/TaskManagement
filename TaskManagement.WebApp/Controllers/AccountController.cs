@@ -11,13 +11,16 @@ namespace TaskManagement.Web.Controllers
     {
         private readonly IAuthService _authService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly TaskManagement.Infrastructure.Services.EmailService _emailService;
 
         public AccountController(
                 IAuthService authService,
-                UserManager<ApplicationUser> userManager)
+                UserManager<ApplicationUser> userManager,
+                TaskManagement.Infrastructure.Services.EmailService emailService)
         {
             _authService = authService;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         // GET: /Account/Login
@@ -127,6 +130,29 @@ namespace TaskManagement.Web.Controllers
                     success = false,
                     message = result.Error
                 });
+            }
+
+            // Send informational email to the user acknowledging the account request
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user != null)
+            {
+                var emailBody = $"""
+                    <p>Hello <strong>{user.FullName}</strong>,</p>
+
+                    <p>Your TaskManager account request has been received successfully.</p>
+
+                    <p>Please wait until your request is approved by the administrator. Until your account is approved, you will not be able to log in.</p>
+
+                    <p>If you have any questions or need assistance, please contact the administrator.</p>
+
+                    <p>Regards,<br/>TaskManager Team</p>
+                    """;
+
+                await _emailService.SendEmailAsync(
+                    user.Email!,
+                    "TaskManager Account Request Received",
+                    emailBody);
             }
 
             return Ok(new

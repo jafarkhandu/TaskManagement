@@ -330,12 +330,24 @@
                                                 Manage
 
                                             </a>
-                                            @if (!user.IsActive)
+                                            @if (user.IsActive)
+                                            {
+                                                // Do not show deactivate button for Admin accounts
+                                                if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-warning deactivate-account-btn ms-2"
+                                                            data-user-id="@user.Id">
+                                                        Deactivate
+                                                    </button>
+                                                }
+                                            }
+                                            else
                                             {
                                                 <button type="button"
                                                         class="btn btn-sm btn-success activate-account-btn"
                                                         data-user-id="@user.Id">
-                                                    Activate Account
+                                                    Activate
                                                 </button>
                                             }
 
@@ -380,6 +392,7 @@
                     'input[name="__RequestVerificationToken"]'
                 );
 
+                // Activate handlers
                 document
                     .querySelectorAll(".activate-account-btn")
                     .forEach(button => {
@@ -422,13 +435,13 @@
                                     );
 
                                     button.disabled = false;
-                                    button.textContent = "Activate Account";
+                                    button.textContent = "Activate";
 
                                     return;
                                 }
 
                                 alert(
-                                    "Account activated successfully."
+                                    result.message || "Account activated successfully."
                                 );
 
                                 window.location.reload();
@@ -446,7 +459,81 @@
                                 );
 
                                 button.disabled = false;
-                                button.textContent = "Activate Account";
+                                button.textContent = "Activate";
+                            }
+
+                        });
+
+                    });
+
+                // Deactivate handlers
+                document
+                    .querySelectorAll(".deactivate-account-btn")
+                    .forEach(button => {
+
+                        button.addEventListener("click", async () => {
+
+                            const userId = button.dataset.userId;
+
+                            if (!userId) {
+                                return;
+                            }
+
+                            if (!confirm("Are you sure you want to deactivate this account?")) {
+                                return;
+                            }
+
+                            button.disabled = true;
+                            button.textContent = "Deactivating...";
+
+                            try {
+
+                                const response = await fetch(
+                                    `/Admin/Users/Deactivate?id=${encodeURIComponent(userId)}`,
+                                    {
+                                        method: "POST",
+                                        headers: {
+                                            "RequestVerificationToken":
+                                                tokenElement.value
+                                        }
+                                    }
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok || !result.success) {
+
+                                    alert(
+                                        result.message ||
+                                        "Unable to deactivate account."
+                                    );
+
+                                    button.disabled = false;
+                                    button.textContent = "Deactivate";
+
+                                    return;
+                                }
+
+                                alert(
+                                    result.message || "Account deactivated successfully."
+                                );
+
+                                window.location.reload();
+
+                            }
+                            catch (error) {
+
+                                console.error(
+                                    "Account deactivation failed:",
+                                    error
+                                );
+
+                                alert(
+                                    "Unable to connect to the server."
+                                );
+
+                                button.disabled = false;
+                                button.textContent = "Deactivate";
                             }
 
                         });
