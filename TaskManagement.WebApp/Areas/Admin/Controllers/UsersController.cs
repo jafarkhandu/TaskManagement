@@ -26,6 +26,80 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             _emailService = emailService;
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Deactivate(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Protect Admin account from deactivation
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Unable to deactivate the system administrator."
+                });
+            }
+
+            if (!user.IsActive)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "This account is already deactivated."
+                });
+            }
+
+            user.IsActive = false;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(" ", result.Errors.Select(x => x.Description));
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = errors
+                });
+            }
+
+            var emailBody = $"""
+                <p>Hello <strong>{user.FullName}</strong>,</p>
+
+                <p>Your TaskManager account has been deactivated by the administrator.</p>
+
+                <p>You will not be able to access your TaskManager account until it is activated again.</p>
+
+                <p>If you have any questions or need assistance, please contact the administrator.</p>
+
+                <p>Regards,<br/>TaskManager Team</p>
+                """;
+
+            await _emailService.SendEmailAsync(
+                user.Email!,
+                "TaskManager Account Deactivated",
+                emailBody);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Account deactivated successfully."
+            });
+        }
+
         // GET: /Admin/Users
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -321,48 +395,117 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 });
             }
 
-            user.UserName = user.FullName;
-            
+            // Determine whether the account already has a password
+            var hasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash);
 
-            var password = GenerateSecurePassword();
-
-            var passwordResult =
-                await _userManager.AddPasswordAsync(user, password);
-
-            if (!passwordResult.Succeeded)
+            if (!hasPassword)
             {
-                var errors = string.Join(
-                    " ",
-                    passwordResult.Errors.Select(x => x.Description));
+                // FIRST-TIME ACTIVATION: keep existing behaviour (generate password, add role, send password email)
+                user.UserName = user.FullName;
 
-                return BadRequest(new
+                var password = GenerateSecurePassword();
+
+                var passwordResult =
+                    await _userManager.AddPasswordAsync(user, password);
+
+                if (!passwordResult.Succeeded)
                 {
-                    success = false,
-                    message = errors
+                    var errors = string.Join(
+                        " ",
+                        passwordResult.Errors.Select(x => x.Description));
+
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = errors
+                    });
+                }
+
+                var roleResult =
+                    await _userManager.AddToRoleAsync(user, "User");
+
+                if (!roleResult.Succeeded)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Account activated, but User role could not be assigned."
+                    });
+                }
+
+                user.IsActive = true;
+
+                var updateResult = await _userManager.UpdateAsync(user);
+
+                if (!updateResult.Succeeded)
+                {
+                    var errors = string.Join(
+                        " ",
+                        updateResult.Errors.Select(x => x.Description));
+
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = errors
+                    });
+                }
+
+                var emailBody = 
+                    $"""
+                    <h2>Account Activated</h2>
+
+                    <p>Hello <strong>{user.FullName}</strong>,</p>
+
+                    <p>Your TaskManager account has been activated successfully.</p>
+
+                    <p><strong>Login Details:</strong></p>
+
+                    <p>
+                        Username: <strong>{user.Email}</strong><br />
+                        Password: <strong>{password}</strong>
+                    </p>
+
+                    <p>
+                        You can now login to TaskManager using these credentials.
+                    </p>
+
+                    <p>Regards,<br />TaskManager Team</p>
+                    """;
+
+                await _emailService.SendEmailAsync(
+                    user.Email!,
+                    "TaskManager Account Activated",
+                    emailBody);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Account activated successfully.",
+                    username = user.UserName,
+                    password = password
                 });
             }
 
-            var roleResult =
-                await _userManager.AddToRoleAsync(user, "User");
-
-            if (!roleResult.Succeeded)
+            // REACTIVATION: account already had a password. Do not change password or roles. Only set IsActive = true and notify.
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
             {
+                // Admin should already be active, but protect just in case
                 return BadRequest(new
                 {
                     success = false,
-                    message = "Account activated, but User role could not be assigned."
+                    message = "Unable to modify the system administrator account."
                 });
             }
 
             user.IsActive = true;
 
-            var updateResult = await _userManager.UpdateAsync(user);
+            var reactivateResult = await _userManager.UpdateAsync(user);
 
-            if (!updateResult.Succeeded)
+            if (!reactivateResult.Succeeded)
             {
                 var errors = string.Join(
                     " ",
-                    updateResult.Errors.Select(x => x.Description));
+                    reactivateResult.Errors.Select(x => x.Description));
 
                 return BadRequest(new
                 {
@@ -371,39 +514,27 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 });
             }
 
-            var emailBody = 
-                $"""
-                <h2>Account Activated</h2>
-
+            var reactivateEmailBody = $"""
                 <p>Hello <strong>{user.FullName}</strong>,</p>
 
-                <p>Your TaskManager account has been activated successfully.</p>
+                <p>Your TaskManager account has been activated again by the administrator.</p>
 
-                <p><strong>Login Details:</strong></p>
+                <p>You can now log in to TaskManager using your existing credentials.</p>
 
-                <p>
-                    Username: <strong>{user.Email}</strong><br />
-                    Password: <strong>{password}</strong>
-                </p>
+                <p>Your previous password remains unchanged.</p>
 
-                <p>
-                    You can now login to TaskManager using these credentials.
-                </p>
-
-                <p>Regards,<br />TaskManager Team</p>
+                <p>Regards,<br/>TaskManager Team</p>
                 """;
 
             await _emailService.SendEmailAsync(
                 user.Email!,
-                "TaskManager Account Activated",
-                emailBody);
+                "TaskManager Account Reactivated",
+                reactivateEmailBody);
 
             return Ok(new
             {
                 success = true,
-                message = "Account activated successfully.",
-                username = user.UserName,
-                password = password
+                message = "Account reactivated successfully."
             });
         }
 

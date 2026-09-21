@@ -74,10 +74,8 @@ namespace TaskManagement.Infrastructure.Services
                 return (false, "Invalid email or password.");
             }
 
-            var isUser =
-                await _userManager.IsInRoleAsync(user, "User");
-
-            if (isUser && !user.IsActive)
+            // Block login if account is not active (pending or deactivated)
+            if (!user.IsActive)
             {
                 return (
                     false,
