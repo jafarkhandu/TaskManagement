@@ -216,236 +216,283 @@
 
     if (resetFilters) {
 
-        resetFilters.addEventListener(
-            "click",
-            function () {
+        resetFilters.addEventListener("click", function () {
 
-                if (projectSearch) {
-                    projectSearch.value = "";
-                }
-
-                if (statusFilter) {
-                    statusFilter.value = "";
-                }
-
-                filterProjects();
-
+            // Clear search
+            if (projectSearch) {
+                projectSearch.value = "";
             }
-        );
+
+            // Reset status dropdown
+            if (statusFilter) {
+                statusFilter.value = "";
+            }
+
+            // Apply reset
+            filterProjects();
+
+        });
 
     }
-
-
     /* =====================================================
-       VIEW PROJECT DETAILS
+       VIEW PROJECT DETAILS - EXPAND CARD
     ====================================================== */
 
-    document.addEventListener(
-        "click",
-        async function (event) {
+    document.addEventListener("click", async function (event) {
 
-            const button =
-                event.target.closest(
-                    ".view-project-btn"
-                );
+        const button = event.target.closest(".view-project-btn");
 
-            if (!button) {
-                return;
-            }
+        if (!button) {
+            return;
+        }
 
-            const projectId =
-                button.dataset.projectId;
+        const projectId = button.dataset.projectId;
 
-            if (!projectId) {
-                return;
-            }
+        if (!projectId) {
+            return;
+        }
 
-            const article =
-                button.closest(
-                    ".project-item"
-                );
+        const article = button.closest(".project-item");
 
-            if (!article) {
-                return;
-            }
+        if (!article) {
+            return;
+        }
 
-            /*
-             * Toggle existing details.
-             */
+        const existingDetails =
+            article.querySelector(".project-expanded-details");
 
-            const existingDetails =
-                article.nextElementSibling;
+        /* =================================================
+           CLOSE CURRENTLY OPEN CARD
+        ================================================= */
 
-            if (
-                existingDetails &&
-                existingDetails.classList.contains(
-                    "project-expanded-details"
-                )
-            ) {
+        if (existingDetails) {
 
-                existingDetails.remove();
+            existingDetails.remove();
 
-                return;
-            }
+            article.classList.remove("project-expanded");
 
-            /*
-             * Close any other expanded details.
-             */
+            button.innerHTML = `
+            <span>⊙</span>
+            View Details
+        `;
 
-            document
-                .querySelectorAll(
-                    ".project-expanded-details"
-                )
-                .forEach(function (element) {
+            return;
+        }
 
-                    element.remove();
 
-                });
+        /* =================================================
+           CLOSE OTHER OPEN CARDS
+        ================================================= */
 
-            try {
+        document
+            .querySelectorAll(".project-item.project-expanded")
+            .forEach(function (openArticle) {
 
-                const response =
-                    await fetch(
-                        "/Admin/Projects/Details?id=" +
-                        encodeURIComponent(projectId)
+                const details =
+                    openArticle.querySelector(
+                        ".project-expanded-details"
                     );
 
-                const result =
-                    await response.json();
-
-                if (
-                    !response.ok ||
-                    !result.success
-                ) {
-
-                    alert(
-                        result.message ||
-                        "Unable to load project details."
-                    );
-
-                    return;
+                if (details) {
+                    details.remove();
                 }
 
-                const project =
-                    result.data;
+                openArticle.classList.remove(
+                    "project-expanded"
+                );
 
-                const detailsContainer =
-                    document.createElement(
-                        "div"
+                const openButton =
+                    openArticle.querySelector(
+                        ".view-project-btn"
                     );
 
-                detailsContainer.className =
-                    "project-expanded-details";
+                if (openButton) {
 
-                detailsContainer.innerHTML = `
-
-                    <div class="project-details-expanded-card">
-
-                        <div class="details-row">
-
-                            <div>
-                                <strong>
-                                    Description
-                                </strong>
-
-                                <p>
-                                    ${escapeHtml(
-                    project.description ||
-                    "No description provided."
-                )
-                    }
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <strong>
-                                    Tech Stack
-                                </strong>
-
-                                <p>
-                                    ${escapeHtml(
-                        project.techStack ||
-                        "-"
-                    )
-                    }
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <strong>
-                                    Start Date
-                                </strong>
-
-                                <p>
-                                    ${formatDate(
-                        project.startDate
-                    )
-                    }
-                                </p>
-                            </div>
-
-
-                            <div>
-                                <strong>
-                                    End Date
-                                </strong>
-
-                                <p>
-                                    ${formatDate(
-                        project.endDate
-                    )
-                    }
-                                </p>
-                            </div>
-
-
-                            // Members count removed
-
-
-                            <div>
-                                <strong>
-                                    Status
-                                </strong>
-
-                                <p>
-                                    ${escapeHtml(
-                        project.status ||
-                        "-"
-                    )
-                    }
-                                </p>
-                            </div>
-
-                        </div>
-
-                    </div>
-
+                    openButton.innerHTML = `
+                    <span>⊙</span>
+                    View Details
                 `;
 
-                article.insertAdjacentElement(
-                    "afterend",
-                    detailsContainer
-                );
+                }
 
-            }
-            catch (error) {
+            });
 
-                console.error(
-                    "Project details error:",
-                    error
-                );
+
+        /* =================================================
+           LOAD PROJECT DETAILS
+        ================================================= */
+
+        try {
+
+            button.disabled = true;
+
+            const response = await fetch(
+                "/Admin/Projects/Details?id=" +
+                encodeURIComponent(projectId)
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
 
                 alert(
+                    result.message ||
                     "Unable to load project details."
                 );
 
+                return;
             }
 
-        }
-    );
 
+            const project = result.data;
+
+
+            /* =================================================
+               CREATE EXPANDED SECTION INSIDE SAME CARD
+            ================================================= */
+
+            const detailsContainer =
+                document.createElement("div");
+
+            detailsContainer.className =
+                "project-expanded-details";
+
+
+            detailsContainer.innerHTML = `
+
+            <div class="project-expanded-divider"></div>
+
+            <div class="project-expanded-header">
+
+                <div>
+                    <span class="expanded-label">
+                        PROJECT DETAILS
+                    </span>
+
+                    <h3>
+                        ${escapeHtml(
+                project.projectTitle || "Project"
+            )}
+                    </h3>
+                </div>
+
+                <span class="expanded-status">
+                    ${escapeHtml(
+                project.status || "-"
+            )}
+                </span>
+
+            </div>
+
+
+            <div class="project-expanded-grid">
+
+                <div class="expanded-detail-box">
+
+                    <span>Description</span>
+
+                    <strong>
+                        ${escapeHtml(
+                project.description ||
+                "No description provided."
+            )}
+                    </strong>
+
+                </div>
+
+
+                <div class="expanded-detail-box">
+
+                    <span>Tech Stack</span>
+
+                    <strong>
+                        ${escapeHtml(
+                project.techStack || "-"
+            )}
+                    </strong>
+
+                </div>
+
+
+                <div class="expanded-detail-box">
+
+                    <span>Start Date</span>
+
+                    <strong>
+                        ${formatDate(project.startDate)}
+                    </strong>
+
+                </div>
+
+
+                <div class="expanded-detail-box">
+
+                    <span>End Date</span>
+
+                    <strong>
+                        ${formatDate(project.endDate)}
+                    </strong>
+
+                </div>
+
+
+                <div class="expanded-detail-box">
+
+                    <span>Status</span>
+
+                    <strong>
+                        ${escapeHtml(
+                project.status || "-"
+            )}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+            /* =================================================
+               ADD INSIDE THE SAME PROJECT CARD
+            ================================================= */
+
+            article.appendChild(detailsContainer);
+
+            article.classList.add(
+                "project-expanded"
+            );
+
+
+            /* =================================================
+               CHANGE BUTTON
+            ================================================= */
+
+            button.innerHTML = `
+            <span>⌃</span>
+            Hide Details
+        `;
+
+        }
+        catch (error) {
+
+            console.error(
+                "Project details error:",
+                error
+            );
+
+            alert(
+                "Unable to load project details."
+            );
+
+        }
+        finally {
+
+            button.disabled = false;
+
+        }
+
+    });
 
     /* =====================================================
        MANAGE TASKS
@@ -484,138 +531,154 @@
        EDIT / DELETE
     ====================================================== */
 
-    document.addEventListener(
-        "click",
-        function (event) {
+    /* =====================================================
+   PROJECT ACTION MENU
+====================================================== */
 
-            const moreButton =
-                event.target.closest(
-                    ".project-more-btn"
-                );
+    document.addEventListener("click", function (event) {
 
-            if (!moreButton) {
-                return;
-            }
+        const moreButton =
+            event.target.closest(".project-more-btn");
 
-            event.stopPropagation();
-
-            /*
-             * Remove existing menus.
-             */
-
-            document
-                .querySelectorAll(
-                    ".project-more-menu"
-                )
-                .forEach(function (menu) {
-
-                    menu.remove();
-
-                });
-
-            const projectId =
-                moreButton.dataset.projectId;
-
-            if (!projectId) {
-                return;
-            }
-
-            const rect =
-                moreButton.getBoundingClientRect();
-
-            const menu =
-                document.createElement("div");
-
-            menu.className =
-                "project-more-menu";
-
-            menu.style.position = "absolute";
-            menu.style.left =
-                (
-                    rect.left +
-                    window.scrollX
-                ) + "px";
-
-            menu.style.top =
-                (
-                    rect.bottom +
-                    window.scrollY +
-                    8
-                ) + "px";
-
-            menu.style.background =
-                "#ffffff";
-
-            menu.style.border =
-                "1px solid #ddd";
-
-            menu.style.padding =
-                "6px";
-
-            menu.style.zIndex =
-                "2000";
-
-            menu.innerHTML = `
-
-                <button
-                    type="button"
-                    class="btn btn-link project-action-edit"
-                    data-project-id="${escapeHtml(projectId)}">
-
-                    Edit
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="btn btn-link text-danger project-action-delete"
-                    data-project-id="${escapeHtml(projectId)}">
-
-                    Delete
-
-                </button>
-
-            `;
-
-            document.body.appendChild(menu);
-
-
-            /*
-             * Close menu when clicking outside.
-             */
-
-            setTimeout(function () {
-
-                document.addEventListener(
-                    "click",
-                    function closeMenu(event) {
-
-                        if (
-                            !menu.contains(
-                                event.target
-                            ) &&
-                            event.target !==
-                            moreButton
-                        ) {
-
-                            menu.remove();
-
-                            document.removeEventListener(
-                                "click",
-                                closeMenu
-                            );
-
-                        }
-
-                    }
-                );
-
-            }, 0);
-
+        if (!moreButton) {
+            return;
         }
-    );
 
+        event.stopPropagation();
+
+        // Close any existing action menu
+        document
+            .querySelectorAll(".project-more-menu")
+            .forEach(function (menu) {
+                menu.remove();
+            });
+
+        const projectId =
+            moreButton.dataset.projectId;
+
+        if (!projectId) {
+            return;
+        }
+
+        const projectCard =
+            moreButton.closest(".project-item");
+
+        if (!projectCard) {
+            return;
+        }
+
+        const menu =
+            document.createElement("div");
+
+        /*
+         * IMPORTANT:
+         * Keep project-more-menu class because your
+         * existing Edit/Delete handlers use it.
+         */
+        menu.className =
+            "project-more-menu project-actions-popover";
+
+        menu.innerHTML = `
+
+        <div class="project-actions-title">
+            Project Actions
+        </div>
+
+        <div class="project-actions-divider"></div>
+
+
+        <!-- EDIT -->
+
+        <button type="button"
+                class="project-action-row project-action-edit"
+                data-project-id="${escapeHtml(projectId)}">
+
+            <span class="project-action-icon edit-icon">
+                ✎
+            </span>
+
+            <span class="project-action-content">
+
+                <strong>
+                    Edit Project
+                </strong>
+
+                <small>
+                    Update project details
+                </small>
+
+            </span>
+
+            <span class="project-action-arrow">
+                ›
+            </span>
+
+        </button>
+
+
+        <!-- DELETE -->
+
+        <button type="button"
+                class="project-action-row project-action-delete"
+                data-project-id="${escapeHtml(projectId)}">
+
+            <span class="project-action-icon delete-icon">
+                ×
+            </span>
+
+            <span class="project-action-content">
+
+                <strong>
+                    Delete Project
+                </strong>
+
+                <small>
+                    Remove this project
+                </small>
+
+            </span>
+
+            <span class="project-action-arrow">
+                ›
+            </span>
+
+        </button>
+
+    `;
+
+
+        /*
+         * Put the menu INSIDE the project card.
+         */
+        projectCard.appendChild(menu);
+
+
+        /*
+         * Position it below the three-dot button.
+         */
+        const buttonRect =
+            moreButton.getBoundingClientRect();
+
+        const cardRect =
+            projectCard.getBoundingClientRect();
+
+        menu.style.top =
+            `${buttonRect.bottom - cardRect.top + 8}px`;
+
+        menu.style.right =
+            `${cardRect.right - buttonRect.right}px`;
+
+
+        /*
+         * Animation
+         */
+        requestAnimationFrame(function () {
+
+            menu.classList.add("show");
+
+        });
+
+    });
 
     /* =====================================================
        EDIT PROJECT
@@ -1017,87 +1080,66 @@
             return;
         }
 
-        const search =
-            (
-                projectSearch?.value ||
-                ""
-            )
-                .trim()
-                .toLowerCase();
+        const search = (projectSearch?.value || "")
+            .trim()
+            .toLowerCase();
 
-        const status =
-            (
-                statusFilter?.value ||
-                ""
-            )
-                .trim()
-                .toLowerCase();
+        const selectedStatus = (statusFilter?.value || "")
+            .trim()
+            .toLowerCase();
 
-        const projects =
-            projectList.querySelectorAll(
-                ".project-item"
-            );
+        const projects = projectList.querySelectorAll(
+            ".project-item"
+        );
 
         let visibleCount = 0;
 
-        projects.forEach(
-            function (project) {
+        projects.forEach(function (project) {
 
-                const title =
-                    (
-                        project.dataset.title ||
-                        ""
-                    ).toLowerCase();
+            const title = (
+                project.dataset.title || ""
+            ).toLowerCase();
 
-                const description =
-                    (
-                        project.dataset.description ||
-                        ""
-                    ).toLowerCase();
+            const description = (
+                project.dataset.description || ""
+            ).toLowerCase();
 
-                const tech =
-                    (
-                        project.dataset.tech ||
-                        ""
-                    ).toLowerCase();
+            const techStack = (
+                project.dataset.tech || ""
+            ).toLowerCase();
 
-                const projectStatus =
-                    (
-                        project.dataset.status ||
-                        ""
-                    ).toLowerCase();
+            const projectStatus = (
+                project.dataset.status || ""
+            ).toLowerCase();
 
-                const matchesSearch =
-                    !search ||
-                    title.includes(search) ||
-                    description.includes(search) ||
-                    tech.includes(search);
+            // Search condition
+            const matchesSearch =
+                search === "" ||
+                title.includes(search) ||
+                description.includes(search) ||
+                techStack.includes(search);
 
-                const matchesStatus =
-                    !status ||
-                    projectStatus === status;
+            // Status condition
+            const matchesStatus =
+                selectedStatus === "" ||
+                projectStatus === selectedStatus;
 
-                const visible =
-                    matchesSearch &&
-                    matchesStatus;
+            const shouldShow =
+                matchesSearch && matchesStatus;
 
-                project.style.display =
-                    visible
-                        ? "flex"
-                        : "none";
+            project.style.display =
+                shouldShow ? "flex" : "none";
 
-                if (visible) {
-                    visibleCount++;
-                }
-
+            if (shouldShow) {
+                visibleCount++;
             }
-        );
+
+        });
 
         updateEmptyFilterMessage(
             visibleCount,
             projects.length
         );
-
     }
 
 
