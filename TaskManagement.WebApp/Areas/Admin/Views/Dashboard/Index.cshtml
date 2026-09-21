@@ -1,4 +1,6 @@
-﻿@{
+﻿@model TaskManagement.Application.DTOs.DashboardViewModel
+@using System.Linq
+@{
     ViewData["Title"] = "Admin Dashboard";
     Layout = null;
 
@@ -403,7 +405,7 @@
                     <div class="stat-content">
 
                         <strong>
-                            5
+                            @Model.TotalProjects
                         </strong>
 
                         <span>
@@ -428,7 +430,7 @@
                     <div class="stat-content">
 
                         <strong>
-                            28
+                            @Model.TotalTasks
                         </strong>
 
                         <span>
@@ -453,7 +455,7 @@
                     <div class="stat-content">
 
                         <strong>
-                            12
+                            @Model.InProgressTasks
                         </strong>
 
                         <span>
@@ -478,7 +480,7 @@
                     <div class="stat-content">
 
                         <strong>
-                            4
+                            @Model.OverdueTasks
                         </strong>
 
                         <span>
@@ -569,286 +571,76 @@
 
 
                             <tbody>
+                                @foreach (var p in Model.RecentProjects)
+                                {
+                                    var statusLower = (p.Status ?? string.Empty).ToLowerInvariant();
+                                    var statusClass = statusLower.Contains("progress") ? "status-progress" :
+                                                      statusLower.Contains("completed") || statusLower.Contains("complete") ? "status-completed" :
+                                                      statusLower.Contains("todo") || statusLower.Contains("pending") ? "status-todo" : "status-todo";
 
+                                    <tr>
 
-                                <tr>
+                                        <td>
 
-                                    <td>
+                                            <div class="project-name">
 
-                                        <div class="project-name">
+                                                <span class="project-letter blue">
+                                                    @( !string.IsNullOrEmpty(p.ProjectTitle) ? p.ProjectTitle[0].ToString().ToUpper() : "P" )
+                                                </span>
 
-                                            <span class="project-letter blue">
-                                                W
+                                                <strong>
+                                                    @p.ProjectTitle
+                                                </strong>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            @p.Description
+                                        </td>
+
+                                        <td>
+
+                                            <div class="avatars">
+
+                                                @if (p.AssignedUsers != null)
+                                                {
+                                                    @foreach (var u in p.AssignedUsers.Take(3))
+                                                    {
+                                                        var name = string.IsNullOrWhiteSpace(u.FullName) ? u.Email ?? string.Empty : u.FullName;
+                                                        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                                        var chars = new string(parts.Select(x => x[0]).Take(2).ToArray()).ToUpper();
+                                                        <span>@chars</span>
+                                                    }
+                                                }
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            @p.TaskCount
+                                        </td>
+
+                                        <td>
+
+                                            <span class="status @statusClass">
+                                                @p.Status
                                             </span>
 
-                                            <strong>
-                                                Website Redesign
-                                            </strong>
+                                        </td>
 
-                                        </div>
+                                        <td class="due-date">
+                                            @(p.EndDate != null ? p.EndDate.ToString("MMM d") : string.Empty)
+                                        </td>
 
-                                    </td>
+                                        <td>
+                                            ⋮
+                                        </td>
 
-                                    <td>
-                                        Main website updates
-                                    </td>
-
-                                    <td>
-
-                                        <div class="avatars">
-
-                                            <span>AR</span>
-                                            <span>PK</span>
-                                            <span>ST</span>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        8
-                                    </td>
-
-                                    <td>
-
-                                        <span class="status status-progress">
-                                            In Progress
-                                        </span>
-
-                                    </td>
-
-                                    <td class="due-date">
-                                        Jun 20
-                                    </td>
-
-                                    <td>
-                                        ⋮
-                                    </td>
-
-                                </tr>
-
-
-                                <tr>
-
-                                    <td>
-
-                                        <div class="project-name">
-
-                                            <span class="project-letter red">
-                                                M
-                                            </span>
-
-                                            <strong>
-                                                Mobile App
-                                            </strong>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        Android & iOS app
-                                    </td>
-
-                                    <td>
-
-                                        <div class="avatars">
-
-                                            <span>PK</span>
-                                            <span>ST</span>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        6
-                                    </td>
-
-                                    <td>
-
-                                        <span class="status status-todo">
-                                            To Do
-                                        </span>
-
-                                    </td>
-
-                                    <td class="due-date">
-                                        Jun 25
-                                    </td>
-
-                                    <td>
-                                        ⋮
-                                    </td>
-
-                                </tr>
-
-
-                                <tr>
-
-                                    <td>
-
-                                        <div class="project-name">
-
-                                            <span class="project-letter purple">
-                                                C
-                                            </span>
-
-                                            <strong>
-                                                Client Portal
-                                            </strong>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        Customer dashboard
-                                    </td>
-
-                                    <td>
-
-                                        <div class="avatars">
-
-                                            <span>AR</span>
-                                            <span>JK</span>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        7
-                                    </td>
-
-                                    <td>
-
-                                        <span class="status status-progress">
-                                            In Progress
-                                        </span>
-
-                                    </td>
-
-                                    <td class="due-date">
-                                        Jun 28
-                                    </td>
-
-                                    <td>
-                                        ⋮
-                                    </td>
-
-                                </tr>
-
-
-                                <tr>
-
-                                    <td>
-
-                                        <div class="project-name">
-
-                                            <span class="project-letter green">
-                                                M
-                                            </span>
-
-                                            <strong>
-                                                Marketing
-                                            </strong>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        Marketing materials
-                                    </td>
-
-                                    <td>
-
-                                        <div class="avatars">
-
-                                            <span>ST</span>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        4
-                                    </td>
-
-                                    <td>
-
-                                        <span class="status status-completed">
-                                            Completed
-                                        </span>
-
-                                    </td>
-
-                                    <td class="due-date">
-                                        Jun 15
-                                    </td>
-
-                                    <td>
-                                        ⋮
-                                    </td>
-
-                                </tr>
-
-
-                                <tr>
-
-                                    <td>
-
-                                        <div class="project-name">
-
-                                            <span class="project-letter orange">
-                                                I
-                                            </span>
-
-                                            <strong>
-                                                Internal Tools
-                                            </strong>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        Admin utilities
-                                    </td>
-
-                                    <td>
-
-                                        <div class="avatars">
-
-                                            <span>JK</span>
-                                            <span>ST</span>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        3
-                                    </td>
-
-                                    <td>
-
-                                        <span class="status status-todo">
-                                            To Do
-                                        </span>
-
-                                    </td>
-
-                                    <td class="due-date">
-                                        Jun 30
-                                    </td>
-
-                                    <td>
-                                        ⋮
-                                    </td>
-
-                                </tr>
+                                    </tr>
+                                }
 
                             </tbody>
 
@@ -886,171 +678,49 @@
 
 
                     <div class="deadline-list">
+                        @foreach (var d in Model.UpcomingDeadlines)
+                        {
+                            var day = d.ExpectedEndDate.ToString("dd");
+                            var month = d.ExpectedEndDate.ToString("MMM");
+                            var priorityClass = (d.Priority ?? string.Empty).ToLower() switch
+                            {
+                                var s when s.Contains("high") => "high",
+                                var s when s.Contains("medium") => "medium",
+                                _ => "low"
+                            };
 
+                            <div class="deadline-item">
 
-                        <div class="deadline-item">
+                                <div class="deadline-date @((priorityClass == "high") ? "danger" : "")">
 
-                            <div class="deadline-date danger">
+                                    <strong>
+                                        @day
+                                    </strong>
 
-                                <strong>
-                                    12
-                                </strong>
+                                    <span>
+                                        @month
+                                    </span>
 
-                                <span>
-                                    Jun
+                                </div>
+
+                                <div class="deadline-info">
+
+                                    <strong>
+                                        @d.Title
+                                    </strong>
+
+                                    <span>
+                                        @d.ProjectTitle
+                                    </span>
+
+                                </div>
+
+                                <span class="priority @priorityClass">
+                                    @d.Priority
                                 </span>
 
                             </div>
-
-                            <div class="deadline-info">
-
-                                <strong>
-                                    Design Homepage
-                                </strong>
-
-                                <span>
-                                    Website Redesign
-                                </span>
-
-                            </div>
-
-                            <span class="priority high">
-                                High
-                            </span>
-
-                        </div>
-
-
-                        <div class="deadline-item">
-
-                            <div class="deadline-date">
-
-                                <strong>
-                                    14
-                                </strong>
-
-                                <span>
-                                    Jun
-                                </span>
-
-                            </div>
-
-                            <div class="deadline-info">
-
-                                <strong>
-                                    API Integration
-                                </strong>
-
-                                <span>
-                                    Mobile App
-                                </span>
-
-                            </div>
-
-                            <span class="priority medium">
-                                Medium
-                            </span>
-
-                        </div>
-
-
-                        <div class="deadline-item">
-
-                            <div class="deadline-date">
-
-                                <strong>
-                                    18
-                                </strong>
-
-                                <span>
-                                    Jun
-                                </span>
-
-                            </div>
-
-                            <div class="deadline-info">
-
-                                <strong>
-                                    Client Meeting Prep
-                                </strong>
-
-                                <span>
-                                    Client Portal
-                                </span>
-
-                            </div>
-
-                            <span class="priority medium">
-                                Medium
-                            </span>
-
-                        </div>
-
-
-                        <div class="deadline-item">
-
-                            <div class="deadline-date">
-
-                                <strong>
-                                    20
-                                </strong>
-
-                                <span>
-                                    Jun
-                                </span>
-
-                            </div>
-
-                            <div class="deadline-info">
-
-                                <strong>
-                                    Marketing Assets
-                                </strong>
-
-                                <span>
-                                    Marketing
-                                </span>
-
-                            </div>
-
-                            <span class="priority low">
-                                Low
-                            </span>
-
-                        </div>
-
-
-                        <div class="deadline-item">
-
-                            <div class="deadline-date">
-
-                                <strong>
-                                    25
-                                </strong>
-
-                                <span>
-                                    Jun
-                                </span>
-
-                            </div>
-
-                            <div class="deadline-info">
-
-                                <strong>
-                                    App Store Deployment
-                                </strong>
-
-                                <span>
-                                    Mobile App
-                                </span>
-
-                            </div>
-
-                            <span class="priority low">
-                                Low
-                            </span>
-
-                        </div>
+                        }
 
                     </div>
 
@@ -1241,7 +911,7 @@
                                 Created
 
                                 <strong>
-                                    18
+                                    @Model.TaskOverview.CreatedCount
                                 </strong>
 
                             </div>
@@ -1254,7 +924,7 @@
                                 Completed
 
                                 <strong>
-                                    12
+                                    @Model.TaskOverview.CompletedCount
                                 </strong>
 
                             </div>
@@ -1296,7 +966,7 @@
                             <div class="donut-inner">
 
                                 <strong>
-                                    5
+                                    @Model.TotalProjects
                                 </strong>
 
                                 <span>
@@ -1309,81 +979,28 @@
 
 
                         <div class="distribution-list">
+                            @{
+                                var dotClasses = new[] { "dot-blue", "dot-green", "dot-yellow", "dot-purple", "dot-red" };
+                            }
 
+                            @for (var i = 0; i < Model.ProjectDistribution.Count; i++)
+                            {
+                                var d = Model.ProjectDistribution[i];
+                                var dot = dotClasses[i % dotClasses.Length];
+                                <div>
 
-                            <div>
+                                    <span class="distribution-dot @dot"></span>
 
-                                <span class="distribution-dot dot-blue"></span>
+                                    <span>
+                                        @d.ProjectTitle
+                                    </span>
 
-                                <span>
-                                    Website Redesign
-                                </span>
+                                    <strong>
+                                        @d.TaskCount
+                                    </strong>
 
-                                <strong>
-                                    1
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span class="distribution-dot dot-green"></span>
-
-                                <span>
-                                    Mobile App
-                                </span>
-
-                                <strong>
-                                    1
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span class="distribution-dot dot-yellow"></span>
-
-                                <span>
-                                    Client Portal
-                                </span>
-
-                                <strong>
-                                    1
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span class="distribution-dot dot-purple"></span>
-
-                                <span>
-                                    Marketing
-                                </span>
-
-                                <strong>
-                                    1
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span class="distribution-dot dot-red"></span>
-
-                                <span>
-                                    Internal Tools
-                                </span>
-
-                                <strong>
-                                    1
-                                </strong>
-
-                            </div>
+                                </div>
+                            }
 
                         </div>
 
