@@ -66,7 +66,7 @@ namespace TaskManagement.Web.Controllers
             var user =
                  await _userManager.FindByEmailAsync(model.Email);
 
-            var redirectUrl = "/Home/Index";
+            var redirectUrl = "/User/Dashboard";
 
             if (user != null &&
                 await _userManager.IsInRoleAsync(user, "Admin"))

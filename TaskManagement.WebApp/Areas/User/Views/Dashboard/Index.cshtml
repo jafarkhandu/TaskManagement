@@ -1,0 +1,1013 @@
+﻿@model TaskManagement.Application.DTOs.UserDashboardViewModel
+
+@{
+    Layout = null;
+
+    var firstLetter = string.IsNullOrWhiteSpace(Model.UserName)
+        ? "U"
+        : Model.UserName.Substring(0, 1).ToUpper();
+
+    var total = Math.Max(Model.TotalTasks, 1);
+
+    var pendingPercent = Model.PendingTasks * 100.0 / total;
+    var progressPercent = Model.InProgressTasks * 100.0 / total;
+    var holdPercent = Model.OnHoldTasks * 100.0 / total;
+    var completedPercent = Model.CompletedTasks * 100.0 / total;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>TaskManager — Dashboard</title>
+
+    <link rel="stylesheet"
+          href="~/css/user-dashboard.css"
+          asp-append-version="true" />
+
+</head>
+
+<body>
+
+<div class="dashboard-shell">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                ✓
+            </div>
+
+            <div class="brand-copy">
+                <strong>TaskManager</strong>
+                <span>Plan · Focus · Achieve</span>
+            </div>
+
+        </div>
+
+
+        <nav class="navigation">
+
+            <a href="#dashboard"
+               class="nav-link active">
+
+                <span class="nav-symbol">⌂</span>
+                <span>Dashboard</span>
+
+            </a>
+
+
+            <a href="#projects"
+               class="nav-link">
+
+                <span class="nav-symbol">▱</span>
+                <span>My Projects</span>
+
+            </a>
+
+
+            <button type="button"
+                    class="nav-link"
+                    data-modal="filesModal">
+
+                <span class="nav-symbol">▤</span>
+                <span>Files</span>
+
+            </button>
+
+
+            <button type="button"
+                    class="nav-link"
+                    data-modal="profileModal">
+
+                <span class="nav-symbol">♙</span>
+                <span>Profile</span>
+
+            </button>
+
+
+            <button type="button"
+                    class="nav-link"
+                    data-modal="settingsModal">
+
+                <span class="nav-symbol">⚙</span>
+                <span>Settings</span>
+
+            </button>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-message">
+
+                <span>✦</span>
+
+                <p>
+                    Small steps every day
+                    create big results.
+                </p>
+
+            </div>
+
+
+           <form id="logoutForm"
+                  action="/Account/Logout"
+                  method="post"
+                  class="logout-form">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="logout-button">
+                    <span>↪</span>
+                    <span>Logout</span>
+                </button>
+
+            </form>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main-content"
+          id="dashboard">
+
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div class="search">
+
+                <span class="search-icon">
+                    ⌕
+                </span>
+
+                <input type="text"
+                       id="globalSearch"
+                       placeholder="Search projects, tasks, or anything..." />
+
+                <kbd>Ctrl K</kbd>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <button type="button"
+                        class="round-button"
+                        id="themeButton">
+
+                    ☼
+
+                </button>
+
+
+                <button type="button"
+                        class="round-button notification-button"
+                        id="notificationButton">
+
+                    ♧
+
+                    @if (Model.DueSoonTasks > 0)
+                    {
+                        <i></i>
+                    }
+
+                </button>
+
+
+                <button type="button"
+                        class="user-button"
+                        data-modal="profileModal">
+
+                    <span class="user-avatar">
+                        @firstLetter
+                    </span>
+
+                    <span class="user-info">
+
+                        <strong>
+                            @Model.UserName
+                        </strong>
+
+                        <small>
+                            Student
+                        </small>
+
+                    </span>
+
+                    <span class="chevron">
+                        ⌄
+                    </span>
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- NOTIFICATION -->
+
+        <div class="notification-popup"
+             id="notificationPopup">
+
+            <div class="popup-title">
+
+                <strong>Notifications</strong>
+
+                <button type="button"
+                        id="closeNotifications">
+                    ×
+                </button>
+
+            </div>
+
+            @if (Model.DueSoonTasks > 0)
+            {
+                <div class="notification-item">
+
+                    <span>!</span>
+
+                    <div>
+
+                        <strong>
+                            @Model.DueSoonTasks task(s) due soon
+                        </strong>
+
+                        <small>
+                            Review your focus tasks.
+                        </small>
+
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <div class="notification-empty">
+
+                    <span>✓</span>
+
+                    <strong>
+                        You're all caught up
+                    </strong>
+
+                    <small>
+                        No urgent notifications.
+                    </small>
+
+                </div>
+            }
+
+        </div>
+
+
+        <!-- ================= HERO ================= -->
+
+        <section class="hero">
+
+            <div class="hero-photo"></div>
+
+            <div class="hero-shade"></div>
+
+            <div class="hero-content">
+
+                <span class="hero-small">
+                    Good Evening,
+                </span>
+
+                <h1>
+                    @Model.UserName
+                    <span>👋</span>
+                </h1>
+
+                <p>
+                    Focus on progress, not perfection.
+                </p>
+
+            </div>
+
+
+            <div class="hero-glass">
+
+                <span class="quotation">
+                    “
+                </span>
+
+                <strong id="dashboardQuote"></strong>
+                <small id="dashboardQuoteAuthor"></small>
+
+                      </div>
+
+                 </section>
+
+
+        <!-- ================= STATS ================= -->
+
+        <section class="stats">
+
+            <button class="stat"
+                    data-stat="all">
+
+                <span class="stat-icon blue">
+                    ✓
+                </span>
+
+                <span class="stat-data">
+
+                    <strong>
+                        @Model.TotalTasks
+                    </strong>
+
+                    <small>
+                        Total Tasks
+                    </small>
+
+                </span>
+
+                <b>›</b>
+
+            </button>
+
+
+            <button class="stat"
+                    data-stat="progress">
+
+                <span class="stat-icon purple">
+                    ◯
+                </span>
+
+                <span class="stat-data">
+
+                    <strong>
+                        @Model.InProgressTasks
+                    </strong>
+
+                    <small>
+                        In Progress
+                    </small>
+
+                </span>
+
+                <b>›</b>
+
+            </button>
+
+
+            <button class="stat"
+                    data-stat="completed">
+
+                <span class="stat-icon green">
+                    ✓
+                </span>
+
+                <span class="stat-data">
+
+                    <strong>
+                        @Model.CompletedTasks
+                    </strong>
+
+                    <small>
+                        Completed
+                    </small>
+
+                </span>
+
+                <b>›</b>
+
+            </button>
+
+
+            <button class="stat"
+                    data-stat="hold">
+
+                <span class="stat-icon pink">
+                    ◷
+                </span>
+
+                <span class="stat-data">
+
+                    <strong>
+                        @Model.OnHoldTasks
+                    </strong>
+
+                    <small>
+                        On Hold
+                    </small>
+
+                </span>
+
+                <b>›</b>
+
+            </button>
+
+        </section>
+
+
+        <!-- ================= CONTENT ================= -->
+
+        <section class="content-grid">
+
+
+            <!-- TASK OVERVIEW -->
+
+            <article class="glass-card overview">
+
+                <div class="card-heading">
+
+                    <div>
+                        <span>PRODUCTIVITY</span>
+                        <h2>Task Overview</h2>
+                    </div>
+
+                    <button type="button"
+                            id="resetFilter">
+
+                        This Project⌄
+
+                    </button>
+
+                </div>
+
+
+                <div class="overview-body">
+
+                    <div class="donut"
+                         style="
+                         --progress:@progressPercent%;
+                         --hold:@holdPercent%;
+                         --completed:@completedPercent%;
+                         ">
+
+                        <div class="donut-center">
+
+                            <strong>
+                                @Model.TotalTasks
+                            </strong>
+
+                            <small>
+                                Total Tasks
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="legend">
+
+                        <div>
+                            <i class="todo"></i>
+                            <span>To Do</span>
+                            <strong>@Model.PendingTasks</strong>
+                        </div>
+
+                        <div>
+                            <i class="inprogress"></i>
+                            <span>In Progress</span>
+                            <strong>@Model.InProgressTasks</strong>
+                        </div>
+
+                        <div>
+                            <i class="onhold"></i>
+                            <span>On Hold</span>
+                            <strong>@Model.OnHoldTasks</strong>
+                        </div>
+
+                        <div>
+                            <i class="done"></i>
+                            <span>Completed</span>
+                            <strong>@Model.CompletedTasks</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <!-- FOCUS TASKS -->
+
+            <article class="glass-card focus">
+
+                <div class="card-heading">
+
+                    <div>
+                        <span>PRIORITY</span>
+                        <h2>My Focus Tasks</h2>
+                    </div>
+
+                    <button type="button"
+                            id="showAllTasks">
+
+                        View All →
+
+                    </button>
+
+                </div>
+
+
+                <div class="task-list">
+
+                    @if (Model.FocusTasks.Any())
+                    {
+                        foreach (var task in Model.FocusTasks)
+                        {
+                            <button type="button"
+                                    class="task-item"
+                                    data-status="@task.Status"
+                                    data-title="@task.Title"
+                                    data-id="@task.Id">
+
+                                <span class="task-circle"></span>
+
+                                <span class="task-text">
+
+                                    <strong>
+                                        @task.Title
+                                    </strong>
+
+                                    <small>
+                                        @(string.IsNullOrWhiteSpace(task.Scenario)
+                                            ? task.ProjectTitle
+                                            : task.Scenario)
+                                    </small>
+
+                                </span>
+
+                                <em class="@task.Priority.ToLowerInvariant()">
+                                    @task.Priority
+                                </em>
+
+                                <time>
+                                    @task.ExpectedEndDate.ToString("dd MMM")
+                                </time>
+
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty">
+
+                            <span>✓</span>
+
+                            <strong>
+                                You're all caught up
+                            </strong>
+
+                            <small>
+                                No pending tasks.
+                            </small>
+
+                        </div>
+                    }
+
+                </div>
+
+            </article>
+
+
+            <!-- RECENT ACTIVITY -->
+
+            <article class="glass-card activity">
+
+                <div class="card-heading">
+
+                    <div>
+                        <span>UPDATES</span>
+                        <h2>Recent Activity</h2>
+                    </div>
+
+                    <button type="button"
+                            id="latestButton">
+
+                        Latest Tasks →
+
+                    </button>
+
+                </div>
+
+
+                <div class="activity-list">
+
+                    @if (Model.RecentTasks.Any())
+                    {
+                        foreach (var task in Model.RecentTasks)
+                        {
+                            <button type="button"
+                                    class="activity-item"
+                                    data-id="@task.Id"
+                                    data-title="@task.Title">
+
+                                <span class="activity-icon">
+                                    ✓
+                                </span>
+
+                                <span>
+
+                                    <strong>
+                                        @task.Title
+                                    </strong>
+
+                                    <small>
+                                        @task.Status
+                                        ·
+                                        @task.ProjectTitle
+                                    </small>
+
+                                </span>
+
+                                <time>
+                                    @task.ExpectedEndDate.ToString("dd MMM")
+                                </time>
+
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty">
+
+                            <span>◌</span>
+
+                            <strong>
+                                No recent activity
+                            </strong>
+
+                        </div>
+                    }
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- ================= PROJECTS ================= -->
+
+        <section class="projects"
+                 id="projects">
+
+            <div class="section-title">
+
+                <div>
+                    <span>WORKSPACE</span>
+                    <h2>My Projects</h2>
+                </div>
+
+                <small>
+                    @Model.ActiveProjects active
+                </small>
+
+            </div>
+
+
+            <div class="project-grid">
+
+                @foreach (var project in Model.Projects)
+                {
+                    var projectLetter =
+                        string.IsNullOrWhiteSpace(project.ProjectTitle)
+                            ? "P"
+                            : project.ProjectTitle.Substring(0, 1).ToUpper();
+
+                    <button type="button"
+                            class="project"
+                            data-project="@project.ProjectTitle">
+
+                        <div class="project-head">
+
+                            <span>
+                                @projectLetter
+                            </span>
+
+                            <b>⋮</b>
+
+                        </div>
+
+                        <strong>
+                            @project.ProjectTitle
+                        </strong>
+
+                        <p>
+                            @project.Description
+                        </p>
+
+                        <div class="progress">
+
+                            <i style="width:@project.ProgressPercent%"></i>
+
+                        </div>
+
+                        <div class="project-bottom">
+
+                            <span>
+                                @project.CompletedTasks /
+                                @project.TotalTasks tasks
+                            </span>
+
+                            <strong>
+                                @project.ProgressPercent%
+                            </strong>
+
+                            <small>
+                                @project.Status
+                            </small>
+
+                        </div>
+
+                    </button>
+                }
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= GOAL ================= -->
+
+        <section class="goal">
+
+            <div class="goal-image"></div>
+
+            <div class="goal-content">
+
+                <span>
+                    Stay focused. Keep learning.
+                </span>
+
+                <h2>
+                    Turn Your
+                    <b>Goals</b>
+                    Into
+                    <em>Achievements</em>
+                </h2>
+
+                <p>
+                    Build your progress one task at a time.
+                </p>
+
+            </div>
+
+
+            <div class="goal-road">
+
+                <span>Learn</span>
+                <i></i>
+                <span>Build</span>
+                <i></i>
+                <span>Improve</span>
+                <i></i>
+                <strong>Achieve ✦</strong>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================= TASK MODAL ================= -->
+
+<div class="modal"
+     id="taskModal">
+
+    <div class="modal-box">
+
+        <button class="modal-close"
+                data-close>
+            ×
+        </button>
+
+        <span class="modal-symbol">
+            ✓
+        </span>
+
+        <small>TASK DETAILS</small>
+
+        <h2 id="taskTitle">
+            Task
+        </h2>
+
+        <p id="taskInfo">
+            Task information.
+        </p>
+
+        <button class="modal-button"
+                data-close>
+            Close
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ================= PROJECT MODAL ================= -->
+
+<div class="modal"
+     id="projectModal">
+
+    <div class="modal-box">
+
+        <button class="modal-close"
+                data-close>
+            ×
+        </button>
+
+        <span class="modal-symbol purple">
+            ▱
+        </span>
+
+        <small>PROJECT</small>
+
+        <h2 id="projectTitle">
+            Project
+        </h2>
+
+        <p>
+            This project is part of your assigned workspace.
+        </p>
+
+        <button class="modal-button"
+                data-close>
+            Close
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ================= PROFILE ================= -->
+
+<div class="modal"
+     id="profileModal">
+
+    <div class="modal-box">
+
+        <button class="modal-close"
+                data-close>
+            ×
+        </button>
+
+        <div class="profile-avatar">
+            @firstLetter
+        </div>
+
+        <small>PROFILE</small>
+
+        <h2>
+            @Model.UserName
+        </h2>
+
+        <p>
+            @Model.UserEmail
+        </p>
+
+        <div class="profile-line">
+
+            <span>Role</span>
+            <strong>Student</strong>
+
+        </div>
+
+        <button class="modal-button"
+                data-close>
+            Done
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ================= FILES ================= -->
+
+<div class="modal"
+     id="filesModal">
+
+    <div class="modal-box">
+
+        <button class="modal-close"
+                data-close>
+            ×
+        </button>
+
+        <span class="modal-symbol">
+            ▤
+        </span>
+
+        <small>FILES</small>
+
+        <h2>
+            Files
+        </h2>
+
+        <p>
+            Your current database does not contain
+            file-management entities yet.
+        </p>
+
+        <button class="modal-button"
+                data-close>
+            Close
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ================= SETTINGS ================= -->
+
+<div class="modal"
+     id="settingsModal">
+
+    <div class="modal-box">
+
+        <button class="modal-close"
+                data-close>
+            ×
+        </button>
+
+        <span class="modal-symbol">
+            ⚙
+        </span>
+
+        <small>SETTINGS</small>
+
+        <h2>
+            Dashboard Settings
+        </h2>
+
+
+        <label class="setting">
+
+            <span>
+                <strong>Animations</strong>
+                <small>
+                    Enable smooth dashboard motion.
+                </small>
+            </span>
+
+            <input type="checkbox"
+                   id="animationSwitch"
+                   checked />
+
+            <i></i>
+
+        </label>
+
+
+        <label class="setting">
+
+            <span>
+                <strong>Compact mode</strong>
+                <small>
+                    Reduce dashboard spacing.
+                </small>
+            </span>
+
+            <input type="checkbox"
+                   id="compactSwitch" />
+
+            <i></i>
+
+        </label>
+
+
+        <button class="modal-button"
+                data-close>
+            Save
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="~/js/user-dashboard.js"
+        asp-append-version="true"></script>
+
+</body>
+</html>
