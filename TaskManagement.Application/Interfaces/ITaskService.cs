@@ -12,7 +12,8 @@ namespace TaskManagement.Application.Interfaces
 
         Task<TaskDto?> GetDetailsAsync(int id);
 
-        Task<(bool Success, string Error)> CreateAsync(TaskDto model);
+        // Returns Success, Error message, and the created Notification Id (0 if none)
+        Task<(bool Success, string Error, int NotificationId)> CreateAsync(TaskDto model);
 
         Task<(bool Success, string Error)> UpdateAsync(TaskDto model);
 

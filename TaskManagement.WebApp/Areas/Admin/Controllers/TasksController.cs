@@ -5,6 +5,8 @@ using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using TaskManagement.WebApp.Hubs;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
 {
@@ -14,11 +16,16 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
     {
         private readonly ITaskService _taskService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHubContext<NotificationHub> _notificationHub;
 
-        public TasksController(ITaskService taskService, UserManager<ApplicationUser> userManager)
+        public TasksController(
+            ITaskService taskService,
+            UserManager<ApplicationUser> userManager,
+            IHubContext<NotificationHub> notificationHub)
         {
             _taskService = taskService;
             _userManager = userManager;
+            _notificationHub = notificationHub;
         }
 
         // GET: /Admin/Tasks/Project/{id}
@@ -95,6 +102,25 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     message = result.Error
                 });
             }
+
+            // Notify the assigned user via SignalR about the persisted notification.
+            // The TaskService returns the created NotificationId as part of the result.
+            var notificationId = result.NotificationId;
+
+            await _notificationHub.Clients
+                .User(model.AssignedToUserId)
+                .SendAsync(
+                    "TaskAssignmentReceived",
+                    new
+                    {
+                        notificationId = notificationId,
+                        title = model.Title,
+                        scenario = model.Scenario,
+                        priority = model.Priority,
+                        startDate = model.StartDate,
+                        expectedEndDate = model.ExpectedEndDate,
+                        amount = model.Amount
+                    });
 
             return Json(new
             {

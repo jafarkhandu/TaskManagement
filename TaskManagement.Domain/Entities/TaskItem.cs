@@ -12,7 +12,7 @@ namespace TaskManagement.Domain.Entities
 
         public string Scenario { get; set; } = string.Empty;
 
-        public string AssignedToUserId { get; set; } = string.Empty;
+        public string? AssignedToUserId { get; set; }
 
         public string Priority { get; set; } = "Low";
 

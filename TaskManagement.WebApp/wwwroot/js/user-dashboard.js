@@ -29,6 +29,56 @@
         sessionStorage.setItem("lastDashboardQuote", index);
     }
 
+    // Live toast UI
+    function showLiveToast(payload) {
+
+        if (!payload || !payload.notificationId)
+            return;
+
+        const toastId = `live-toast-${payload.notificationId}`;
+
+        // Prevent duplicates
+        if (document.getElementById(toastId))
+            return;
+
+        const toast = document.createElement('div');
+        toast.id = toastId;
+        toast.className = 'live-toast';
+
+        toast.innerHTML = `
+            <div class="live-toast-inner">
+                <div class="live-toast-icon">\uD83D\uDD14</div>
+                <div class="live-toast-body">
+                    <strong>New assignment for you</strong>
+                    <div class="live-toast-sub">Click to view</div>
+                    <div class="live-toast-progress"><div></div></div>
+                </div>
+            </div>
+        `;
+
+        toast.addEventListener('click', () => {
+            window.location.href = `/User/Notifications/Details/${payload.notificationId}`;
+        });
+
+        document.body.appendChild(toast);
+
+        // Entrance animation handled by CSS. Auto dismiss after 5s
+        const progress = toast.querySelector('.live-toast-progress > div');
+
+        // Start progress
+        requestAnimationFrame(() => {
+            progress.style.transition = 'width 5s linear';
+            progress.style.width = '100%';
+        });
+
+        // Remove after 5.2s
+        setTimeout(() => {
+            toast.classList.add('live-toast-hidden');
+            setTimeout(() => toast.remove(), 300);
+        }, 5200);
+
+    }
+
     const body = document.body;
 
 
@@ -125,35 +175,387 @@
         document.getElementById("closeNotifications");
 
 
-    notificationButton?.addEventListener("click", event => {
+    function getAntiForgeryToken() {
 
-        event.stopPropagation();
-
-        notificationPopup?.classList.toggle("show");
-
-    });
-
-
-    closeNotifications?.addEventListener("click", () => {
-
-        notificationPopup?.classList.remove("show");
-
-    });
+        return document.querySelector(
+            'input[name="__RequestVerificationToken"]'
+        )?.value || "";
+    }
 
 
-    document.addEventListener("click", event => {
+    function escapeHtml(value) {
 
-        if (
-            notificationPopup &&
-            !notificationPopup.contains(event.target) &&
-            !notificationButton?.contains(event.target)
-        ) {
+        const div = document.createElement("div");
 
-            notificationPopup.classList.remove("show");
+        div.textContent = value ?? "";
 
+        return div.innerHTML;
+    }
+
+
+    function formatDate(value) {
+
+        if (!value)
+            return "";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime()))
+            return value;
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+    }
+
+
+    function renderAssignmentNotifications(notifications) {
+
+        if (!notificationPopup)
+            return;
+
+        const title = `
+        <div class="popup-title">
+            <strong>Notifications</strong>
+
+            <button type="button"
+                    id="closeNotifications">
+                ×
+            </button>
+        </div>
+    `;
+
+        if (!notifications || notifications.length === 0) {
+
+            notificationPopup.innerHTML = title + `
+            <div class="notification-empty">
+
+                <span>✓</span>
+
+                <strong>
+                    You're all caught up
+                </strong>
+
+                <small>
+                    No new task assignments.
+                </small>
+
+            </div>
+        `;
+
+            document
+                .getElementById("closeNotifications")
+                ?.addEventListener("click", () => {
+
+                    notificationPopup.classList.remove("show");
+
+                });
+
+            return;
         }
 
-    });
+        // Compact entries only: icon + heading + chevron
+        const items = notifications.map(n => `
+            <div class="notification-item compact-notification"
+                 data-notification-id="${n.notificationId}">
+
+                <span>\uD83D\uDD14</span>
+
+                <div class="notification-compact-content">
+                    <strong>New assignment for you</strong>
+                    <small>${formatDate(n.createdAt)}</small>
+                </div>
+
+                <div class="notification-chevron">›</div>
+
+            </div>
+        `).join("");
+
+
+        notificationPopup.innerHTML = title + items;
+
+
+        // Make items clickable to open exact details
+        document
+            .querySelectorAll(".compact-notification")
+            .forEach(item => item.addEventListener("click", e => {
+
+                const notificationId = item.dataset.notificationId;
+
+                if (notificationId) {
+                    window.location.href = `/User/Notifications/Details/${notificationId}`;
+                }
+
+            }));
+    }
+
+
+    async function loadAssignmentNotifications() {
+
+        try {
+
+            const response =
+                await fetch("/User/Notifications/Pending");
+
+            if (!response.ok)
+                return;
+
+            const result =
+                await response.json();
+
+            if (result.success) {
+
+                renderAssignmentNotifications(
+                    result.notifications
+                );
+
+                updateNotificationBadge(
+                    result.notifications.length
+                );
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Notification loading failed:",
+                error
+            );
+
+        }
+    }
+
+
+    function updateNotificationBadge(count) {
+
+        if (!notificationButton)
+            return;
+
+        let badge =
+            notificationButton.querySelector(
+                ".notification-badge"
+            );
+
+        if (count > 0) {
+
+            if (!badge) {
+
+                badge =
+                    document.createElement("i");
+
+                badge.className =
+                    "notification-badge";
+
+                notificationButton.appendChild(badge);
+            }
+
+        }
+        else {
+
+            badge?.remove();
+        }
+    }
+
+
+    async function respondToAssignment(
+        assignmentId,
+        action,
+        button
+    ) {
+
+        const buttons =
+            document.querySelectorAll(
+                `[data-assignment-id="${assignmentId}"]`
+            );
+
+        buttons.forEach(element => {
+
+            if (
+                element.tagName === "BUTTON"
+            ) {
+                element.disabled = true;
+            }
+
+        });
+
+
+        const token =
+            getAntiForgeryToken();
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/User/Notifications/${action}`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/x-www-form-urlencoded; charset=UTF-8",
+
+                            "RequestVerificationToken":
+                                token
+                        },
+
+                        body:
+                            `assignmentId=${encodeURIComponent(
+                                assignmentId
+                            )}`
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok || !result.success) {
+
+                throw new Error(
+                    result.message ||
+                    "Unable to process assignment."
+                );
+            }
+
+
+            await loadAssignmentNotifications();
+
+
+            if (notificationPopup) {
+
+                notificationPopup.classList.add("show");
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Assignment response failed:",
+                error
+            );
+
+            alert(
+                error.message ||
+                "Unable to process assignment."
+            );
+
+
+            buttons.forEach(element => {
+
+                if (
+                    element.tagName === "BUTTON"
+                ) {
+                    element.disabled = false;
+                }
+
+            });
+        }
+    }
+
+
+    notificationButton?.addEventListener(
+        "click",
+        async event => {
+
+            event.stopPropagation();
+
+            notificationPopup?.classList.toggle("show");
+
+            if (
+                notificationPopup?.classList.contains("show")
+            ) {
+
+                await loadAssignmentNotifications();
+
+            }
+
+        }
+    );
+
+
+    closeNotifications?.addEventListener(
+        "click",
+        () => {
+
+            notificationPopup?.classList.remove("show");
+
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                notificationPopup &&
+                !notificationPopup.contains(event.target) &&
+                !notificationButton?.contains(event.target)
+            ) {
+
+                notificationPopup.classList.remove("show");
+
+            }
+
+        }
+    );
+
+
+    // Load notifications when dashboard opens.
+    // This handles users who were offline.
+    loadAssignmentNotifications();
+
+    /* =====================================================
+        LIVE TASK ASSIGNMENT - SIGNALR
+    ===================================================== */
+
+    if (window.signalR) {
+
+        const notificationConnection =
+            new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub")
+                .withAutomaticReconnect()
+                .build();
+
+
+        notificationConnection.on(
+            "TaskAssignmentReceived",
+            async (payload) => {
+
+                try {
+                    // Update badge / pending list (offline deliveries)
+                    await loadAssignmentNotifications();
+
+                    // Show a live toast for real-time delivery
+                    if (payload && payload.notificationId) {
+                        showLiveToast(payload);
+                    }
+                }
+                catch (err) {
+                    console.error('Error handling TaskAssignmentReceived:', err);
+                }
+
+            }
+        );
+
+
+        notificationConnection
+            .start()
+            .catch(error => {
+
+                console.error(
+                    "SignalR connection failed:",
+                    error
+                );
+
+            });
+
+    }
 
 
     /* =====================================================

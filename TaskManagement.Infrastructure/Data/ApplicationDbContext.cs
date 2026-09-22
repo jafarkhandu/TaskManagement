@@ -17,6 +17,10 @@ namespace TaskManagement.Infrastructure.Data
 
         public DbSet<TaskItem> TaskItems { get; set; }
 
+        public DbSet<TaskAssignment> TaskAssignments { get; set; }
+
+        public DbSet<Notification> Notifications { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -31,7 +35,7 @@ namespace TaskManagement.Infrastructure.Data
                 // Ensure AssignedToUserId is compatible with Identity user Id (nvarchar(450))
                 b.Property<string>(nameof(TaskItem.AssignedToUserId))
                     .HasMaxLength(450)
-                    .IsRequired();
+                    .IsRequired(false);
 
                 // Indexes for foreign keys
                 b.HasIndex(t => t.ProjectId);
@@ -48,6 +52,54 @@ namespace TaskManagement.Infrastructure.Data
                     .WithMany()
                     .HasForeignKey(t => t.AssignedToUserId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<TaskAssignment>(b =>
+            {
+                b.Property(x => x.UserId)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                b.Property(x => x.Status)
+                    .HasMaxLength(20)
+                    .IsRequired();
+
+                b.HasIndex(x => x.TaskId);
+
+                b.HasIndex(x => x.UserId);
+
+                b.HasOne<TaskItem>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<Notification>(b =>
+            {
+                b.Property(x => x.UserId)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                b.Property(x => x.Type)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                b.Property(x => x.Title)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                b.HasIndex(x => x.UserId);
+
+                b.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.IsRead
+                });
+
+                b.HasOne<TaskAssignment>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskAssignmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

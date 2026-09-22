@@ -35,7 +35,7 @@ namespace TaskManagement.Infrastructure.Services
                     ProjectId = t.ProjectId,
                     Title = t.Title,
                     Scenario = t.Scenario,
-                    AssignedToUserId = t.AssignedToUserId,
+                    AssignedToUserId = t.AssignedToUserId ?? string.Empty,
                     // Project to the user's display name (FullName or Email)
                     AssignedToUserName = _db.Users
                         .Where(u => u.Id == t.AssignedToUserId)
@@ -61,7 +61,7 @@ namespace TaskManagement.Infrastructure.Services
                     ProjectId = t.ProjectId,
                     Title = t.Title,
                     Scenario = t.Scenario,
-                    AssignedToUserId = t.AssignedToUserId,
+                    AssignedToUserId = t.AssignedToUserId ?? string.Empty,
                     AssignedToUserName = _db.Users
                         .Where(u => u.Id == t.AssignedToUserId)
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
@@ -80,57 +80,114 @@ namespace TaskManagement.Infrastructure.Services
             return await GetByIdAsync(id);
         }
 
-        public async Task<(bool Success, string Error)> CreateAsync(TaskDto model)
+        public async Task<(bool Success, string Error, int NotificationId)> CreateAsync(TaskDto model)
         {
-            // Basic validation
-            var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == model.ProjectId);
+            var project = await _db.Projects
+                .FirstOrDefaultAsync(p => p.Id == model.ProjectId);
+
             if (project == null)
-                return (false, "Project not found.");
+                return (false, "Project not found.", 0);
 
             if (!AllowedPriorities.Contains(model.Priority))
-                return (false, "Invalid priority.");
+                return (false, "Invalid priority.", 0);
 
             if (!AllowedStatuses.Contains(model.Status))
-                return (false, "Invalid status.");
+                return (false, "Invalid status.", 0);
 
             if (model.StartDate > model.ExpectedEndDate)
-                return (false, "Task start date cannot be after expected end date.");
+                return (false, "Task start date cannot be after expected end date.", 0);
 
             if (model.StartDate < project.StartDate)
-                return (false, "Task start date cannot be before project start date.");
+                return (false, "Task start date cannot be before project start date.", 0);
 
             if (model.ExpectedEndDate > project.EndDate)
-                return (false, "Task expected end date cannot be after project end date.");
+                return (false, "Task expected end date cannot be after project end date.", 0);
 
-            // Assigned user must exist and must be in the 'User' role.
-            var assignedUser = await _userManager.FindByIdAsync(model.AssignedToUserId);
+            var assignedUser = await _userManager.FindByIdAsync(
+                model.AssignedToUserId);
+
             if (assignedUser == null)
-                return (false, "Assigned user not found.");
+                return (false, "Assigned user not found.", 0);
 
-            // Ensure the user is not an Admin even if they also have the User role
+            if (!assignedUser.IsActive)
+                return (false, "The selected user is not active.", 0);
+
             if (await _userManager.IsInRoleAsync(assignedUser, "Admin"))
-                return (false, "Assigned user cannot be an administrator.");
+                return (false, "Assigned user cannot be an administrator.", 0);
 
             if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
-                return (false, "Only users can be assigned to tasks.");
+                return (false, "Only users can be assigned to tasks.", 0);
 
-            var task = new TaskItem
+            await using var transaction =
+                await _db.Database.BeginTransactionAsync();
+
+            try
             {
-                ProjectId = model.ProjectId,
-                Title = model.Title,
-                Scenario = model.Scenario,
-                AssignedToUserId = model.AssignedToUserId,
-                Priority = model.Priority,
-                Status = model.Status,
-                StartDate = model.StartDate,
-                ExpectedEndDate = model.ExpectedEndDate,
-                Amount = model.Amount
-            };
+                // Task is created, but it is NOT officially assigned yet.
+                var task = new TaskItem
+                {
+                    ProjectId = model.ProjectId,
+                    Title = model.Title,
+                    Scenario = model.Scenario,
 
-            _db.TaskItems.Add(task);
-            await _db.SaveChangesAsync();
+                    // Keep existing field for compatibility.
+                    // Official assignment is controlled by TaskAssignment.
+                    AssignedToUserId = null,
 
-            return (true, string.Empty);
+                    Priority = model.Priority,
+
+                    // Task waits for user's response.
+                    Status = "Pending",
+
+                    StartDate = model.StartDate,
+                    ExpectedEndDate = model.ExpectedEndDate,
+                    Amount = model.Amount
+                };
+
+                _db.TaskItems.Add(task);
+
+                await _db.SaveChangesAsync();
+
+                var assignment = new TaskAssignment
+                {
+                    TaskId = task.Id,
+                    UserId = assignedUser.Id,
+                    Status = "Pending",
+                    AssignedAt = DateTime.UtcNow
+                };
+
+                _db.TaskAssignments.Add(assignment);
+
+                await _db.SaveChangesAsync();
+
+                var notification = new Notification
+                {
+                    UserId = assignedUser.Id,
+                    TaskAssignmentId = assignment.Id,
+                    Type = "TaskAssignment",
+                    Title = "New Task Assignment",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Notifications.Add(notification);
+
+                await _db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return (true, string.Empty, notification.Id);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                return (
+                    false,
+                    "Unable to create the task assignment. Please try again.",
+                    0
+                );
+            }
         }
 
         public async Task<(bool Success, string Error)> UpdateAsync(TaskDto model)

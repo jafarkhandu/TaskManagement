@@ -1,0 +1,55 @@
+@model dynamic
+@{
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="page-header">
+	<a href="/User/Notifications" class="back-link">← Notifications</a>
+	<h1>New Task Assignment</h1>
+</div>
+
+<div class="notification-details-card">
+	<h2>@Model.Title</h2>
+
+	<div class="detail-row">
+		<strong>Scenario</strong>
+		<p>@Model.Scenario</p>
+	</div>
+
+	<div class="detail-row">
+		<strong>Priority</strong>
+		<p>@Model.Priority</p>
+	</div>
+
+	<div class="detail-row">
+		<strong>Start Date</strong>
+		<p>@(Model.StartDate == null ? "" : ((DateTime)Model.StartDate).ToString("dd MMM yyyy"))</p>
+	</div>
+
+	<div class="detail-row">
+		<strong>Expected End Date</strong>
+		<p>@(Model.ExpectedEndDate == null ? "" : ((DateTime)Model.ExpectedEndDate).ToString("dd MMM yyyy"))</p>
+	</div>
+
+	<div class="detail-row">
+		<strong>Amount</strong>
+		<p>₹@String.Format(System.Globalization.CultureInfo.GetCultureInfo("en-IN"), "{0:N2}", Model.Amount)</p>
+	</div>
+
+	<div class="actions">
+		<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+
+		<button id="rejectButton" class="btn btn-light">Reject</button>
+		<button id="acceptButton" class="btn btn-primary">Accept</button>
+	</div>
+</div>
+
+<link rel="stylesheet" href="~/css/user-dashboard.css" asp-append-version="true" />
+<script src="~/js/notifications.js" asp-append-version="true"></script>
+<script>
+	// Pass server model info into JS
+	window.__notificationDetails = {
+		assignmentId: @Model.AssignmentId,
+		notificationId: @Model.NotificationId
+	};
+</script>

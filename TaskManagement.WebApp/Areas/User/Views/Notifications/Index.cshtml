@@ -1,0 +1,19 @@
+@{
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@* Simple Notifications List Page *@
+
+<div class="page-header">
+	<a href="/User/Dashboard" class="back-link">← Dashboard</a>
+	<h1>Notifications</h1>
+</div>
+
+<div class="notifications-list" id="notificationsList" aria-live="polite">
+	<div class="loading">Loading...</div>
+</div>
+
+<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+
+<link rel="stylesheet" href="~/css/user-dashboard.css" asp-append-version="true" />
+<script src="~/js/notifications.js" asp-append-version="true"></script>
