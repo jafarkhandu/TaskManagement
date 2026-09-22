@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const listEl = document.getElementById('notificationsList');
+    const clearAllBtn = document.getElementById('clearAllNotifications');
     const antiForgeryToken = () => document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
 
     function formatDate(value) {
@@ -46,7 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <strong>New assignment for you</strong>
                         <small>${formatDate(n.createdAt)}</small>
                     </div>
-                    <div class="notification-action">›</div>
+
+                    <div class="notification-action">
+                        ${n.assignmentStatus === "Accepted"
+                                        ? '<span class="notification-status accepted">✓ Accepted</span>'
+                                        : n.assignmentStatus === "Rejected"
+                                            ? '<span class="notification-status rejected">✕ Rejected</span>'
+                                            : '›'
+                        }
+                    </div>
                 </div>
             `;
 
@@ -147,6 +156,133 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function clearAllNotifications() {
+
+        if (!listEl)
+            return;
+
+        const cards = [
+            ...listEl.querySelectorAll('.notification-card')
+        ];
+
+        if (!cards.length)
+            return;
+
+        const clearButton =
+            document.getElementById('clearAllNotifications');
+
+        if (clearButton)
+            clearButton.disabled = true;
+
+
+        // ===============================
+        // SLIDE OUT ANIMATION
+        // ===============================
+
+        cards.forEach((card, index) => {
+
+            card.style.transition =
+                'transform .45s cubic-bezier(.16,1,.3,1), opacity .45s ease';
+
+            card.style.transitionDelay =
+                `${index * 120}ms`;
+
+            card.style.transform =
+                'translateX(120%)';
+
+            card.style.opacity = '0';
+        });
+
+
+        const animationTime =
+            ((cards.length - 1) * 120) + 600;
+
+
+        // ===============================
+        // DELETE FROM DATABASE
+        // ===============================
+
+        try {
+
+            const token = antiForgeryToken();
+
+            const response = await fetch(
+                '/User/Notifications/ClearAll',
+                {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    }
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message ||
+                    'Unable to clear notifications.'
+                );
+            }
+
+
+            // ===============================
+            // SHOW EMPTY STATE AFTER ANIMATION
+            // ===============================
+
+            setTimeout(() => {
+
+                listEl.innerHTML = `
+                <div class="notification-empty">
+
+                    <span>✓</span>
+
+                    <strong>
+                        You're all caught up
+                    </strong>
+
+                    <small>
+                        No new task assignments.
+                    </small>
+
+                </div>
+            `;
+
+                if (clearButton)
+                    clearButton.disabled = false;
+
+            }, animationTime);
+
+        }
+        catch (error) {
+
+            console.error(
+                'Clear All failed:',
+                error
+            );
+
+
+            // Restore cards if database operation fails
+            cards.forEach(card => {
+
+                card.style.transition = 'none';
+                card.style.transitionDelay = '0ms';
+                card.style.transform = '';
+                card.style.opacity = '';
+
+            });
+
+
+            if (clearButton)
+                clearButton.disabled = false;
+
+            alert(
+                error.message ||
+                'Unable to clear notifications.'
+            );
+        }
+    }
+
     // If on details page, wire accept/reject
     if (window.__notificationDetails) {
         const acceptBtn = document.getElementById('acceptButton');
@@ -191,6 +327,14 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(err.message || 'Unable to process assignment');
         }
     }
+
+    const clearAllButton =
+        document.getElementById('clearAllNotifications');
+
+    clearAllBtn?.addEventListener(
+        'click',
+        clearAllNotifications
+    );
 
     // Initial load if on list
     if (listEl) loadList();

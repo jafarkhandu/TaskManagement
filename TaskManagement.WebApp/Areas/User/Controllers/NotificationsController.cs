@@ -90,7 +90,6 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 .AsNoTracking()
                 .Where(n =>
                     n.UserId == user.Id &&
-                    !n.IsRead &&
                     n.Type == "TaskAssignment")
                 .Join(
                     _context.TaskAssignments,
@@ -119,7 +118,6 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         CreatedAt = x.Notification.CreatedAt
                     }
                 )
-                .Where(x => x.AssignmentStatus == "Pending")
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
 
@@ -328,6 +326,44 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             catch
             {
                 return StatusCode(500, new { success = false, message = "Unable to delete notification." });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearAll()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var notifications = await _context.Notifications
+                    .Where(n =>
+                        n.UserId == user.Id &&
+                        n.Type == "TaskAssignment")
+                    .ToListAsync();
+
+                if (notifications.Count > 0)
+                {
+                    _context.Notifications.RemoveRange(notifications);
+                    await _context.SaveChangesAsync();
+                }
+
+                return Json(new
+                {
+                    success = true
+                });
+            }
+            catch
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Unable to clear notifications."
+                });
             }
         }
     }

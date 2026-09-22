@@ -47,22 +47,58 @@
 
         toast.innerHTML = `
             <div class="live-toast-inner">
-                <div class="live-toast-icon">\uD83D\uDD14</div>
+
+                <div class="live-toast-icon">🔔</div>
+
                 <div class="live-toast-body">
                     <strong>New assignment for you</strong>
                     <div class="live-toast-sub">Click to view</div>
-                    <div class="live-toast-progress"><div></div></div>
+
+                    <div class="live-toast-progress">
+                        <div></div>
+                    </div>
                 </div>
+
+                <button type="button"
+                        class="live-toast-close"
+                        aria-label="Close notification">
+                    ×
+                </button>
+
             </div>
         `;
 
-        toast.addEventListener('click', () => {
-            window.location.href = `/User/Notifications/Details/${payload.notificationId}`;
+        toast.addEventListener('click', (event) => {
+
+            if (event.target.closest('.live-toast-close')) {
+                return;
+            }
+
+            window.location.href =
+                `/User/Notifications/Details/${payload.notificationId}`;
         });
 
         document.body.appendChild(toast);
 
-        // Entrance animation handled by CSS. Auto dismiss after 5s
+        toast.querySelector('.live-toast-close')
+            ?.addEventListener('click', (event) => {
+
+                event.stopPropagation();
+
+                toast.classList.add('live-toast-hidden');
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 450);
+
+            });
+
+        // Start entrance animation
+        requestAnimationFrame(() => {
+            toast.classList.add("show");
+        });
+
+        // Auto dismiss after 5s
         const progress = toast.querySelector('.live-toast-progress > div');
 
         // Start progress
@@ -171,6 +207,16 @@
     const notificationPopup =
         document.getElementById("notificationPopup");
 
+    notificationPopup?.addEventListener("click", (event) => {
+
+        const heading = event.target.closest(".popup-title strong");
+
+        if (!heading)
+            return;
+
+        window.location.href = "/User/Notifications";
+    });
+
     const closeNotifications =
         document.getElementById("closeNotifications");
 
@@ -220,10 +266,18 @@
         <div class="popup-title">
             <strong>Notifications</strong>
 
-            <button type="button"
-                    id="closeNotifications">
-                ×
-            </button>
+            <div class="popup-title-actions">
+                <button type="button"
+                        id="clearPopupNotifications"
+                        class="clear-popup-button">
+                    Clear
+                </button>
+
+                <button type="button"
+                        id="closeNotifications">
+                    ×
+                </button>
+            </div>
         </div>
     `;
 
@@ -276,6 +330,80 @@
 
         notificationPopup.innerHTML = title + items;
 
+        document
+            .getElementById("clearPopupNotifications")
+            ?.addEventListener("click", (event) => {
+
+                event.stopPropagation();
+
+                const items =
+                    notificationPopup.querySelectorAll(
+                        ".compact-notification"
+                    );
+
+                if (!items.length)
+                    return;
+
+                // Remember cleared notifications
+                const clearedIds = JSON.parse(
+                    sessionStorage.getItem(
+                        "clearedPopupNotifications"
+                    ) || "[]"
+                );
+
+                items.forEach(item => {
+
+                    const id =
+                        Number(item.dataset.notificationId);
+
+                    if (
+                        id &&
+                        !clearedIds.includes(id)
+                    ) {
+                        clearedIds.push(id);
+                    }
+                });
+
+                sessionStorage.setItem(
+                    "clearedPopupNotifications",
+                    JSON.stringify(clearedIds)
+                );
+
+                // Slide out one by one
+                items.forEach((item, index) => {
+
+                    item.style.transition =
+                        "transform 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.45s ease";
+
+                    item.style.transitionDelay =
+                        `${index * 120}ms`;
+
+                    item.style.transform =
+                        "translateX(120%)";
+
+                    item.style.opacity = "0";
+                });
+
+                // Wait for all animations to finish
+                const animationTime =
+                    ((items.length - 1) * 120) + 600;
+
+                setTimeout(() => {
+
+                    renderAssignmentNotifications([]);
+
+                    updateNotificationBadge(0);
+
+                }, animationTime);
+
+            });
+
+        document
+            .querySelector(".notifications-page-link")
+            ?.addEventListener("click", () => {
+                window.location.href = "/User/Notifications";
+            });
+
 
         // Make items clickable to open exact details
         document
@@ -307,12 +435,21 @@
 
             if (result.success) {
 
+                const clearedIds = JSON.parse(
+                    sessionStorage.getItem("clearedPopupNotifications") || "[]"
+                );
+
+                const visibleNotifications =
+                    result.notifications.filter(
+                        n => !clearedIds.includes(n.notificationId)
+                    );
+
                 renderAssignmentNotifications(
-                    result.notifications
+                    visibleNotifications
                 );
 
                 updateNotificationBadge(
-                    result.notifications.length
+                    visibleNotifications.length
                 );
             }
 
@@ -424,6 +561,9 @@
 
             await loadAssignmentNotifications();
 
+            if (action === "Accept") {
+                alert("Task accepted successfully.");
+            }
 
             if (notificationPopup) {
 
@@ -526,6 +666,8 @@
         notificationConnection.on(
             "TaskAssignmentReceived",
             async (payload) => {
+
+                console.log("TaskAssignmentReceived RECEIVED:", payload);
 
                 try {
                     // Update badge / pending list (offline deliveries)

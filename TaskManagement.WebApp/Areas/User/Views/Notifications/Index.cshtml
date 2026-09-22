@@ -1,19 +1,99 @@
 @{
-	Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = null;
 }
 
-@* Simple Notifications List Page *@
+<div class="notifications-page">
 
-<div class="page-header">
-	<a href="/User/Dashboard" class="back-link">← Dashboard</a>
-	<h1>Notifications</h1>
+    <div class="notifications-glow glow-one"></div>
+    <div class="notifications-glow glow-two"></div>
+
+    <div class="notifications-page-header">
+
+        <div class="notifications-heading">
+
+            <a href="/User/Dashboard" class="notifications-back">
+                <span>←</span>
+                Dashboard
+            </a>
+
+            <div class="notifications-title-row">
+
+                <div class="notifications-title-icon">
+                    🔔
+                </div>
+
+                <div>
+                    <span class="notifications-eyebrow">
+                        TASK CENTER
+                    </span>
+
+                    <h1>Notifications</h1>
+
+                    <p>
+                        Stay updated with your task assignments and activity.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <button type="button"
+                id="clearAllNotifications"
+                class="clear-all-button">
+
+            <span class="clear-icon">⌫</span>
+            <span>Clear All</span>
+
+        </button>
+
+    </div>
+
+
+    <div class="notifications-content">
+
+        <div class="notifications-content-top">
+
+            <div>
+                <span class="section-label">
+                    INBOX
+                </span>
+
+                <h2>Your notifications</h2>
+            </div>
+
+            <div class="live-indicator">
+                <span></span>
+                Live
+            </div>
+
+        </div>
+
+
+        <div class="notifications-list"
+             id="notificationsList"
+             aria-live="polite">
+
+            <div class="notifications-loading">
+                <div class="loading-orb"></div>
+                <span>Loading notifications...</span>
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<div class="notifications-list" id="notificationsList" aria-live="polite">
-	<div class="loading">Loading...</div>
-</div>
 
-<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+<form id="antiForgeryForm">
+    @Html.AntiForgeryToken()
+</form>
 
-<link rel="stylesheet" href="~/css/user-dashboard.css" asp-append-version="true" />
-<script src="~/js/notifications.js" asp-append-version="true"></script>
+
+<link rel="stylesheet"
+      href="~/css/user-dashboard.css"
+      asp-append-version="true" />
+
+<script src="~/js/notifications.js"
+        asp-append-version="true"></script>

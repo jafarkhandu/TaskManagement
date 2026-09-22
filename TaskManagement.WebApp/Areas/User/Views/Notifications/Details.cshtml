@@ -39,8 +39,30 @@
 	<div class="actions">
 		<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
 
-		<button id="rejectButton" class="btn btn-light">Reject</button>
-		<button id="acceptButton" class="btn btn-primary">Accept</button>
+		@if (Model.AssignmentStatus == "Pending")
+		{
+			<button id="rejectButton"
+					class="btn btn-light">
+				Reject
+			</button>
+
+			<button id="acceptButton"
+					class="btn btn-primary">
+				Accept
+			</button>
+		}
+		else if (Model.AssignmentStatus == "Accepted")
+		{
+			<span class="notification-status accepted">
+				✓ Accepted
+			</span>
+		}
+		else if (Model.AssignmentStatus == "Rejected")
+		{
+			<span class="notification-status rejected">
+				✕ Rejected
+			</span>
+		}
 	</div>
 </div>
 
