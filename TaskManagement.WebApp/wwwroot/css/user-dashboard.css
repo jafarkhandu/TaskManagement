@@ -365,7 +365,8 @@ button {
     right: 25px;
     width: 310px;
     padding: 15px;
-    border: 1px solid rgba(255,255,255,.12);
+    border: none !important;
+    outline: none !important;
     border-radius: 15px;
     background: rgba(11,27,47,.95);
     backdrop-filter: blur(25px);
@@ -2617,9 +2618,8 @@ button {
    FIXED NOTIFICATIONS PAGE
    ONLY INBOX SCROLLS
 ===================================================== */
-
-html,
-body {
+html:has(.notifications-page),
+body:has(.notifications-page) {
     height: 100%;
     overflow: hidden;
 }
@@ -2686,8 +2686,8 @@ body {
 
 @media (max-width: 700px) {
 
-    html,
-    body {
+    html:has(.notifications-page),
+    body:has(.notifications-page) {
         overflow: hidden;
     }
 
@@ -2704,3 +2704,75 @@ body {
         padding-right: 6px;
     }
 }
+
+/* ================= NOTIFICATION POPUP HEADER ================= */
+
+.notification-popup .popup-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 2px 12px;
+}
+
+/* Actual notification item */
+.notification-popup .compact-notification {
+    cursor: pointer !important;
+    user-select: none;
+}
+
+.notification-popup .compact-notification,
+.notification-popup .compact-notification *,
+.notification-popup .compact-notification strong,
+.notification-popup .compact-notification small,
+.notification-popup .compact-notification span {
+    cursor: pointer !important;
+}
+
+/* ================= NOTIFICATION POPUP HEADER ================= */
+
+.notification-popup .popup-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 2px 12px;
+}
+
+    /* Notifications heading should behave like a clickable UI element */
+    .notification-popup .popup-title strong {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 8px;
+        background: rgba(255,255,255,.035);
+        color: #edf4ff;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        user-select: none;
+        transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+    }
+
+        .notification-popup .popup-title strong:hover {
+            background: rgba(75,140,255,.10);
+            border-color: rgba(90,145,255,.22);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+/* Actual notification item */
+.notification-popup .compact-notification {
+    cursor: pointer !important;
+    user-select: none;
+}
+
+    .notification-popup .compact-notification,
+    .notification-popup .compact-notification *,
+    .notification-popup .compact-notification strong,
+    .notification-popup .compact-notification small,
+    .notification-popup .compact-notification span {
+        cursor: pointer !important;
+    }
