@@ -2,86 +2,102 @@
     Layout = null;
 }
 
-<div class="notifications-page">
+<div class="user-app-shell">
 
-    <div class="notifications-glow glow-one"></div>
-    <div class="notifications-glow glow-two"></div>
+    <!-- COMMON USER SIDEBAR -->
+    @await Html.PartialAsync(
+        "~/Areas/User/Views/Shared/_UserSidebar.cshtml")
 
-    <div class="notifications-page-header">
+    <main class="main-content">
 
-        <div class="notifications-heading">
+        <!-- COMMON USER TOPBAR -->
+        @await Html.PartialAsync(
+            "~/Areas/User/Views/Shared/_UserTopbar.cshtml")
 
-            <a href="/User/Dashboard" class="notifications-back">
-                <span>←</span>
-                Dashboard
-            </a>
+        <div class="notifications-page">
 
-            <div class="notifications-title-row">
+            <div class="notifications-glow glow-one"></div>
+            <div class="notifications-glow glow-two"></div>
 
-                <div class="notifications-title-icon">
-                    🔔
+            <div class="notifications-page-header">
+
+                <div class="notifications-heading">
+
+                    <a href="/User/Dashboard" class="notifications-back">
+                        <span>←</span>
+                        Dashboard
+                    </a>
+
+                    <div class="notifications-title-row">
+
+                        <div class="notifications-title-icon">
+                            🔔
+                        </div>
+
+                        <div>
+                            <span class="notifications-eyebrow">
+                                TASK CENTER
+                            </span>
+
+                            <h1>Notifications</h1>
+
+                            <p>
+                                Stay updated with your task assignments and activity.
+                            </p>
+                        </div>
+
+                    </div>
+
                 </div>
 
-                <div>
-                    <span class="notifications-eyebrow">
-                        TASK CENTER
-                    </span>
+                <button type="button"
+                        id="clearAllNotifications"
+                        class="clear-all-button">
 
-                    <h1>Notifications</h1>
+                    <span class="clear-icon">⌫</span>
+                    <span>Clear All</span>
 
-                    <p>
-                        Stay updated with your task assignments and activity.
-                    </p>
+                </button>
+
+            </div>
+
+
+            <div class="notifications-content">
+
+                <div class="notifications-content-top">
+
+                    <div>
+                        <span class="section-label">
+                            INBOX
+                        </span>
+
+                        <h2>Your notifications</h2>
+                    </div>
+
+                    <div class="live-indicator">
+                        <span></span>
+                        Live
+                    </div>
+
+                </div>
+
+
+                <div class="notifications-list"
+                     id="notificationsList"
+                     aria-live="polite">
+
+                    <div class="notifications-loading">
+                        <div class="loading-orb"></div>
+                        <span>Loading notifications...</span>
+                    </div>
+
                 </div>
 
             </div>
 
         </div>
 
-        <button type="button"
-                id="clearAllNotifications"
-                class="clear-all-button">
-
-            <span class="clear-icon">⌫</span>
-            <span>Clear All</span>
-
-        </button>
-
-    </div>
-
-
-    <div class="notifications-content">
-
-        <div class="notifications-content-top">
-
-            <div>
-                <span class="section-label">
-                    INBOX
-                </span>
-
-                <h2>Your notifications</h2>
-            </div>
-
-            <div class="live-indicator">
-                <span></span>
-                Live
-            </div>
-
-        </div>
-
-
-        <div class="notifications-list"
-             id="notificationsList"
-             aria-live="polite">
-
-            <div class="notifications-loading">
-                <div class="loading-orb"></div>
-                <span>Loading notifications...</span>
-            </div>
-
-        </div>
-
-    </div>
+    </main>
 
 </div>
 
@@ -95,5 +111,12 @@
       href="~/css/user-dashboard.css"
       asp-append-version="true" />
 
+<link rel="stylesheet"
+      href="~/css/notifications.css"
+      asp-append-version="true" />
+
 <script src="~/js/notifications.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/user-dashboard.js"
         asp-append-version="true"></script>

@@ -149,6 +149,7 @@ body {
 .task-main {
     min-width: 0;
     flex: 1;
+    margin-left: 304px;
 }
 
 .task-topbar {

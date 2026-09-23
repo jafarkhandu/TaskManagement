@@ -1,0 +1,163 @@
+﻿<aside class="sidebar">
+
+    <!-- BRAND -->
+
+    <div class="sidebar-brand">
+
+        <div class="brand-logo">
+            ✓
+        </div>
+
+        <div class="brand-text">
+
+            <strong>
+                TaskManager
+            </strong>
+
+            <span>
+                Plan · Assign · Track
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- NAVIGATION -->
+
+    <nav class="sidebar-nav">
+
+
+        <!-- DASHBOARD -->
+
+        <a href="@Url.Action(
+                                "Index",
+                                "Dashboard",
+                                new { area = "Admin" })"
+           class="sidebar-link">
+
+            <span class="nav-icon">
+                ⌂
+            </span>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+
+        <!-- PROJECTS -->
+
+        <a href="@Url.Action(
+                                "Index",
+                                "Projects",
+                                new { area = "Admin" })"
+           class="sidebar-link">
+
+            <span class="nav-icon">
+                ▣
+            </span>
+
+            <span>
+                Projects
+            </span>
+
+        </a>
+
+
+        <!-- USERS -->
+
+        <a href="@Url.Action(
+                                "Index",
+                                "Users",
+                                new { area = "Admin" })"
+           class="sidebar-link">
+
+            <span class="nav-icon">
+                ♙
+            </span>
+
+            <span>
+                Users
+            </span>
+
+        </a>
+
+
+        <!-- CALENDAR -->
+
+        <a href="#"
+           class="sidebar-link">
+
+            <span class="nav-icon">
+                ▣
+            </span>
+
+            <span>
+                Calendar
+            </span>
+
+        </a>
+
+
+        <!-- REPORTS -->
+
+        <a href="@Url.Action(
+                                "Index",
+                                "Reports",
+                                new { area = "Admin" })"
+           class="sidebar-link">
+
+            <span class="nav-icon">
+                ▥
+            </span>
+
+            <span>
+                Reports
+            </span>
+
+        </a>
+
+
+        <!-- SETTINGS -->
+
+        <a href="#"
+           class="sidebar-link">
+
+            <span class="nav-icon">
+                ⚙
+            </span>
+
+            <span>
+                Settings
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <!-- LOGOUT -->
+
+    <form class="sidebar-logout-form"
+          action="@Url.Action(
+                          "Logout",
+                          "Account",
+                          new { area = "" })"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <button type="submit"
+                class="sidebar-logout-button">
+
+            <span class="logout-icon">↪</span>
+
+            <span>Logout</span>
+
+        </button>
+
+    </form>
+
+</aside>

@@ -1,0 +1,88 @@
+﻿@{
+    var userName =
+        ViewData["UserName"]?.ToString()
+        ?? User.Identity?.Name
+        ?? "User";
+
+    var firstLetter =
+        string.IsNullOrWhiteSpace(userName)
+            ? "U"
+            : userName.Substring(0, 1).ToUpper();
+}
+
+<header class="topbar">
+
+    <div class="search">
+
+        <span class="search-icon">
+            ⌕
+        </span>
+
+        <input type="text"
+               id="globalSearch"
+               placeholder="Search tasks..." />
+
+        <kbd>Ctrl K</kbd>
+
+    </div>
+
+
+    <div class="top-actions">
+
+        <!-- THEME -->
+
+        <button type="button"
+                class="round-button"
+                id="themeButton"
+                aria-label="Change theme">
+
+            ☼
+
+        </button>
+
+
+        <!-- NOTIFICATIONS -->
+
+        <button type="button"
+                class="round-button notification-button"
+                id="notificationButton"
+                aria-label="Notifications">
+
+            <span class="notification-icon-glyph">
+                🔔
+            </span>
+
+        </button>
+
+
+        <!-- USER -->
+
+        <button type="button"
+                class="user-button"
+                data-modal="profileModal">
+
+            <span class="user-avatar">
+                @firstLetter
+            </span>
+
+            <span class="user-info">
+
+                <strong>
+                    @userName
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </span>
+
+            <span class="chevron">
+                ⌄
+            </span>
+
+        </button>
+
+    </div>
+
+</header>

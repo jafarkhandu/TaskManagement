@@ -1,0 +1,233 @@
+﻿/* =====================================================
+   COMMON ADMIN TOPBAR
+===================================================== */
+
+.admin-notification-icon {
+    font-size: 19px;
+    line-height: 1;
+    transition: transform .2s ease, color .2s ease;
+}
+
+/* =====================================================
+   ADMIN BELL
+===================================================== */
+
+.notification-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+}
+
+
+.admin-bell-icon {
+    width: 20px;
+    height: 20px;
+    color: #52627a;
+    transition: color .2s ease, transform .2s ease, filter .2s ease;
+}
+
+
+.notification-button:hover
+.admin-bell-icon {
+    color: #2864ed;
+    transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   LIVE NOTIFICATION
+===================================================== */
+
+.notification-button.has-notification
+.admin-bell-icon {
+    color: #2864ed;
+    filter: drop-shadow( 0 0 6px rgba(40,100,237,.55) );
+    animation: bell-ring 1.8s ease-in-out infinite;
+}
+
+
+.notification-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.10), 0 0 10px rgba(239,68,68,.7);
+}
+
+
+@keyframes bell-ring {
+
+    0%, 100% {
+        transform: rotate(0);
+    }
+
+    15% {
+        transform: rotate(-9deg);
+    }
+
+    30% {
+        transform: rotate(9deg);
+    }
+
+    45% {
+        transform: rotate(-6deg);
+    }
+
+    60% {
+        transform: rotate(3deg);
+    }
+
+    75% {
+        transform: rotate(0);
+    }
+}
+
+/* =====================================================
+   SIDEBAR LOGOUT
+===================================================== */
+
+.sidebar-logout-form {
+    margin-top: auto;
+    padding-top: 18px;
+}
+
+
+.sidebar-logout-button {
+    width: 100%;
+    min-height: 45px;
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    background: rgba(255,255,255,.035);
+    color: #aebbd0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 15px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+
+
+    .sidebar-logout-button:hover {
+        background: rgba(239,68,68,.12);
+        border-color: rgba(239,68,68,.28);
+        color: #ff6675;
+    }
+
+
+.logout-icon {
+    font-size: 17px;
+}
+
+
+/* =====================================================
+   DROPDOWN LOGOUT
+===================================================== */
+
+.profile-dropdown .logout-item {
+    color: #dc3545;
+}
+
+
+    .profile-dropdown .logout-item:hover {
+        background: #fff1f2;
+        color: #c82333;
+    }
+
+
+.profile-dropdown .dropdown-icon {
+    width: 20px;
+    display: inline-flex;
+    justify-content: center;
+    margin-right: 8px;
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.search-box {
+    position: relative;
+}
+
+
+.admin-search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    max-height: 360px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e3e8ef;
+    border-radius: 10px;
+    box-shadow: 0 15px 40px rgba(20,35,65,.12);
+    z-index: 1000;
+}
+
+
+.admin-search-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 13px;
+    color: #26344e;
+    text-decoration: none;
+    border-bottom: 1px solid #f0f2f5;
+}
+
+
+    .admin-search-result:hover {
+        background: #f6f9ff;
+    }
+
+
+    .admin-search-result:last-child {
+        border-bottom: 0;
+    }
+
+
+.admin-search-result-icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #edf3ff;
+    color: #2864ed;
+    font-size: 12px;
+}
+
+
+.admin-search-result-text {
+    min-width: 0;
+}
+
+
+    .admin-search-result-text strong {
+        display: block;
+        font-size: 11px;
+    }
+
+
+    .admin-search-result-text small {
+        display: block;
+        margin-top: 2px;
+        color: #8a96a9;
+        font-size: 9px;
+    }
+
+
+.admin-search-empty {
+    padding: 18px;
+    text-align: center;
+    color: #8995a8;
+    font-size: 10px;
+}

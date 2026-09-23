@@ -300,18 +300,86 @@ button {
 
 .notification-button {
     position: relative;
+    display: grid;
+    place-items: center;
 }
 
-    .notification-button i {
-        position: absolute;
-        width: 6px;
-        height: 6px;
-        top: 7px;
-        right: 7px;
-        border-radius: 50%;
-        background: #ff5273;
-        box-shadow: 0 0 10px #ff5273;
+.notification-icon-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    line-height: 1;
+    filter: grayscale(.25);
+    transition: transform .25s ease, filter .25s ease, opacity .25s ease;
+}
+
+
+/* =====================================================
+   ACTIVE NOTIFICATION
+===================================================== */
+
+.notification-button.has-notifications
+.notification-icon-glyph {
+    filter: grayscale(0) drop-shadow(0 0 7px rgba(255, 190, 65, .45));
+    animation: notificationBellPulse 2s ease-in-out infinite;
+}
+
+
+/* =====================================================
+   RED LIVE DOT
+===================================================== */
+
+.notification-button.has-notifications::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    top: 6px;
+    right: 6px;
+    border-radius: 50%;
+    background: #ff4d6d;
+    box-shadow: 0 0 0 3px rgba(255, 77, 109, .12), 0 0 12px rgba(255, 77, 109, .85);
+    animation: notificationDotPulse 1.8s ease-in-out infinite;
+}
+
+
+@keyframes notificationBellPulse {
+
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
     }
+
+    15% {
+        transform: rotate(-8deg) scale(1.04);
+    }
+
+    30% {
+        transform: rotate(8deg) scale(1.04);
+    }
+
+    45% {
+        transform: rotate(-5deg) scale(1.02);
+    }
+
+    60% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+
+@keyframes notificationDotPulse {
+
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.25);
+        opacity: .65;
+    }
+}
 
 
 .user-button {
@@ -715,98 +783,361 @@ button {
     }
 
 
+/* =====================================================
+   TASK OVERVIEW
+===================================================== */
+
+.overview {
+    overflow: hidden;
+}
+
+
+/* ================= OVERVIEW CONTAINER ================= */
+
+.overview-dashboard {
+    min-height: 295px;
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ================= DONUT AREA ================= */
+
+.overview-chart-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 3px;
+}
+
+
 /* ================= DONUT ================= */
 
-.overview-body {
-    min-height: 174px;
-    display: flex;
-    align-items: center;
-    gap: 25px;
-    padding: 18px;
+.overview-donut-wrap {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    display: grid;
+    place-items: center;
 }
 
 
 .donut {
+    position: relative;
+    z-index: 2;
     width: 132px;
     height: 132px;
     display: grid;
     place-items: center;
     flex: 0 0 132px;
     border-radius: 50%;
-    background: conic-gradient( #4c83ff 0 var(--progress), #8c5cff var(--progress) calc(var(--progress) + var(--hold)), #2ed5a0 calc(var(--progress) + var(--hold)) calc( var(--progress) + var(--hold) + var(--completed) ), #7589aa calc( var(--progress) + var(--hold) + var(--completed) ) 100% );
-    transform: rotate(-90deg);
+    background: conic-gradient( from -90deg, #4f8cff 0 var(--progress), #8b5cf6 var(--progress) calc(var(--progress) + var(--hold)), #32d6a1 calc(var(--progress) + var(--hold)) calc( var(--progress) + var(--hold) + var(--completed) ), #7187aa calc( var(--progress) + var(--hold) + var(--completed) ) 100% );
+    box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 12px 35px rgba(54,110,255,.12);
+    transform: rotate(0deg);
+    transition: transform .5s ease, box-shadow .5s ease;
 }
 
 
+    .donut::before {
+        content: "";
+        position: absolute;
+        inset: 9px;
+        border-radius: 50%;
+        background: radial-gradient( circle at 40% 35%, rgba(26,51,82,.98), rgba(7,21,38,1) );
+        box-shadow: inset 0 0 20px rgba(0,0,0,.25);
+    }
+
+
+    .donut:hover {
+        transform: scale(1.035);
+        box-shadow: 0 0 0 1px rgba(83,140,255,.12), 0 0 35px rgba(72,130,255,.16);
+    }
+
+
+/* ================= DONUT CENTER ================= */
+
 .donut-center {
-    width: 97px;
-    height: 97px;
+    position: relative;
+    z-index: 3;
+    width: 82px;
+    height: 82px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: #10243c;
-    transform: rotate(90deg);
+    text-align: center;
 }
 
 
     .donut-center strong {
-        font-size: 22px;
+        display: block;
+        color: #f3f7ff;
+        font-size: 25px;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: -.8px;
     }
 
 
     .donut-center small {
-        margin-top: 3px;
-        color: #7389a7;
+        margin-top: 7px;
+        color: #6f87a8;
         font-size: 7px;
+        font-weight: 600;
+        letter-spacing: .2px;
     }
 
 
-.legend {
-    flex: 1;
+/* ================= DONUT GLOW ================= */
+
+.donut-glow {
+    position: absolute;
+    width: 105px;
+    height: 105px;
+    border-radius: 50%;
+    background: radial-gradient( circle, rgba(73,129,255,.15), transparent 68% );
+    filter: blur(18px);
+    pointer-events: none;
+    animation: overviewGlow 4s ease-in-out infinite;
 }
 
 
-    .legend div {
-        display: grid;
-        grid-template-columns: 8px 1fr auto;
-        gap: 8px;
-        align-items: center;
-        margin: 12px 0;
-        color: #9cafc9;
-        font-size: 9px;
+@keyframes overviewGlow {
+
+    0%, 100% {
+        transform: scale(.92);
+        opacity: .55;
+    }
+
+    50% {
+        transform: scale(1.08);
+        opacity: .85;
+    }
+}
+
+
+/* ================= COMPLETION ================= */
+
+.completion-summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 7px;
+}
+
+
+    .completion-summary strong {
+        color: #63dcb8;
+        font-size: 11px;
+        font-weight: 800;
     }
 
 
-    .legend i {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
+    .completion-summary span {
+        color: #6f87a8;
+        font-size: 8px;
+        font-weight: 600;
     }
 
 
-    .legend .todo {
-        background: #7186a8;
+/* ================= STATUS GRID ================= */
+
+.overview-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 15px;
+}
+
+
+/* ================= STATUS CARD ================= */
+
+.overview-status {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 7px;
+    border: 1px solid rgba(255,255,255,.055);
+    border-radius: 9px;
+    background: linear-gradient( 135deg, rgba(255,255,255,.045), rgba(255,255,255,.015) );
+    transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+
+
+    .overview-status:hover {
+        transform: translateY(-2px);
+        border-color: rgba(95,145,255,.20);
+        background: rgba(55,92,140,.12);
     }
 
-    .legend .inprogress {
-        background: #4b86ff;
+
+/* ================= STATUS DOT ================= */
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: 50%;
+}
+
+
+/* ================= STATUS COLORS ================= */
+
+.overview-status.todo .status-dot {
+    background: #7b91b7;
+    box-shadow: 0 0 8px rgba(123,145,183,.35);
+}
+
+
+.overview-status.in-progress .status-dot {
+    background: #4f8cff;
+    box-shadow: 0 0 8px rgba(79,140,255,.45);
+}
+
+
+.overview-status.hold .status-dot {
+    background: #8b5cf6;
+    box-shadow: 0 0 8px rgba(139,92,246,.45);
+}
+
+
+.overview-status.completed .status-dot {
+    background: #32d6a1;
+    box-shadow: 0 0 8px rgba(50,214,161,.45);
+}
+
+
+/* ================= STATUS TEXT ================= */
+
+.overview-status div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.overview-status small {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #7187a6;
+    font-size: 7px;
+    line-height: 1.1;
+}
+
+
+.overview-status strong {
+    margin-top: 3px;
+    color: #e8f0fc;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+
+/* ================= PROGRESS ================= */
+
+.overview-progress {
+    margin-top: 14px;
+    padding-top: 11px;
+    border-top: 1px solid rgba(255,255,255,.055);
+}
+
+
+.overview-progress-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+
+    .overview-progress-head span {
+        color: #7188a8;
+        font-size: 7px;
+        font-weight: 600;
     }
 
-    .legend .onhold {
-        background: #8c5cff;
+
+    .overview-progress-head strong {
+        color: #9bbcff;
+        font-size: 8px;
+        font-weight: 800;
     }
 
-    .legend .done {
-        background: #2ed5a0;
+
+.overview-progress-track {
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(255,255,255,.065);
+}
+
+
+    .overview-progress-track span {
+        display: block;
+        height: 100%;
+        min-width: 0;
+        border-radius: inherit;
+        background: linear-gradient( 90deg, #4f8cff, #6b8fff, #32d6a1 );
+        box-shadow: 0 0 10px rgba(79,140,255,.30);
+        transition: width .6s ease;
     }
 
 
-    .legend strong {
-        color: white;
-    }
+/* ================= INSIGHT ================= */
 
+.overview-insight {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 11px;
+    padding: 8px 10px;
+    border: 1px solid rgba(50,214,161,.09);
+    border-radius: 9px;
+    background: linear-gradient( 135deg, rgba(50,214,161,.055), rgba(79,140,255,.035) );
+}
+
+
+.insight-icon {
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    color: #67dcb9;
+    background: rgba(50,214,161,.08);
+    border: 1px solid rgba(50,214,161,.10);
+    font-size: 11px;
+}
+
+
+.overview-insight div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.overview-insight strong {
+    color: #cfe4f9;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+
+.overview-insight small {
+    margin-top: 3px;
+    color: #66809f;
+    font-size: 7px;
+}
 
 /* ================= TASKS ================= */
 
@@ -1388,6 +1719,42 @@ button {
 
 
 /* ================= MOBILE ================= */
+@media (max-width: 1100px) {
+
+    .overview-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .overview-dashboard {
+        min-height: auto;
+        padding: 18px 14px 15px;
+    }
+
+    .overview-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .overview-status {
+        padding: 9px;
+    }
+}
+
+
+@media (max-width: 420px) {
+
+    .overview-status-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .overview-status {
+        padding: 8px 6px;
+    }
+}
 
 @media (max-width: 1150px) {
 

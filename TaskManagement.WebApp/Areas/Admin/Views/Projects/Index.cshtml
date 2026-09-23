@@ -47,6 +47,9 @@
     <link rel="stylesheet"
           href="~/css/admin-projects.css"
           asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/css/admin-common.css"
+          asp-append-version="true" />
 
 </head>
 
@@ -60,181 +63,8 @@
     <!-- =====================================================
          SIDEBAR
     ====================================================== -->
-
-    <aside class="sidebar">
-
-
-        <!-- BRAND -->
-
-        <div class="sidebar-brand">
-
-            <div class="brand-logo">
-                ✓
-            </div>
-
-            <div class="brand-text">
-
-                <strong>
-                    TaskManager
-                </strong>
-
-                <span>
-                    Plan · Assign · Track
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <!-- NAVIGATION -->
-
-        <nav class="sidebar-nav">
-
-
-            <!-- Dashboard -->
-
-            <a href="@Url.Action(
-                    "Index",
-                    "Dashboard",
-                    new { area = "Admin" })"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    ⌂
-                </span>
-
-                <span>
-                    Dashboard
-                </span>
-
-            </a>
-
-
-            <!-- Projects -->
-
-            <a href="@Url.Action(
-                    "Index",
-                    "Projects",
-                    new { area = "Admin" })"
-               class="sidebar-link active">
-
-                <span class="nav-icon">
-                    ▣
-                </span>
-
-                <span>
-                    Projects
-                </span>
-
-            </a>
-
-
-            <!-- Users -->
-
-            <a href="@Url.Action(
-                    "Index",
-                    "Users",
-                    new { area = "Admin" })"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    ♙
-                </span>
-
-                <span>
-                    Users
-                </span>
-
-            </a>
-
-
-            <!-- Manage Roles -->
-
-            <!-- Manage Roles removed - role management merged into Users -->
-
-
-            <!-- Calendar -->
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    □
-                </span>
-
-                <span>
-                    Calendar
-                </span>
-
-            </a>
-
-
-            <!-- Reports -->
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    ▥
-                </span>
-
-                <span>
-                    Reports
-                </span>
-
-            </a>
-
-
-            <!-- Settings -->
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">
-                    ⚙
-                </span>
-
-                <span>
-                    Settings
-                </span>
-
-            </a>
-
-
-        </nav>
-
-
-        <!-- ADMIN CARD -->
-
-        <div class="admin-card">
-
-            <div class="admin-card-icon">
-                ♛
-            </div>
-
-            <div class="admin-card-content">
-
-                <strong>
-                    Admin Panel
-                </strong>
-
-                <span>
-                    Manage projects, users
-                    and tasks in one place.
-                </span>
-
-            </div>
-
-            <span class="admin-arrow">
-                →
-            </span>
-
-        </div>
-
-
-    </aside>
-
+        @await Html.PartialAsync(
+            "~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
 
 
     <!-- =====================================================
@@ -248,151 +78,8 @@
              TOPBAR
         ================================================== -->
 
-        <header class="topbar">
-
-
-            <!-- SEARCH -->
-
-            <div class="search-box">
-
-                <span class="search-icon">
-                    ⌕
-                </span>
-
-                <input type="text"
-                       id="globalSearch"
-                       placeholder="Search projects, tasks or users..." />
-
-                <span class="search-shortcut">
-                    Ctrl K
-                </span>
-
-            </div>
-
-
-            <!-- RIGHT -->
-
-            <div class="topbar-right">
-
-
-                <!-- NOTIFICATION -->
-
-                <button type="button"
-                        class="icon-button notification-button">
-
-                    ♧
-
-                    <span class="notification-dot"></span>
-
-                </button>
-
-
-                <!-- PROFILE -->
-
-                <div class="dropdown">
-
-
-                    <button type="button"
-                            class="profile profile-button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
-
-
-                        <div class="profile-avatar">
-
-                            @adminInitial
-
-                        </div>
-
-
-                        <div class="profile-info">
-
-                            <strong>
-                                @adminName
-                            </strong>
-
-                            <span>
-                                Administrator
-                            </span>
-
-                        </div>
-
-
-                        <span class="profile-arrow">
-                            ▾
-                        </span>
-
-
-                    </button>
-
-
-                    <ul class="dropdown-menu dropdown-menu-end profile-menu">
-
-
-                        <li>
-
-                            <a href="#"
-                               class="dropdown-item">
-
-                                My Profile
-
-                            </a>
-
-                        </li>
-
-
-                        <li>
-
-                            <a href="#"
-                               class="dropdown-item">
-
-                                Settings
-
-                            </a>
-
-                        </li>
-
-
-                        <li>
-
-                            <hr class="dropdown-divider" />
-
-                        </li>
-
-
-                        <li>
-
-                            <form asp-area=""
-                                  asp-controller="Account"
-                                  asp-action="Logout"
-                                  method="post">
-
-                                @Html.AntiForgeryToken()
-
-                                <button type="submit"
-                                        class="dropdown-item logout-item">
-
-                                    Logout
-
-                                </button>
-
-                            </form>
-
-                        </li>
-
-
-                    </ul>
-
-
-                </div>
-
-
-            </div>
-
-
-        </header>
-
-
+       @await Html.PartialAsync(
+    "~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
 
         <!-- =================================================
              PROJECT CONTENT
@@ -1455,7 +1142,8 @@
 
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/admin-projects.js" asp-append-version="true"></script>
-
+<script src="~/js/admin-common.js"
+        asp-append-version="true"></script>
 </body>
 
 </html>

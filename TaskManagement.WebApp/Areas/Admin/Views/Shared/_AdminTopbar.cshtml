@@ -1,0 +1,185 @@
+﻿@{
+    var adminName = User.Identity?.Name ?? "Administrator";
+
+    var adminInitial =
+        !string.IsNullOrWhiteSpace(adminName)
+            ? adminName.Substring(0, 1).ToUpper()
+            : "A";
+}
+
+<header class="topbar">
+
+    <!-- SEARCH -->
+    <div class="search-box">
+
+        <span class="search-icon">
+            ⌕
+        </span>
+
+        <input type="text"
+               id="adminGlobalSearch"
+               placeholder="Search projects, tasks or users..."
+               autocomplete="off" />
+
+        <span class="search-shortcut">
+            Ctrl K
+        </span>
+
+    </div>
+
+
+    <div class="topbar-right">
+
+        <!-- NOTIFICATIONS -->
+
+        <button type="button"
+                class="icon-button notification-button"
+                id="adminNotificationButton"
+                aria-label="Notifications">
+
+            <svg class="admin-bell-icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+
+                <path d="M18 8C18 4.686 15.314 2 12 2C8.686 2 6 4.686 6 8C6 13 4 15 3 16H21C20 15 18 13 18 8Z"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round" />
+
+                <path d="M10 20C10.4 21.1 11.1 22 12 22C12.9 22 13.6 21.1 14 20"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round" />
+
+            </svg>
+
+            <span id="adminNotificationDot"
+                  class="notification-dot"
+                  hidden>
+            </span>
+
+        </button>
+
+
+        <!-- PROFILE -->
+
+        <div class="dropdown">
+
+            <button type="button"
+                    class="profile profile-button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+
+                <div class="profile-avatar">
+                    @adminInitial
+                </div>
+
+                <div class="profile-info">
+
+                    <strong>
+                        @adminName
+                    </strong>
+
+                    <span>
+                        Administrator
+                    </span>
+
+                </div>
+
+                <span class="profile-arrow">
+                    ▾
+                </span>
+
+            </button>
+
+
+            <div class="dropdown-menu dropdown-menu-end profile-dropdown">
+
+                <div class="profile-dropdown-header">
+
+                    <div class="profile-avatar large">
+                        @adminInitial
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            @adminName
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dropdown-divider"></div>
+
+
+                <!-- PROFILE - routing later -->
+
+                <a href="#"
+                   class="dropdown-item">
+
+                    <span class="dropdown-icon">
+                        ♙
+                    </span>
+
+                    My Profile
+
+                </a>
+
+
+                <!-- SETTINGS - routing later -->
+
+                <a href="#"
+                   class="dropdown-item">
+
+                    <span class="dropdown-icon">
+                        ⚙
+                    </span>
+
+                    Settings
+
+                </a>
+
+
+                <div class="dropdown-divider"></div>
+
+
+                <!-- LOGOUT -->
+
+                <form class="admin-logout-form"
+                      action="@Url.Action(
+                                "Logout",
+                                "Account",
+                                new { area = "" })"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="dropdown-item logout-item">
+
+                        <span class="dropdown-icon">
+                            ↪
+                        </span>
+
+                        Logout
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>

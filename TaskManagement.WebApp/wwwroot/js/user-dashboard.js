@@ -470,29 +470,13 @@
         if (!notificationButton)
             return;
 
-        let badge =
-            notificationButton.querySelector(
-                ".notification-badge"
-            );
+        const hasNotifications =
+            Number(count) > 0;
 
-        if (count > 0) {
-
-            if (!badge) {
-
-                badge =
-                    document.createElement("i");
-
-                badge.className =
-                    "notification-badge";
-
-                notificationButton.appendChild(badge);
-            }
-
-        }
-        else {
-
-            badge?.remove();
-        }
+        notificationButton.classList.toggle(
+            "has-notifications",
+            hasNotifications
+        );
     }
 
 

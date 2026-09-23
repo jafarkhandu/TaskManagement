@@ -39,106 +39,8 @@
 <div class="dashboard-shell">
 
     <!-- ================= SIDEBAR ================= -->
-
-    <aside class="sidebar">
-
-        <div class="brand">
-
-            <div class="brand-logo">
-                ✓
-            </div>
-
-            <div class="brand-copy">
-                <strong>TaskManager</strong>
-                <span>Plan · Focus · Achieve</span>
-            </div>
-
-        </div>
-
-
-        <nav class="navigation">
-
-            <a href="#dashboard"
-               class="nav-link active">
-
-                <span class="nav-symbol">⌂</span>
-                <span>Dashboard</span>
-
-            </a>
-
-
-                <a href="/User/MyTasks"
-                   class="nav-link">
-
-                    <span class="nav-symbol">✓</span>
-                    <span>My Tasks</span>
-
-                </a>
-
-
-            <button type="button"
-                    class="nav-link"
-                    data-modal="filesModal">
-
-                <span class="nav-symbol">▤</span>
-                <span>Files</span>
-
-            </button>
-
-
-            <button type="button"
-                    class="nav-link"
-                    data-modal="profileModal">
-
-                <span class="nav-symbol">♙</span>
-                <span>Profile</span>
-
-            </button>
-
-
-            <button type="button"
-                    class="nav-link"
-                    data-modal="settingsModal">
-
-                <span class="nav-symbol">⚙</span>
-                <span>Settings</span>
-
-            </button>
-
-        </nav>
-
-
-        <div class="sidebar-bottom">
-
-            <div class="sidebar-message">
-
-                <span>✦</span>
-
-                <p>
-                    Small steps every day
-                    create big results.
-                </p>
-
-            </div>
-
-
-           <form id="logoutForm"
-                  action="/Account/Logout"
-                  method="post"
-                  class="logout-form">
-
-                @Html.AntiForgeryToken()
-
-                <button type="submit" class="logout-button">
-                    <span>↪</span>
-                    <span>Logout</span>
-                </button>
-
-            </form>
-
-        </div>
-
-    </aside>
+        @await Html.PartialAsync(
+            "~/Areas/User/Views/Shared/_UserSidebar.cshtml")
 
 
     <!-- ================= MAIN ================= -->
@@ -147,79 +49,12 @@
           id="dashboard">
 
 
-        <!-- TOP BAR -->
+            @{
+                ViewData["UserName"] = Model.UserName;
+            }
 
-        <header class="topbar">
-
-            <div class="search">
-
-                <span class="search-icon">
-                    ⌕
-                </span>
-
-                <input type="text"
-                       id="globalSearch"
-                       placeholder="Search projects, tasks, or anything..." />
-
-                <kbd>Ctrl K</kbd>
-
-            </div>
-
-
-            <div class="top-actions">
-
-                <button type="button"
-                        class="round-button"
-                        id="themeButton">
-
-                    ☼
-
-                </button>
-
-
-                <button type="button"
-                        class="round-button notification-button"
-                        id="notificationButton">
-
-                    ♧
-
-                    @if (Model.DueSoonTasks > 0)
-                    {
-                        <i></i>
-                    }
-
-                </button>
-
-
-                <button type="button"
-                        class="user-button"
-                        data-modal="profileModal">
-
-                    <span class="user-avatar">
-                        @firstLetter
-                    </span>
-
-                    <span class="user-info">
-
-                        <strong>
-                            @Model.UserName
-                        </strong>
-
-                        <small>
-                            Student
-                        </small>
-
-                    </span>
-
-                    <span class="chevron">
-                        ⌄
-                    </span>
-
-                </button>
-
-            </div>
-
-        </header>
+            @await Html.PartialAsync(
+                "~/Areas/User/Views/Shared/_UserTopbar.cshtml")
 
 
         <!-- NOTIFICATION -->
@@ -425,83 +260,227 @@
         <section class="content-grid">
 
 
-            <!-- TASK OVERVIEW -->
+                <!-- ================= TASK OVERVIEW ================= -->
 
-            <article class="glass-card overview">
+                <article class="glass-card overview">
 
-                <div class="card-heading">
+                    <div class="card-heading">
 
-                    <div>
-                        <span>PRODUCTIVITY</span>
-                        <h2>Task Overview</h2>
-                    </div>
-
-                    <button type="button"
-                            id="resetFilter">
-
-                        This Project⌄
-
-                    </button>
-
-                </div>
-
-
-                <div class="overview-body">
-
-                    <div class="donut"
-                         style="
-                         --progress:@progressPercent%;
-                         --hold:@holdPercent%;
-                         --completed:@completedPercent%;
-                         ">
-
-                        <div class="donut-center">
-
-                            <strong>
-                                @Model.TotalTasks
-                            </strong>
-
-                            <small>
-                                Total Tasks
-                            </small>
-
+                        <div>
+                            <span>PRODUCTIVITY</span>
+                            <h2>Task Overview</h2>
                         </div>
+
+                        <button type="button"
+                                id="resetFilter">
+                            This Project⌄
+                        </button>
 
                     </div>
 
 
-                    <div class="legend">
+                    <div class="overview-dashboard">
 
-                        <div>
-                            <i class="todo"></i>
-                            <span>To Do</span>
-                            <strong>@Model.PendingTasks</strong>
+                        <!-- ================= DONUT ================= -->
+
+                        <div class="overview-chart-area">
+
+                            <div class="overview-donut-wrap">
+
+                                <div class="donut"
+                                     style="
+                                    --progress:@progressPercent%;
+                                    --hold:@holdPercent%;
+                                    --completed:@completedPercent%;
+                                    ">
+
+                                    <div class="donut-center">
+
+                                        <strong>
+                                            @Model.TotalTasks
+                                        </strong>
+
+                                        <small>
+                                            Total Tasks
+                                        </small>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="donut-glow"></div>
+
+                            </div>
+
+
+                            <div class="completion-summary">
+
+                                <strong>
+                                    @{
+                                        var completionRate =
+                                            Model.TotalTasks > 0
+                                                ? Math.Round(
+                                                    Model.CompletedTasks * 100.0 /
+                                                    Model.TotalTasks)
+                                                : 0;
+                                    }
+
+                                    @completionRate%
+                                </strong>
+
+                                <span>Completed</span>
+
+                            </div>
+
                         </div>
 
-                        <div>
-                            <i class="inprogress"></i>
-                            <span>In Progress</span>
-                            <strong>@Model.InProgressTasks</strong>
+
+                        <!-- ================= STATUS ================= -->
+
+                        <div class="overview-status-grid">
+
+                            <div class="overview-status todo">
+
+                                <span class="status-dot"></span>
+
+                                <div>
+                                    <small>To Do</small>
+                                    <strong>
+                                        @Model.PendingTasks
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="overview-status in-progress">
+
+                                <span class="status-dot"></span>
+
+                                <div>
+                                    <small>In Progress</small>
+                                    <strong>
+                                        @Model.InProgressTasks
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="overview-status hold">
+
+                                <span class="status-dot"></span>
+
+                                <div>
+                                    <small>On Hold</small>
+                                    <strong>
+                                        @Model.OnHoldTasks
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="overview-status completed">
+
+                                <span class="status-dot"></span>
+
+                                <div>
+                                    <small>Completed</small>
+                                    <strong>
+                                        @Model.CompletedTasks
+                                    </strong>
+                                </div>
+
+                            </div>
+
                         </div>
 
-                        <div>
-                            <i class="onhold"></i>
-                            <span>On Hold</span>
-                            <strong>@Model.OnHoldTasks</strong>
+
+                        <!-- ================= PROGRESS ================= -->
+
+                        <div class="overview-progress">
+
+                            <div class="overview-progress-head">
+
+                                <span>
+                                    Overall Progress
+                                </span>
+
+                                <strong>
+                                    @completionRate%
+                                </strong>
+
+                            </div>
+
+
+                            <div class="overview-progress-track">
+
+                                <span style="width:@completionRate%"></span>
+
+                            </div>
+
                         </div>
 
-                        <div>
-                            <i class="done"></i>
-                            <span>Completed</span>
-                            <strong>@Model.CompletedTasks</strong>
+
+                        <!-- ================= INSIGHT ================= -->
+
+                        <div class="overview-insight">
+
+                            <span class="insight-icon">
+                                ✦
+                            </span>
+
+                            <div>
+
+                                @if (Model.CompletedTasks > 0)
+                                {
+                                    <strong>
+                                        Keep the momentum going
+                                    </strong>
+
+                                    <small>
+                                        @Model.CompletedTasks task(s) completed so far.
+                                    </small>
+                                }
+                                else if (Model.InProgressTasks > 0)
+                                {
+                                    <strong>
+                                        You're making progress
+                                    </strong>
+
+                                    <small>
+                                        @Model.InProgressTasks task(s) currently in progress.
+                                    </small>
+                                }
+                                else if (Model.PendingTasks > 0)
+                                {
+                                    <strong>
+                                        Ready when you are
+                                    </strong>
+
+                                    <small>
+                                        @Model.PendingTasks task(s) waiting for you.
+                                    </small>
+                                }
+                                else
+                                {
+                                    <strong>
+                                        You're all caught up
+                                    </strong>
+
+                                    <small>
+                                        No active tasks right now.
+                                    </small>
+                                }
+
+                            </div>
+
                         </div>
 
                     </div>
 
-                </div>
-
-            </article>
-
+                </article>
 
             <!-- FOCUS TASKS -->
 
@@ -544,11 +523,9 @@
                                         @task.Title
                                     </strong>
 
-                                    <small>
-                                        @(string.IsNullOrWhiteSpace(task.Scenario)
-                                            ? task.ProjectTitle
-                                            : task.Scenario)
-                                    </small>
+                                        <small>
+                                            @task.Scenario
+                                        </small>
 
                                 </span>
 
@@ -629,8 +606,8 @@
 
                                     <small>
                                         @task.Status
-                                        ·
-                                        @task.ProjectTitle
+                                        
+                                        
                                     </small>
 
                                 </span>
@@ -662,85 +639,6 @@
         </section>
 
 
-        <!-- ================= PROJECTS ================= -->
-
-        <section class="projects"
-                 id="projects">
-
-            <div class="section-title">
-
-                <div>
-                    <span>WORKSPACE</span>
-                    <h2>My Projects</h2>
-                </div>
-
-                <small>
-                    @Model.ActiveProjects active
-                </small>
-
-            </div>
-
-
-            <div class="project-grid">
-
-                @foreach (var project in Model.Projects)
-                {
-                    var projectLetter =
-                        string.IsNullOrWhiteSpace(project.ProjectTitle)
-                            ? "P"
-                            : project.ProjectTitle.Substring(0, 1).ToUpper();
-
-                    <button type="button"
-                            class="project"
-                            data-project="@project.ProjectTitle">
-
-                        <div class="project-head">
-
-                            <span>
-                                @projectLetter
-                            </span>
-
-                            <b>⋮</b>
-
-                        </div>
-
-                        <strong>
-                            @project.ProjectTitle
-                        </strong>
-
-                        <p>
-                            @project.Description
-                        </p>
-
-                        <div class="progress">
-
-                            <i style="width:@project.ProgressPercent%"></i>
-
-                        </div>
-
-                        <div class="project-bottom">
-
-                            <span>
-                                @project.CompletedTasks /
-                                @project.TotalTasks tasks
-                            </span>
-
-                            <strong>
-                                @project.ProgressPercent%
-                            </strong>
-
-                            <small>
-                                @project.Status
-                            </small>
-
-                        </div>
-
-                    </button>
-                }
-
-            </div>
-
-        </section>
 
 
         <!-- ================= GOAL ================= -->

@@ -27,6 +27,9 @@
     <link rel="stylesheet"
           href="~/css/admin-tasks.css"
           asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/css/admin-common.css"
+          asp-append-version="true" />
 
 </head>
 
@@ -37,92 +40,8 @@
         <!-- =====================================================
          SIDEBAR
     ====================================================== -->
-
-        <aside class="task-sidebar">
-
-            <div class="task-brand">
-
-                <div class="brand-logo">
-                    ✓
-                </div>
-
-                <div>
-                    <div class="brand-name">
-                        TaskManager
-                    </div>
-
-                    <div class="brand-tagline">
-                        Plan · Assign · Track
-                    </div>
-                </div>
-
-            </div>
-
-
-            <nav class="task-navigation">
-
-                <a href="/Admin/Dashboard">
-                    <span>⌂</span>
-                    Dashboard
-                </a>
-
-                <a href="/Admin/Projects">
-                    <span>▣</span>
-                    Projects
-                </a>
-
-                <a href="#" class="active">
-                    <span>✓</span>
-                    Tasks
-                </a>
-
-                <a href="/Admin/Users">
-                    <span>♙</span>
-                    Users
-                </a>
-
-                <a href="/Admin/Roles">
-                    <span>▣</span>
-                    Manage Roles
-                </a>
-
-                <a href="#">
-                    <span>□</span>
-                    Calendar
-                </a>
-
-                <a href="#">
-                    <span>▤</span>
-                    Reports
-                </a>
-
-                <a href="#">
-                    <span>⚙</span>
-                    Settings
-                </a>
-
-            </nav>
-
-
-            <div class="sidebar-admin-card">
-
-                <div class="sidebar-admin-icon">
-                    ♛
-                </div>
-
-                <div>
-                    <strong>Admin Panel</strong>
-                    <small>
-                        Manage projects, users and tasks in one place.
-                    </small>
-                </div>
-
-                <span>→</span>
-
-            </div>
-
-        </aside>
-
+        @await Html.PartialAsync(
+            "~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
 
         <!-- =====================================================
          MAIN
@@ -132,106 +51,8 @@
 
             <!-- TOPBAR -->
 
-            <header class="task-topbar">
-
-                <div class="global-search">
-
-                    <span>⌕</span>
-
-                    <input type="text"
-                           placeholder="Search tasks, projects or users..." />
-
-                    <kbd>Ctrl K</kbd>
-
-                </div>
-
-
-                <div class="topbar-right">
-
-                    <span class="notification">
-                        ♧
-                        <i></i>
-                    </span>
-
-                    <div class="admin-avatar">
-                        A
-                    </div>
-
-                    <div class="admin-user">
-
-                        <strong>
-                            admin@taskmanagement.com
-                        </strong>
-
-                        <small>
-                            Administrator
-                        </small>
-
-                    </div>
-
-                    <span class="profile-arrow">
-                        ▾
-                    </span>
-
-                </div>
-
-            </header>
-
-
-            <!-- CONTENT -->
-
-            <section class="task-content">
-
-
-                <!-- PAGE HEADER -->
-
-                <div class="task-page-header">
-
-                    <div>
-
-                        <div class="task-breadcrumb">
-                            <span>Admin</span>
-                            <span>/</span>
-                            <strong>Tasks</strong>
-                        </div>
-
-                        <h1>
-                            Project Tasks
-                        </h1>
-
-                        <p>
-                            Manage tasks for the selected project.
-                        </p>
-
-                    </div>
-
-
-                    <div class="task-header-actions">
-
-                        <a href="/Admin/Projects"
-                               class="back-project-btn">
-
-                            ←
-                            Back to Projects
-
-                        </a>
-
-
-                        <button type="button"
-                                id="addTaskBtn"
-                                class="add-task-btn"
-                                data-project-id="@projectId"
-                                data-bs-toggle="modal"
-                                data-bs-target="#addTaskModal">
-
-                            + Add Task
-
-                        </button>
-
-                    </div>
-
-                </div>
-
+            @await Html.PartialAsync(
+            "~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
 
                 <!-- =================================================
                  PROJECT HEADER
@@ -1173,6 +994,8 @@
     <script src="~/js/admin-tasks.js"
             asp-append-version="true">
     </script>
+    <script src="~/js/admin-common.js"
+        asp-append-version="true"></script>
 
 </body>
 </html>

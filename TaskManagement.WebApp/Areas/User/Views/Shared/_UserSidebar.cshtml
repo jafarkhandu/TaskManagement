@@ -1,0 +1,151 @@
+﻿<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-logo">
+            ✓
+        </div>
+
+        <div class="brand-copy">
+            <strong>TaskManager</strong>
+            <span>Plan · Focus · Achieve</span>
+        </div>
+
+    </div>
+
+
+    <nav class="navigation">
+
+        <!-- Dashboard -->
+
+        <a href="@Url.Action(
+                                "Index",
+                                "Dashboard",
+                                new { area = "User" })"
+           class="nav-link active">
+
+            <span class="nav-symbol">⌂</span>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+
+        <!-- My Tasks -->
+
+        <a href="@Url.Action(
+                                "Index",
+                                "MyTasks",
+                                new { area = "User" })"
+           class="nav-link">
+
+            <span class="nav-symbol">✓</span>
+
+            <span>
+                My Tasks
+            </span>
+
+        </a>
+
+
+        <!-- Files -->
+
+        <button type="button"
+                class="nav-link"
+                data-modal="filesModal">
+
+            <span class="nav-symbol">
+                ▤
+            </span>
+
+            <span>
+                Files
+            </span>
+
+        </button>
+
+
+        <!-- Profile -->
+
+        <button type="button"
+                class="nav-link"
+                data-modal="profileModal">
+
+            <span class="nav-symbol">
+                ♙
+            </span>
+
+            <span>
+                Profile
+            </span>
+
+        </button>
+
+
+        <!-- Settings -->
+
+        <button type="button"
+                class="nav-link"
+                data-modal="settingsModal">
+
+            <span class="nav-symbol">
+                ⚙
+            </span>
+
+            <span>
+                Settings
+            </span>
+
+        </button>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <div class="sidebar-message">
+
+            <span>
+                ✦
+            </span>
+
+            <p>
+                Small steps every day
+                create big results.
+            </p>
+
+        </div>
+
+
+        <!-- LOGOUT -->
+
+        <form id="logoutForm"
+              action="@Url.Action(
+                                      "Logout",
+                                      "Account",
+                                      new { area = "" })"
+              method="post"
+              class="logout-form">
+
+            @Html.AntiForgeryToken()
+
+            <button type="submit"
+                    class="logout-button">
+
+                <span>
+                    ↪
+                </span>
+
+                <span>
+                    Logout
+                </span>
+
+            </button>
+
+        </form>
+
+    </div>
+
+</aside>

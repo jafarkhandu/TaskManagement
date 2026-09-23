@@ -32,132 +32,18 @@
           href="~/css/admin-users.css"
           asp-append-version="true" />
 
+    <link rel="stylesheet"
+      href="~/css/admin-common.css"
+      asp-append-version="true" />
+
 </head>
 
 <body class="admin-dashboard">
 
     <!-- ================= SIDEBAR ================= -->
 
-    <aside class="sidebar">
-
-        <div class="sidebar-brand">
-
-            <div class="brand-logo">
-                ✓
-            </div>
-
-            <div class="brand-text">
-
-                <strong>TaskManager</strong>
-
-                <span>
-                    Plan · Assign · Track
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <nav class="sidebar-nav">
-
-            <a href="@Url.Action(
-                "Index",
-                "Dashboard",
-                new { area = "Admin" })"
-               class="sidebar-link">
-
-                <span class="nav-icon">⌂</span>
-
-                <span>Dashboard</span>
-
-            </a>
-
-
-            <a href="@Url.Action(
-                "Index",
-                "Projects",
-                new { area = "Admin" })"
-               class="sidebar-link">
-
-                <span class="nav-icon">▣</span>
-
-                <span>Projects</span>
-
-            </a>
-
-
-            <a href="@Url.Action(
-                "Index",
-                "Users",
-                new { area = "Admin" })"
-               class="sidebar-link active">
-
-                <span class="nav-icon">♙</span>
-
-                <span>Users</span>
-
-            </a>
-
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">▣</span>
-
-                <span>Calendar</span>
-
-            </a>
-
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">▥</span>
-
-                <span>Reports</span>
-
-            </a>
-
-
-            <a href="#"
-               class="sidebar-link">
-
-                <span class="nav-icon">⚙</span>
-
-                <span>Settings</span>
-
-            </a>
-
-        </nav>
-
-
-        <div class="admin-card">
-
-            <div class="admin-card-icon">
-                ♛
-            </div>
-
-            <div class="admin-card-content">
-
-                <strong>
-                    Admin Panel
-                </strong>
-
-                <span>
-                    Manage projects, users
-                    and tasks in one place.
-                </span>
-
-            </div>
-
-            <span class="admin-arrow">
-                →
-            </span>
-
-        </div>
-
-    </aside>
+    @await Html.PartialAsync(
+    "~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
 
 
     <!-- ================= MAIN ================= -->
@@ -165,28 +51,8 @@
     <main class="main-content">
 
 
-        <!-- TOPBAR -->
-
-        <header class="topbar">
-
-            <div class="search-box">
-
-                <span class="search-icon">
-                    ⌕
-                </span>
-
-                <input type="text"
-                       id="userSearch"
-                       placeholder="Search users..." />
-
-                <span class="search-shortcut">
-                    Ctrl K
-                </span>
-
-            </div>
-
-        </header>
-
+        @await Html.PartialAsync(
+    "~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
 
         <div class="dashboard-container">
 
@@ -603,7 +469,8 @@
 
     <script src="~/js/admin-users.js"
             asp-append-version="true"></script>
-
+    <script src="~/js/admin-common.js"
+        asp-append-version="true"></script>
 </body>
 
 </html>
