@@ -2,77 +2,679 @@
 
 @{
     Layout = null;
+
+    var totalTasks = Model?.Count ?? 0;
+    var inProgress = Model?.Count(x => x.Status == "In Progress") ?? 0;
+    var onHold = Model?.Count(x => x.Status == "On Hold") ?? 0;
+    var completed = Model?.Count(x => x.Status == "Completed") ?? 0;
+
+    var todoTasks = Model?
+        .Where(x => x.Status == "Pending" || x.Status == "To Do")
+        .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
+
+    var progressTasks = Model?
+        .Where(x => x.Status == "In Progress")
+        .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
+
+    var holdTasks = Model?
+        .Where(x => x.Status == "On Hold")
+        .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
+
+    var completedTasks = Model?
+        .Where(x => x.Status == "Completed")
+        .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>TaskManager — My Tasks</title>
 
     <link rel="stylesheet"
-          href="~/css/user-dashboard.css"
+          href="~/css/my-tasks.css"
           asp-append-version="true" />
 </head>
 
 <body>
 
-    <div style="padding:40px; color:white;">
+<div class="user-task-app">
 
-        <h1>My Tasks</h1>
+    <form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
 
-        <p>
-            Total Tasks: @Model.Count
-        </p>
+    <!-- ================= SIDEBAR ================= -->
 
-        @if (Model.Any())
-        {
-            foreach (var task in Model)
-            {
-                <div style="margin:20px 0; padding:20px; background:#10233d; border-radius:12px;">
+    <aside class="task-sidebar">
 
-                    <h2>@task.Title</h2>
+        <div class="brand-area">
+            <div class="brand-icon">✓</div>
 
-                    <p>@task.Scenario</p>
+            <div>
+                <div class="brand-name">TaskManager</div>
+                <div class="brand-tagline">Plan · Focus · Achieve</div>
+            </div>
+        </div>
 
-                    <p>
-                        <strong>Priority:</strong>
-                        @task.Priority
-                    </p>
+        <nav class="sidebar-nav">
 
-                    <p>
-                        <strong>Status:</strong>
-                        @task.Status
-                    </p>
+            <a href="/User/Dashboard" class="sidebar-link">
+                <span class="sidebar-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
 
-                    <p>
-                        <strong>Start:</strong>
-                        @task.StartDate.ToString("dd MMM yyyy")
-                    </p>
+            <a href="/User/MyTasks" class="sidebar-link active">
+                <span class="sidebar-icon">✓</span>
+                <span>My Tasks</span>
+            </a>
 
-                    <p>
-                        <strong>Expected End:</strong>
-                        @task.ExpectedEndDate.ToString("dd MMM yyyy")
-                    </p>
+            <a href="/User/Notifications" class="sidebar-link">
+                <span class="sidebar-icon">♧</span>
+                <span>Notifications</span>
+            </a>
 
-                    <p>
-                        <strong>Amount:</strong>
-                        @task.Amount
-                    </p>
+            <a href="/User/Profile" class="sidebar-link">
+                <span class="sidebar-icon">♙</span>
+                <span>Profile</span>
+            </a>
+
+            <a href="/User/Settings" class="sidebar-link">
+                <span class="sidebar-icon">⚙</span>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-tip">
+                <span class="tip-star">✦</span>
+                <p>
+                    Small steps every day create big results.
+                </p>
+            </div>
+
+            <a href="/Account/Logout" class="logout-link">
+                <span>↪</span>
+                <span>Logout</span>
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="task-main">
+
+        <!-- TOP BAR -->
+
+        <header class="task-topbar">
+
+            <div class="top-search">
+                <span>⌕</span>
+
+                <input type="text"
+                       id="taskSearch"
+                       placeholder="Search tasks by title, description or status..." />
+
+                <span class="search-shortcut">Ctrl K</span>
+            </div>
+
+            <div class="top-actions">
+
+                <button type="button" class="top-icon-button">
+                    ⚙
+                </button>
+
+                <a href="/User/Notifications"
+                   class="top-icon-button notification-top">
+                    ♧
+                    <span class="notification-dot"></span>
+                </a>
+
+                <div class="user-mini">
+
+                    <div class="user-avatar">
+                        U
+                    </div>
+
+                    <div class="user-mini-info">
+                        <strong>User</strong>
+                        <small>Student</small>
+                    </div>
 
                 </div>
-            }
-        }
-        else
-        {
-            <p>No tasks assigned to you.</p>
-        }
+
+            </div>
+
+        </header>
+
+
+        <!-- HERO -->
+
+        <section class="task-hero">
+
+            <div class="hero-overlay"></div>
+
+            <div class="hero-content">
+
+                <span class="hero-label">
+                    My Tasks
+                </span>
+
+                <h1>
+                    Focus on what's
+                    <span>yours</span>
+                </h1>
+
+                <p>
+                    Complete your assigned tasks and make progress. 🚀
+                </p>
+
+            </div>
+
+            <div class="hero-quote">
+
+                <span>“</span>
+
+                <strong>
+                    Discipline today,
+                    success tomorrow.
+                </strong>
+
+                <small>
+                    — Keep Going
+                </small>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= STAT CARDS ================= -->
+
+        <section class="task-stats">
+
+            <div class="stat-card stat-total">
+
+                <div class="stat-icon">
+                    ✓
+                </div>
+
+                <div>
+                    <span>Total Tasks</span>
+                    <strong>@totalTasks</strong>
+                    <small>Assigned to you</small>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card stat-progress">
+
+                <div class="stat-icon">
+                    ▶
+                </div>
+
+                <div>
+                    <span>In Progress</span>
+                    <strong>@inProgress</strong>
+                    <small>Currently working</small>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card stat-hold">
+
+                <div class="stat-icon">
+                    II
+                </div>
+
+                <div>
+                    <span>On Hold</span>
+                    <strong>@onHold</strong>
+                    <small>Temporarily paused</small>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card stat-completed">
+
+                <div class="stat-icon">
+                    ✓
+                </div>
+
+                <div>
+                    <span>Completed</span>
+                    <strong>@completed</strong>
+                    <small>Finished tasks</small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= FILTER ================= -->
+
+        <section class="task-filter-bar">
+
+            <div class="filter-search">
+
+                <span>⌕</span>
+
+                <input type="text"
+                       id="boardSearch"
+                       placeholder="Search your tasks..." />
+
+            </div>
+
+            <select id="statusFilter">
+                <option value="all">All Status</option>
+                <option value="Pending">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Completed">Completed</option>
+            </select>
+
+            <select id="priorityFilter">
+                <option value="all">All Priority</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+
+            <button type="button" id="resetFilters">
+                ↻ Reset
+            </button>
+
+        </section>
+
+
+        <!-- ================= KANBAN ================= -->
+
+        <section class="kanban-board">
+
+
+            <!-- TODO -->
+
+            <div class="kanban-column todo-column">
+
+                <div class="column-header">
+
+                    <div>
+                        <span class="column-dot todo-dot"></span>
+                        <strong>To Do</strong>
+                        <b id="todoCount">@todoTasks.Count</b>
+                    </div>
+
+                </div>
+
+                <div class="task-list" id="todoList">
+
+                    @foreach (var task in todoTasks)
+                    {
+                        <article class="task-card"
+                                data-title="@task.Title"
+                                data-scenario="@task.Scenario"
+                                data-status="@task.Status"
+                                data-priority="@task.Priority"
+                                data-task-id="@task.Id"
+                                data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-amount="@task.Amount.ToString("0.00")">
+
+                            <div class="task-card-top">
+
+                                <span class="task-id">
+                                    TASK-@task.Id
+                                </span>
+
+                                <span class="priority-badge @task.Priority?.ToLower()">
+                                    @task.Priority
+                                </span>
+
+                            </div>
+
+                            <h3>@task.Title</h3>
+
+                            <p>@task.Scenario</p>
+
+                            <div class="task-meta">
+
+                                <span>
+                                    ◫
+                                    @task.ExpectedEndDate.ToString("dd MMM yyyy")
+                                </span>
+
+                                <span>
+                                    ₹ @task.Amount.ToString("0.00")
+                                </span>
+
+                            </div>
+
+                            <button class="view-task-btn"
+                                    type="button">
+                                View Details →
+                            </button>
+
+                        </article>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- IN PROGRESS -->
+
+            <div class="kanban-column progress-column">
+
+                <div class="column-header">
+
+                    <div>
+                        <span class="column-dot progress-dot"></span>
+                        <strong>In Progress</strong>
+                        <b id="progressCount">@progressTasks.Count</b>
+                    </div>
+
+                </div>
+
+                <div class="task-list" id="progressList">
+
+                    @foreach (var task in progressTasks)
+                    {
+                        <article class="task-card"
+                                data-title="@task.Title"
+                                data-scenario="@task.Scenario"
+                                data-status="@task.Status"
+                                data-priority="@task.Priority"
+                                data-task-id="@task.Id"
+                                data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-amount="@task.Amount.ToString("0.00")">
+
+                            <div class="task-card-top">
+
+                                <span class="task-id">
+                                    TASK-@task.Id
+                                </span>
+
+                                <span class="priority-badge @task.Priority?.ToLower()">
+                                    @task.Priority
+                                </span>
+
+                            </div>
+
+                            <h3>@task.Title</h3>
+
+                            <p>@task.Scenario</p>
+
+                            <div class="task-meta">
+
+                                <span>
+                                    ◫
+                                    @task.ExpectedEndDate.ToString("dd MMM yyyy")
+                                </span>
+
+                                <span>
+                                    ₹ @task.Amount.ToString("0.00")
+                                </span>
+
+                            </div>
+
+                            <button class="view-task-btn"
+                                    type="button">
+                                View Details →
+                            </button>
+
+                        </article>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- ON HOLD -->
+
+            <div class="kanban-column hold-column">
+
+                <div class="column-header">
+
+                    <div>
+                        <span class="column-dot hold-dot"></span>
+                        <strong>On Hold</strong>
+                        <b id="holdCount">@holdTasks.Count</b>
+                    </div>
+
+                </div>
+
+                <div class="task-list" id="holdList">
+
+                    @foreach (var task in holdTasks)
+                    {
+                        <article class="task-card"
+                                data-title="@task.Title"
+                                data-scenario="@task.Scenario"
+                                data-status="@task.Status"
+                                data-priority="@task.Priority"
+                                data-task-id="@task.Id"
+                                data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-amount="@task.Amount.ToString("0.00")">
+
+                            <div class="task-card-top">
+
+                                <span class="task-id">
+                                    TASK-@task.Id
+                                </span>
+
+                                <span class="priority-badge @task.Priority?.ToLower()">
+                                    @task.Priority
+                                </span>
+
+                            </div>
+
+                            <h3>@task.Title</h3>
+
+                            <p>@task.Scenario</p>
+
+                            <div class="task-meta">
+
+                                <span>
+                                    ◫
+                                    @task.ExpectedEndDate.ToString("dd MMM yyyy")
+                                </span>
+
+                                <span>
+                                    ₹ @task.Amount.ToString("0.00")
+                                </span>
+
+                            </div>
+
+                            <button class="view-task-btn"
+                                    type="button">
+                                View Details →
+                            </button>
+
+                        </article>
+                    }
+
+                    @if (!holdTasks.Any())
+                    {
+                        <div class="empty-column">
+                            <div>Ⅱ</div>
+                            <strong>No tasks here</strong>
+                            <span>Tasks will appear here.</span>
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- COMPLETED -->
+
+            <div class="kanban-column completed-column">
+
+                <div class="column-header">
+
+                    <div>
+                        <span class="column-dot completed-dot"></span>
+                        <strong>Completed</strong>
+                        <b id="completedCount">@completedTasks.Count</b>
+                    </div>
+
+                </div>
+
+                <div class="task-list" id="completedList">
+
+                    @foreach (var task in completedTasks)
+                    {
+                        <article class="task-card"
+                                data-title="@task.Title"
+                                data-scenario="@task.Scenario"
+                                data-status="@task.Status"
+                                data-priority="@task.Priority"
+                                data-task-id="@task.Id"
+                                data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-amount="@task.Amount.ToString("0.00")">
+
+                            <div class="task-card-top">
+
+                                <span class="task-id">
+                                    TASK-@task.Id
+                                </span>
+
+                                <span class="priority-badge @task.Priority?.ToLower()">
+                                    @task.Priority
+                                </span>
+
+                            </div>
+
+                            <h3>@task.Title</h3>
+
+                            <p>@task.Scenario</p>
+
+                            <div class="task-meta">
+
+                                <span>
+                                    ◫
+                                    @task.ExpectedEndDate.ToString("dd MMM yyyy")
+                                </span>
+
+                                <span>
+                                    ₹ @task.Amount.ToString("0.00")
+                                </span>
+
+                            </div>
+
+                            <button class="view-task-btn"
+                                    type="button">
+                                View Details →
+                            </button>
+
+                        </article>
+                    }
+
+                    @if (!completedTasks.Any())
+                    {
+                        <div class="empty-column">
+                            <div>✓</div>
+                            <strong>No tasks here</strong>
+                            <span>Tasks will appear here.</span>
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================= TASK DETAILS MODAL ================= -->
+
+<div class="task-modal" id="taskModal">
+
+    <div class="task-modal-backdrop"></div>
+
+    <div class="task-modal-box">
+
+        <button type="button"
+                class="modal-close"
+                id="closeTaskModal">
+            ×
+        </button>
+
+        <div class="modal-title">
+
+            <div class="modal-icon">
+                ✓
+            </div>
+
+            <h2>Task Details</h2>
+
+        </div>
+
+        <div class="modal-task-id"
+             id="modalTaskId">
+        </div>
+
+        <h2 id="modalTitle">
+        </h2>
+
+        <p id="modalScenario">
+        </p>
+
+        <div class="modal-grid">
+
+            <div class="modal-info">
+                <span>Status</span>
+                <strong id="modalStatus"></strong>
+            </div>
+
+            <div class="modal-info">
+                <span>Priority</span>
+                <strong id="modalPriority"></strong>
+            </div>
+
+            <div class="modal-info">
+                <span>Start Date</span>
+                <strong id="modalStartDate"></strong>
+            </div>
+
+            <div class="modal-info">
+                <span>Expected End</span>
+                <strong id="modalEndDate"></strong>
+            </div>
+
+            <div class="modal-info">
+                <span>Amount</span>
+                <strong id="modalAmount"></strong>
+            </div>
+
+        </div>
 
     </div>
+
+</div>
+
+
+<script src="~/js/my-tasks.js"
+        asp-append-version="true"></script>
 
 </body>
 </html>
