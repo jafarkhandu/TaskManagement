@@ -1,0 +1,78 @@
+﻿@model List<TaskManagement.Domain.Entities.TaskItem>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>TaskManager — My Tasks</title>
+
+    <link rel="stylesheet"
+          href="~/css/user-dashboard.css"
+          asp-append-version="true" />
+</head>
+
+<body>
+
+    <div style="padding:40px; color:white;">
+
+        <h1>My Tasks</h1>
+
+        <p>
+            Total Tasks: @Model.Count
+        </p>
+
+        @if (Model.Any())
+        {
+            foreach (var task in Model)
+            {
+                <div style="margin:20px 0; padding:20px; background:#10233d; border-radius:12px;">
+
+                    <h2>@task.Title</h2>
+
+                    <p>@task.Scenario</p>
+
+                    <p>
+                        <strong>Priority:</strong>
+                        @task.Priority
+                    </p>
+
+                    <p>
+                        <strong>Status:</strong>
+                        @task.Status
+                    </p>
+
+                    <p>
+                        <strong>Start:</strong>
+                        @task.StartDate.ToString("dd MMM yyyy")
+                    </p>
+
+                    <p>
+                        <strong>Expected End:</strong>
+                        @task.ExpectedEndDate.ToString("dd MMM yyyy")
+                    </p>
+
+                    <p>
+                        <strong>Amount:</strong>
+                        @task.Amount
+                    </p>
+
+                </div>
+            }
+        }
+        else
+        {
+            <p>No tasks assigned to you.</p>
+        }
+
+    </div>
+
+</body>
+</html>
