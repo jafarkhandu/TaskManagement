@@ -1081,7 +1081,7 @@
 
 
         /* =====================================================
-           FILTERS
+            FILTERS
         ===================================================== */
 
         searchInput.addEventListener(
@@ -1112,22 +1112,309 @@
             'click',
             function () {
 
-                searchInput.value =
-                    '';
+                searchInput.value = '';
 
-                statusFilter.value =
-                    '';
+                statusFilter.value = '';
 
-                priorityFilter.value =
-                    '';
+                priorityFilter.value = '';
 
-                assigneeFilter.value =
-                    '';
+                assigneeFilter.value = '';
 
                 renderBoard();
 
             }
         );
+
+
+        /* =====================================================
+           LIVE UPDATES - SIGNALR
+        ===================================================== */
+
+        if (window.signalR && projectId > 0) {
+
+            const adminNotificationConnection =
+                new signalR.HubConnectionBuilder()
+                    .withUrl('/notificationHub')
+                    .withAutomaticReconnect()
+                    .build();
+
+
+            function adminShowToast(message) {
+
+                try {
+
+                    const el =
+                        document.createElement('div');
+
+                    el.className =
+                        'admin-status-toast';
+
+                    el.style.position = 'fixed';
+                    el.style.right = '20px';
+                    el.style.top = '20px';
+                    el.style.background = '#2d9cdb';
+                    el.style.color = '#fff';
+                    el.style.padding = '10px 14px';
+                    el.style.borderRadius = '6px';
+                    el.style.boxShadow =
+                        '0 6px 18px rgba(0,0,0,0.12)';
+                    el.style.zIndex = '10000';
+
+                    el.textContent = message;
+
+                    document.body.appendChild(el);
+
+                    setTimeout(
+                        function () {
+
+                            el.style.opacity = '0';
+
+                            setTimeout(
+                                function () {
+                                    el.remove();
+                                },
+                                300
+                            );
+
+                        },
+                        3500
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Toast error:',
+                        error
+                    );
+
+                }
+
+            }
+
+
+            /* ==========================================
+               TASK STATUS CHANGED
+            ========================================== */
+
+            adminNotificationConnection.on(
+                'TaskStatusChanged',
+                function (payload) {
+
+                    console.log(
+                        'ADMIN RECEIVED TaskStatusChanged:',
+                        payload
+                    );
+
+
+                    if (!payload) {
+                        return;
+                    }
+
+
+                    const incomingProjectId =
+                        Number(
+                            payload.projectId ??
+                            payload.ProjectId ??
+                            0
+                        );
+
+
+                    if (
+                        incomingProjectId !==
+                        Number(projectId)
+                    ) {
+                        return;
+                    }
+
+
+                    const taskId =
+                        Number(
+                            payload.taskId ??
+                            payload.TaskId ??
+                            0
+                        );
+
+
+                    const newStatus =
+                        payload.newStatus ??
+                        payload.NewStatus ??
+                        '';
+
+
+                    if (!taskId || !newStatus) {
+                        return;
+                    }
+
+
+                    const taskIndex =
+                        tasks.findIndex(
+                            function (task) {
+
+                                return Number(task.id) ===
+                                    taskId;
+
+                            }
+                        );
+
+
+                    if (taskIndex === -1) {
+
+                        console.warn(
+                            'Task not found in admin board:',
+                            taskId
+                        );
+
+                        return;
+                    }
+
+
+                    /* Remove task from old position */
+
+                    const movedTask =
+                        tasks.splice(
+                            taskIndex,
+                            1
+                        )[0];
+
+
+                    /* Update status */
+
+                    movedTask.status =
+                        normalizeStatus(
+                            newStatus
+                        );
+
+
+                    /*
+                     * Put task at the beginning.
+                     * Therefore it appears at the TOP
+                     * of the new status column.
+                     */
+
+                    tasks.unshift(
+                        movedTask
+                    );
+
+
+                    /* Update statistics */
+
+                    renderStats();
+
+
+                    /* Re-render board */
+
+                    renderBoard();
+
+
+                    /* Show notification */
+
+                    adminShowToast(
+                        `Task ${taskId} moved to ${movedTask.status}`
+                    );
+
+                }
+            );
+
+
+            /* ==========================================
+               RECONNECT
+            ========================================== */
+
+            adminNotificationConnection.onreconnected(
+                async function () {
+
+                    console.log(
+                        'Admin SignalR reconnected.'
+                    );
+
+
+                    try {
+
+                        await adminNotificationConnection
+                            .invoke(
+                                'JoinProjectGroup',
+                                projectId
+                            );
+
+
+                        console.log(
+                            'Rejoined project group:',
+                            projectId
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            'Failed to rejoin project group:',
+                            error
+                        );
+
+                    }
+
+                }
+            );
+
+
+            /* ==========================================
+               START SIGNALR
+            ========================================== */
+
+            async function startAdminSignalR() {
+
+                try {
+
+                    await adminNotificationConnection
+                        .start();
+
+
+                    console.log(
+                        'Admin SignalR connected.'
+                    );
+
+
+                    await adminNotificationConnection
+                        .invoke(
+                            'JoinProjectGroup',
+                            projectId
+                        );
+
+
+                    console.log(
+                        'Admin joined project group:',
+                        projectId
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Admin SignalR connection failed:',
+                        error
+                    );
+
+
+                    setTimeout(
+                        startAdminSignalR,
+                        5000
+                    );
+
+                }
+
+            }
+
+
+            startAdminSignalR();
+
+        }
+        else {
+
+            console.error(
+                'SignalR library not loaded.'
+            );
+
+        }
 
 
         /* =====================================================

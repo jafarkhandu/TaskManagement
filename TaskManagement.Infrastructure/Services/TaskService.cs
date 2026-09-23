@@ -190,6 +190,64 @@ namespace TaskManagement.Infrastructure.Services
             }
         }
 
+        public async Task<(bool Success, string Error, int TaskId, int ProjectId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return (false, "User not found.", 0, 0, string.Empty, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(newStatus))
+                return (false, "Invalid target status.", taskId, 0, string.Empty, string.Empty);
+
+            // Normalize newStatus to canonical allowed value if case-insensitive match exists
+            newStatus = AllowedStatuses.FirstOrDefault(s => string.Equals(s, newStatus, StringComparison.OrdinalIgnoreCase)) ?? newStatus;
+
+            if (!AllowedStatuses.Contains(newStatus))
+                return (false, "Invalid target status.", taskId, 0, string.Empty, string.Empty);
+
+            var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+                return (false, "Task not found.", taskId, 0, string.Empty, string.Empty);
+
+            // Ensure the caller owns the task
+            if (string.IsNullOrWhiteSpace(task.AssignedToUserId) || task.AssignedToUserId != userId)
+                return (false, "Unauthorized to modify this task.", taskId, task.ProjectId, task.Status ?? string.Empty, newStatus);
+
+            var oldStatus = task.Status ?? string.Empty;
+
+            // Completed is terminal
+            if (string.Equals(oldStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Completed tasks cannot be modified.", taskId, task.ProjectId, oldStatus, newStatus);
+
+            // No-op
+            if (string.Equals(oldStatus, newStatus, StringComparison.OrdinalIgnoreCase))
+                return (false, "Task is already in the requested status.", taskId, task.ProjectId, oldStatus, newStatus);
+
+            // Strict workflow transitions
+            var allowed = false;
+            if (string.Equals(oldStatus, "Pending", StringComparison.OrdinalIgnoreCase) && string.Equals(newStatus, "In Progress", StringComparison.OrdinalIgnoreCase))
+                allowed = true;
+            else if (string.Equals(oldStatus, "In Progress", StringComparison.OrdinalIgnoreCase) && (string.Equals(newStatus, "On Hold", StringComparison.OrdinalIgnoreCase) || string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)))
+                allowed = true;
+            else if (string.Equals(oldStatus, "On Hold", StringComparison.OrdinalIgnoreCase) && string.Equals(newStatus, "In Progress", StringComparison.OrdinalIgnoreCase))
+                allowed = true;
+
+            if (!allowed)
+                return (false, "Status transition is not allowed.", taskId, task.ProjectId, oldStatus, newStatus);
+
+            task.Status = newStatus;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+                return (true, string.Empty, taskId, task.ProjectId, oldStatus, newStatus);
+            }
+            catch
+            {
+                return (false, "Failed to update task status.", taskId, task.ProjectId, oldStatus, newStatus);
+            }
+        }
+
         public async Task<(bool Success, string Error)> UpdateAsync(TaskDto model)
         {
             var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == model.Id);
