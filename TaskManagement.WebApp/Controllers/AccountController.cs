@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using TaskManagement.Infrastructure.Identity;
 
 namespace TaskManagement.Web.Controllers
@@ -91,8 +91,8 @@ namespace TaskManagement.Web.Controllers
 
         }
 
-            // GET: /Account/Register
-            [HttpGet]
+        // GET: /Account/Register
+        [HttpGet]
         public IActionResult Register()
         {
             return View();

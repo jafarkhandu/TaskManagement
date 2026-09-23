@@ -450,7 +450,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     });
                 }
 
-                var emailBody = 
+                var emailBody =
                     $"""
                     <h2>Account Activated</h2>
 

@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.SignalR;
 using TaskManagement.WebApp.Hubs;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
@@ -158,8 +157,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             return Json(new { success = true, message = "Task deleted successfully." });
         }
 
-        
 
-        
+
+
     }
 }

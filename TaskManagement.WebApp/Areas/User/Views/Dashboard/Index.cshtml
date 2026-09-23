@@ -67,11 +67,11 @@
             </a>
 
 
-            <a href="#projects"
+           <a href="#tasks"
                class="nav-link">
 
-                <span class="nav-symbol">▱</span>
-                <span>My Projects</span>
+                <span class="nav-symbol">✓</span>
+                <span>My Tasks</span>
 
             </a>
 
@@ -159,7 +159,7 @@
 
                 <input type="text"
                        id="globalSearch"
-                       placeholder="Search projects, tasks, or anything..." />
+                       placeholder="Search tasks..."" />
 
                 <kbd>Ctrl K</kbd>
 
@@ -439,7 +439,7 @@
                     <button type="button"
                             id="resetFilter">
 
-                        This Project⌄
+                        All Tasks⌄
 
                     </button>
 
@@ -505,7 +505,8 @@
 
             <!-- FOCUS TASKS -->
 
-            <article class="glass-card focus">
+            <article class="glass-card focus"
+             id="tasks">
 
                 <div class="card-heading">
 
@@ -544,9 +545,9 @@
                                         @task.Title
                                     </strong>
 
-                                    <small>
+                                   <small>
                                         @(string.IsNullOrWhiteSpace(task.Scenario)
-                                            ? task.ProjectTitle
+                                            ? "Task details"
                                             : task.Scenario)
                                     </small>
 
@@ -629,8 +630,7 @@
 
                                     <small>
                                         @task.Status
-                                        ·
-                                        @task.ProjectTitle
+                                        
                                     </small>
 
                                 </span>
@@ -661,86 +661,6 @@
 
         </section>
 
-
-        <!-- ================= PROJECTS ================= -->
-
-        <section class="projects"
-                 id="projects">
-
-            <div class="section-title">
-
-                <div>
-                    <span>WORKSPACE</span>
-                    <h2>My Projects</h2>
-                </div>
-
-                <small>
-                    @Model.ActiveProjects active
-                </small>
-
-            </div>
-
-
-            <div class="project-grid">
-
-                @foreach (var project in Model.Projects)
-                {
-                    var projectLetter =
-                        string.IsNullOrWhiteSpace(project.ProjectTitle)
-                            ? "P"
-                            : project.ProjectTitle.Substring(0, 1).ToUpper();
-
-                    <button type="button"
-                            class="project"
-                            data-project="@project.ProjectTitle">
-
-                        <div class="project-head">
-
-                            <span>
-                                @projectLetter
-                            </span>
-
-                            <b>⋮</b>
-
-                        </div>
-
-                        <strong>
-                            @project.ProjectTitle
-                        </strong>
-
-                        <p>
-                            @project.Description
-                        </p>
-
-                        <div class="progress">
-
-                            <i style="width:@project.ProgressPercent%"></i>
-
-                        </div>
-
-                        <div class="project-bottom">
-
-                            <span>
-                                @project.CompletedTasks /
-                                @project.TotalTasks tasks
-                            </span>
-
-                            <strong>
-                                @project.ProgressPercent%
-                            </strong>
-
-                            <small>
-                                @project.Status
-                            </small>
-
-                        </div>
-
-                    </button>
-                }
-
-            </div>
-
-        </section>
 
 
         <!-- ================= GOAL ================= -->
@@ -824,40 +744,6 @@
 </div>
 
 
-<!-- ================= PROJECT MODAL ================= -->
-
-<div class="modal"
-     id="projectModal">
-
-    <div class="modal-box">
-
-        <button class="modal-close"
-                data-close>
-            ×
-        </button>
-
-        <span class="modal-symbol purple">
-            ▱
-        </span>
-
-        <small>PROJECT</small>
-
-        <h2 id="projectTitle">
-            Project
-        </h2>
-
-        <p>
-            This project is part of your assigned workspace.
-        </p>
-
-        <button class="modal-button"
-                data-close>
-            Close
-        </button>
-
-    </div>
-
-</div>
 
 
 <!-- ================= PROFILE ================= -->

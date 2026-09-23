@@ -763,28 +763,6 @@
         });
 
 
-    /* =====================================================
-       PROJECTS
-    ===================================================== */
-
-    const projectTitle =
-        document.getElementById("projectTitle");
-
-
-    document.querySelectorAll(".project")
-        .forEach(project => {
-
-            project.addEventListener("click", () => {
-
-                if (projectTitle)
-                    projectTitle.textContent =
-                        project.dataset.project;
-
-                openModal("projectModal");
-
-            });
-
-        });
 
 
     /* =====================================================
@@ -803,8 +781,8 @@
                 .toLowerCase();
 
 
-        document.querySelectorAll(
-            ".task-item, .activity-item, .project"
+       document.querySelectorAll(
+            ".task-item, .activity-item"
         )
             .forEach(item => {
 
