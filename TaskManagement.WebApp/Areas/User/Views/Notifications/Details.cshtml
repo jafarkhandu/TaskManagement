@@ -1,77 +1,323 @@
 @model dynamic
+
 @{
-	Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = null;
 }
 
-<div class="page-header">
-	<a href="/User/Notifications" class="back-link">← Notifications</a>
-	<h1>New Task Assignment</h1>
+<div class="task-details-page">
+
+    <div class="task-details-glow task-details-glow-one"></div>
+    <div class="task-details-glow task-details-glow-two"></div>
+
+    <main class="task-details-shell">
+
+        <!-- Header -->
+
+        <section class="task-details-header">
+
+            <a href="/User/Notifications" class="task-back-link">
+                <span class="back-arrow">←</span>
+                <span>Back to Notifications</span>
+            </a>
+
+            <div class="task-header-content">
+
+                <div class="task-header-icon">
+                    <span>🔔</span>
+                </div>
+
+                <div class="task-header-text">
+
+                    <span class="task-eyebrow">
+                        TASK ASSIGNMENT
+                    </span>
+
+                    <h1>
+                        New Task Assignment
+                    </h1>
+
+                    <p>
+                        Review the task details below and choose to accept or reject.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Main Task Card -->
+
+        <section class="task-details-card">
+
+            <div class="task-details-card-inner">
+
+                <!-- Left Side -->
+
+                <div class="task-information">
+
+                    <div class="task-title-row">
+
+                        <div>
+                            <h2>
+                                @Model.Title
+                            </h2>
+
+                            <span class="task-reference">
+                                #TASK-@Model.NotificationId
+                            </span>
+                        </div>
+
+                        <span class="priority-badge">
+                            <span class="priority-dot"></span>
+                            @Model.Priority Priority
+                        </span>
+
+                    </div>
+
+
+                    <!-- Scenario -->
+
+                    <div class="task-scenario">
+
+                        <span class="detail-label">
+                            Scenario
+                        </span>
+
+                        <div class="scenario-box">
+                            @Model.Scenario
+                        </div>
+
+                    </div>
+
+
+                    <!-- Task Information Grid -->
+
+                    <div class="task-info-grid">
+
+                        <div class="info-tile">
+
+                            <div class="info-icon">
+                                📅
+                            </div>
+
+                            <div>
+                                <span class="detail-label">
+                                    Start Date
+                                </span>
+
+                                <strong>
+                                    @(((DateTime)Model.StartDate).ToString("dd MMM yyyy"))
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-tile">
+
+                            <div class="info-icon">
+                                📅
+                            </div>
+
+                            <div>
+                                <span class="detail-label">
+                                    Expected End Date
+                                </span>
+
+                                <strong>
+                                    @(((DateTime)Model.ExpectedEndDate).ToString("dd MMM yyyy"))
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-tile">
+
+                            <div class="info-icon">
+                                ₹
+                            </div>
+
+                            <div>
+                                <span class="detail-label">
+                                    Amount
+                                </span>
+
+                                <strong>
+                                    ₹@String.Format(
+                                        System.Globalization.CultureInfo.GetCultureInfo("en-IN"),
+                                        "{0:N2}",
+                                        Model.Amount
+                                    )
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-tile">
+
+                            <div class="info-icon">
+                                ⚑
+                            </div>
+
+                            <div>
+                                <span class="detail-label">
+                                    Priority
+                                </span>
+
+                                <strong>
+                                    @Model.Priority
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-tile">
+
+                            <div class="info-icon">
+                                📁
+                            </div>
+
+                            <div>
+                                <span class="detail-label">
+                                    Project
+                                </span>
+
+                                <strong>
+                                    Not specified
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-tile">
+
+                            <div class="info-icon">
+                                👤
+                            </div>
+
+                            <div>
+                                <span class="detail-label">
+                                    Assigned By
+                                </span>
+
+                                <strong>
+                                    Admin
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Right Side -->
+
+                <aside class="task-action-panel">
+
+                    <div class="action-panel-icon">
+                        📄
+                    </div>
+
+                    <h3>
+                        Task Details
+                    </h3>
+
+                    <p class="action-panel-subtitle">
+                        Please review all the information before taking action.
+                    </p>
+
+
+                    <div class="action-info-box">
+
+                        <span class="action-info-icon">
+                            ⓘ
+                        </span>
+
+                        <p>
+                            By accepting this task, it will be added to your
+                            active tasks and you will be responsible for
+                            completing it within the expected date.
+                        </p>
+
+                    </div>
+
+
+                    <!-- Buttons -->
+
+                    <div class="task-actions">
+
+                        <form id="antiForgeryForm">
+                            @Html.AntiForgeryToken()
+                        </form>
+
+                        @if (Model.AssignmentStatus == "Pending")
+                        {
+                            <button type="button"
+                                    id="rejectButton"
+                                    class="task-action-button reject-button">
+
+                                <span>✕</span>
+
+                                <span>Reject</span>
+
+                            </button>
+
+                            <button type="button"
+                                    id="acceptButton"
+                                    class="task-action-button accept-button">
+
+                                <span>✓</span>
+
+                                <span>Accept</span>
+
+                            </button>
+                        }
+                        else if (Model.AssignmentStatus == "Accepted")
+                        {
+                            <div class="final-status accepted-status">
+                                <span>✓</span>
+                                Task Accepted
+                            </div>
+                        }
+                        else if (Model.AssignmentStatus == "Rejected")
+                        {
+                            <div class="final-status rejected-status">
+                                <span>✕</span>
+                                Task Rejected
+                            </div>
+                        }
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </section>
+
+    </main>
+
 </div>
 
-<div class="notification-details-card">
-	<h2>@Model.Title</h2>
 
-	<div class="detail-row">
-		<strong>Scenario</strong>
-		<p>@Model.Scenario</p>
-	</div>
+<link rel="stylesheet"
+      href="~/css/notification-details.css"
+      asp-append-version="true" />
 
-	<div class="detail-row">
-		<strong>Priority</strong>
-		<p>@Model.Priority</p>
-	</div>
-
-	<div class="detail-row">
-		<strong>Start Date</strong>
-		<p>@(Model.StartDate == null ? "" : ((DateTime)Model.StartDate).ToString("dd MMM yyyy"))</p>
-	</div>
-
-	<div class="detail-row">
-		<strong>Expected End Date</strong>
-		<p>@(Model.ExpectedEndDate == null ? "" : ((DateTime)Model.ExpectedEndDate).ToString("dd MMM yyyy"))</p>
-	</div>
-
-	<div class="detail-row">
-		<strong>Amount</strong>
-		<p>₹@String.Format(System.Globalization.CultureInfo.GetCultureInfo("en-IN"), "{0:N2}", Model.Amount)</p>
-	</div>
-
-	<div class="actions">
-		<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
-
-		@if (Model.AssignmentStatus == "Pending")
-		{
-			<button id="rejectButton"
-					class="btn btn-light">
-				Reject
-			</button>
-
-			<button id="acceptButton"
-					class="btn btn-primary">
-				Accept
-			</button>
-		}
-		else if (Model.AssignmentStatus == "Accepted")
-		{
-			<span class="notification-status accepted">
-				✓ Accepted
-			</span>
-		}
-		else if (Model.AssignmentStatus == "Rejected")
-		{
-			<span class="notification-status rejected">
-				✕ Rejected
-			</span>
-		}
-	</div>
-</div>
-
-<link rel="stylesheet" href="~/css/user-dashboard.css" asp-append-version="true" />
-<script src="~/js/notifications.js" asp-append-version="true"></script>
 <script>
-	// Pass server model info into JS
-	window.__notificationDetails = {
-		assignmentId: @Model.AssignmentId,
-		notificationId: @Model.NotificationId
-	};
+    window.notificationDetails = {
+        assignmentId: @Model.AssignmentId,
+        notificationId: @Model.NotificationId
+    };
 </script>
+
+<script src="~/js/notification-details.js"
+        asp-append-version="true"></script>
