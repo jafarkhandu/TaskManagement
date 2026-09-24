@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Infrastructure.Identity;
+using TaskManagement.WebApp.Hubs;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
 {
@@ -13,13 +15,16 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
     {
         private readonly IChatService _chatService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHubContext<ChatHub> _chatHub;
 
         public ChatController(
             IChatService chatService,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IHubContext<ChatHub> chatHub)
         {
             _chatService = chatService;
             _userManager = userManager;
+            _chatHub = chatHub;
         }
 
         [HttpGet]
@@ -73,6 +78,28 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
             if (!result.Success)
                 return BadRequest(result.Error);
+
+            // Broadcast the saved message to the chat group so the user receives it in real-time
+            if (result.Message != null)
+            {
+                var payload = new
+                {
+                    chatSessionId = model.ChatSessionId,
+                    senderId = result.Message.SenderId,
+                    senderName = result.Message.SenderName,
+                    message = result.Message.Message,
+                    sentAt = result.Message.SentAt
+                };
+
+                try
+                {
+                    await _chatHub.Clients.Group($"chat-{model.ChatSessionId}").SendAsync("ReceiveMessage", payload);
+                }
+                catch
+                {
+                    // Non-fatal
+                }
+            }
 
             return Ok();
         }

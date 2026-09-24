@@ -29,6 +29,14 @@
 
     </div>
 
+@* Anti-forgery token available globally to user pages *@
+<form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
+
+@* Expose current user id to client scripts for chat rendering (safe identifier only) *@
+<script>
+    window.CurrentUserId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ""));
+</script>
+
     <div id="notificationPopupContent">
 
         <div class="notification-empty">
@@ -46,6 +54,12 @@
         </div>
 
     </div>
+
+
+@* Include the global user chat drawer and its script so it's available on all user pages *@
+@await Html.PartialAsync("~/Areas/User/Views/Shared/_UserChat.cshtml")
+
+<script src="~/js/user-chat.js" asp-append-version="true"></script>
 
 </div>
 

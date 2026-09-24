@@ -164,20 +164,15 @@
     }
 
 
-    cards.forEach(card => {
+    // Use delegated handler for View Details so it continues to work after DOM changes
+    document.body.addEventListener('click', function (ev) {
+        const btn = ev.target.closest('.view-task-btn');
+        if (!btn) return;
 
-        const button =
-            card.querySelector(".view-task-btn");
+        const card = btn.closest('.task-card');
+        if (!card) return;
 
-        button?.addEventListener(
-            "click",
-            function () {
-
-                openTaskModal(card);
-
-            }
-        );
-
+        openTaskModal(card);
     });
 
 
@@ -514,357 +509,8 @@
 
        })();
 
-});
-
-// =========================================================
-// TASK CHAT - DRAWER UI
-// =========================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const drawer = document.getElementById("taskChatDrawer");
-    const overlay = document.getElementById("taskChatOverlay");
-    const closeButton = document.getElementById("closeTaskChat");
-    const startChatButton =
-        document.getElementById("startTaskChat");
-
-    const startChatButtonParent =
-        startChatButton?.parentElement;
-
-    const taskTitle =
-        document.getElementById("chatTaskTitle");
-    const taskStatus = document.getElementById("chatTaskStatus");
-
-    function restoreStartChatButton(showButton) {
-
-        if (!startChatButton) {
-            return;
-        }
-
-        // Put the button back into its original location
-        if (
-            startChatButtonParent &&
-            !startChatButtonParent.contains(startChatButton)
-        ) {
-            startChatButtonParent.appendChild(
-                startChatButton
-            );
-        }
-
-        startChatButton.style.display =
-            showButton ? "" : "none";
-
-        startChatButton.disabled = false;
-
-        startChatButton.innerHTML =
-            '<span>✦</span> Start Chat';
-    }
-
-    let activeChatTaskId = null;
-    let activeChatSessionId = null;
-
-    async function loadChatHistory() {
-
-        if (!activeChatSessionId) {
-            return;
-        }
-
-        try {
-
-            const response = await fetch(
-                `/User/MyTasks/GetChat?chatSessionId=${activeChatSessionId}`
-            );
-
-            const result = await response.json();
-
-            if (!result.success) {
-                throw new Error(
-                    result.message || "Unable to load chat history."
-                );
-            }
-
-            renderChatHistory(result.data);
-
-        } catch (error) {
-
-            console.error(
-                "Chat history error:",
-                error
-            );
-        }
-    }
-
-    function renderChatHistory(chatData) {
-
-        const messagesContainer =
-            document.getElementById("taskChatMessages");
-
-        if (!messagesContainer) {
-            return;
-        }
-
-        const messages =
-            chatData?.messages || [];
-
-        // Clear previous chat content
-        messagesContainer.innerHTML = "";
-
-        // No previous messages
-        if (messages.length === 0) {
-
-            messagesContainer.innerHTML = `
-        <div class="task-chat-empty">
-            <div class="task-chat-empty-icon">💬</div>
-
-            <h4>Start the conversation</h4>
-
-            <p>
-                Ask Admin anything about this task.
-            </p>
-        </div>
-    `;
-
-            return;
-        }
-
-        // Render old messages
-        messages.forEach(message => {
-
-            const wrapper =
-                document.createElement("div");
-
-            // For now identify messages using SenderId.
-            // Real current-user identification will be connected
-            // when SignalR messaging is added.
-            wrapper.className = "chat-message admin";
-
-            const bubble =
-                document.createElement("div");
-
-            bubble.className =
-                "chat-message-bubble";
-
-            bubble.textContent =
-                message.message || "";
-
-            const time =
-                document.createElement("div");
-
-            time.className =
-                "chat-message-time";
-
-            time.textContent =
-                formatChatTime(message.sentAt);
-
-            const content =
-                document.createElement("div");
-
-            content.appendChild(bubble);
-            content.appendChild(time);
-
-            wrapper.appendChild(content);
-
-            messagesContainer.appendChild(wrapper);
-        });
-
-        // Automatically scroll to latest message
-        messagesContainer.scrollTop =
-            messagesContainer.scrollHeight;
-    }
-
-
-    function formatChatTime(value) {
-
-        if (!value) {
-            return "";
-        }
-
-        const date =
-            new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "";
-        }
-
-        return date.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
-    }
-
-
-    if (!drawer || !overlay) {
-        return;
-    }
-
-    // Ensure overlay and drawer are direct children of <body> so parent layout/transform
-    // rules cannot affect fixed positioning. Move them if they're not already there.
-    try {
-        if (overlay.parentElement !== document.body) {
-            document.body.appendChild(overlay);
-        }
-
-        if (drawer.parentElement !== document.body) {
-            document.body.appendChild(drawer);
-        }
-    }
-    catch (err) {
-        // Non-fatal: keep going; positioning will still use CSS if possible
-        console.warn('Task chat: failed to move elements to body', err);
-    }
-
-    async function openTaskChat(taskCard) {
-
-        if (!taskCard) {
-            return;
-        }
-
-        // Capture the task ID locally.
-        // This prevents an older request from changing the state
-        // of a newly opened task.
-        const taskId = taskCard.dataset.taskId;
-
-        activeChatTaskId = taskId;
-        activeChatSessionId = null;
-
-        const title =
-            taskCard.dataset.title || "Task Support";
-
-        const status =
-            taskCard.dataset.status || "—";
-
-        taskTitle.textContent = title;
-        taskStatus.textContent = status;
-
-        // Show drawer immediately
-        drawer.classList.add("active");
-        overlay.classList.add("active");
-
-        document.body.style.overflow = "hidden";
-
-        // Always reset the button for the newly selected task
-        if (startChatButton) {
-            startChatButton.style.display = "";
-            startChatButton.disabled = false;
-            startChatButton.innerHTML = '<span>✦</span> Start Chat';
-        }
-
-        // Clear previous task messages immediately
-        const messagesContainer =
-            document.getElementById("taskChatMessages");
-
-        if (messagesContainer) {
-            messagesContainer.innerHTML = "";
-
-            // Put Start Chat button back into the drawer
-            if (startChatButton) {
-                messagesContainer.appendChild(startChatButton);
-
-                startChatButton.style.display = "";
-                startChatButton.disabled = false;
-                startChatButton.innerHTML =
-                    '<span>✦</span> Start Chat';
-            }
-        }
-
-        try {
-
-            const res = await fetch(
-                `/User/MyTasks/CheckActiveSession?taskId=${encodeURIComponent(taskId)}`
-            );
-
-            // IMPORTANT:
-            // If user already opened another task,
-            // ignore this old request completely.
-            if (activeChatTaskId !== taskId) {
-                return;
-            }
-
-            if (!res.ok) {
-                throw new Error("Unable to check chat session.");
-            }
-
-            const json = await res.json();
-
-            // Again verify that this response belongs
-            // to the currently opened task.
-            if (activeChatTaskId !== taskId) {
-                return;
-            }
-
-            if (
-                json &&
-                json.success &&
-                json.exists &&
-                json.chatSessionId
-            ) {
-
-                // Existing session found
-                activeChatSessionId = json.chatSessionId;
-
-                if (startChatButton) {
-                    startChatButton.style.display = "none";
-                    startChatButton.disabled = false;
-                }
-
-                await loadChatHistory();
-
-                return;
-            }
-
-            // No existing session
-            activeChatSessionId = null;
-
-            if (startChatButton) {
-
-                if (
-                    messagesContainer &&
-                    !messagesContainer.contains(startChatButton)
-                ) {
-                    messagesContainer.appendChild(startChatButton);
-                }
-
-                startChatButton.style.display = "";
-                startChatButton.disabled = false;
-                startChatButton.innerHTML =
-                    '<span>✦</span> Start Chat';
-            }
-
-        }
-        catch (err) {
-
-            // Ignore errors from an old task request
-            if (activeChatTaskId !== taskId) {
-                return;
-            }
-
-            console.error(
-                "CheckActiveSession failed:",
-                err
-            );
-
-            // If checking fails, allow manual Start Chat
-            activeChatSessionId = null;
-
-            if (startChatButton) {
-                startChatButton.style.display = "";
-                startChatButton.disabled = false;
-                startChatButton.innerHTML =
-                    '<span>✦</span> Start Chat';
-            }
-        }
-    }
-
-    function closeTaskChat() {
-
-        drawer.classList.remove("active");
-        overlay.classList.remove("active");
-
-        document.body.style.overflow = "";
-    }
-
-    // Use event delegation for chat buttons so dynamically created/removed buttons
-    // are handled automatically without needing to rebind handlers.
+// Ensure chat buttons use the shared UserChat implementation (avoid duplicate chat code)
+document.addEventListener('DOMContentLoaded', function () {
     document.body.addEventListener('click', function (ev) {
         const btn = ev.target.closest('.task-chat-btn');
         if (!btn) return;
@@ -879,81 +525,39 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        openTaskChat(taskCard);
-    });
-
-    closeButton?.addEventListener("click", closeTaskChat);
-
-    overlay.addEventListener("click", closeTaskChat);
-
-    document.addEventListener("keydown", event => {
-
-        if (event.key === "Escape") {
-            closeTaskChat();
-        }
-
-    });
-
-    startChatButton?.addEventListener("click", async () => {
-
-        if (!activeChatTaskId) {
+        if (window.UserChat && typeof window.UserChat.openForTask === 'function') {
+            window.UserChat.openForTask({
+                taskId: taskCard.dataset.taskId,
+                title: taskCard.dataset.title,
+                status: taskCard.dataset.status,
+                taskCard: taskCard
+            });
             return;
         }
 
-        startChatButton.disabled = true;
-        startChatButton.innerHTML = "Starting...";
+        // Fallback: call StartChat endpoint if shared client not available yet
+        (async function () {
+            try {
+                const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+                const response = await fetch('/User/MyTasks/StartChat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body: new URLSearchParams({ taskId: taskCard.dataset.taskId, __RequestVerificationToken: token })
+                });
 
-        try {
-
-            const tokenInput =
-                document.querySelector(
-                    'input[name="__RequestVerificationToken"]'
-                );
-
-            const response = await fetch(
-                "/User/MyTasks/StartChat",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/x-www-form-urlencoded; charset=UTF-8"
-                    },
-                    body: new URLSearchParams({
-                        taskId: activeChatTaskId,
-                        __RequestVerificationToken:
-                            tokenInput?.value || ""
-                    })
+                const json = await response.json();
+                if (json && json.success) {
+                    // reload or open the global chat after starting
+                    if (window.UserChat && typeof window.UserChat.openForTask === 'function') {
+                        window.UserChat.openForTask({ taskId: taskCard.dataset.taskId, title: taskCard.dataset.title, status: taskCard.dataset.status, taskCard: taskCard });
+                    } else {
+                        location.reload();
+                    }
                 }
-            );
-
-            const result = await response.json();
-
-            if (!result.success) {
-                throw new Error(
-                    result.message || "Unable to start chat."
-                );
+            } catch (err) {
+                console.warn('Fallback StartChat failed', err);
             }
+        })();
 
-            activeChatSessionId = result.chatSessionId;
-
-            console.log(
-                "Chat Session ID:",
-                activeChatSessionId
-            );
-
-            startChatButton.style.display = "none";
-            await loadChatHistory();
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(error.message);
-
-            startChatButton.disabled = false;
-            startChatButton.innerHTML =
-                "<span>✦</span> Start Chat";
-        }
     });
-
-
+});
