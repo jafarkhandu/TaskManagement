@@ -5,6 +5,7 @@ using TaskManagement.Application.DTOs;
 using TaskManagement.Domain.Entities;
 using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Identity;
+using System.Linq;
 
 namespace TaskManagement.Infrastructure.Services
 {
@@ -51,7 +52,7 @@ namespace TaskManagement.Infrastructure.Services
             return ordered;
         }
 
-        public async Task<(bool Success, string Error, int ChatSessionId)> StartChatAsync(
+        public async Task<(bool Success, string Error, int ChatSessionId, bool IsNew)> StartChatAsync(
             int taskId,
             string userId)
         {
@@ -62,7 +63,10 @@ namespace TaskManagement.Infrastructure.Services
                     x.AssignedToUserId == userId);
 
             if (task == null)
-                return (false, "Task not found or you are not assigned to this task.", 0);
+                return (false, "Task not found or you are not assigned to this task.", 0, false);
+
+            if (string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Cannot start chat for completed tasks.", 0, false);
 
             var admin = await _userManager.Users
                 .Where(x => x.IsActive)
@@ -80,7 +84,7 @@ namespace TaskManagement.Infrastructure.Services
             }
 
             if (selectedAdmin == null)
-                return (false, "Admin account not found.", 0);
+                return (false, "Admin account not found.", 0, false);
 
             var existingSession = await _context.ChatSessions
                 .FirstOrDefaultAsync(x =>
@@ -89,7 +93,7 @@ namespace TaskManagement.Infrastructure.Services
                     x.IsActive);
 
             if (existingSession != null)
-                return (true, string.Empty, existingSession.Id);
+                return (true, string.Empty, existingSession.Id, false);
 
             var session = new ChatSession
             {
@@ -104,21 +108,21 @@ namespace TaskManagement.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            return (true, string.Empty, session.Id);
+            return (true, string.Empty, session.Id, true);
         }
 
-        public async Task<(bool Success, string Error)> SendMessageAsync(
+        public async Task<(bool Success, string Error, AdminChatMessageDto? Message)> SendMessageAsync(
             int chatSessionId,
             string senderId,
             string message)
         {
             if (string.IsNullOrWhiteSpace(message))
-                return (false, "Message cannot be empty.");
+                return (false, "Message cannot be empty.", null);
 
             message = message.Trim();
 
             if (message.Length > 4000)
-                return (false, "Message cannot exceed 4000 characters.");
+                return (false, "Message cannot exceed 4000 characters.", null);
 
             var session = await _context.ChatSessions
                 .FirstOrDefaultAsync(x =>
@@ -126,24 +130,27 @@ namespace TaskManagement.Infrastructure.Services
                     x.IsActive);
 
             if (session == null)
-                return (false, "Chat session not found.");
-
-            var isAdmin = await _userManager.Users
-                .Where(x => x.Id == senderId)
-                .AnyAsync();
+                return (false, "Chat session not found.", null);
 
             var sender = await _userManager.FindByIdAsync(senderId);
 
             if (sender == null)
-                return (false, "Sender not found.");
+                return (false, "Sender not found.", null);
 
             var senderIsAdmin = await _userManager.IsInRoleAsync(sender, "Admin");
 
             if (!senderIsAdmin && session.UserId != senderId)
-                return (false, "You are not allowed to send messages in this chat.");
+                return (false, "You are not allowed to send messages in this chat.", null);
 
             if (senderIsAdmin && session.AdminId != senderId)
-                return (false, "You are not allowed to send messages in this chat.");
+                return (false, "You are not allowed to send messages in this chat.", null);
+
+            // Prevent messages on completed tasks for users
+            var task = await _context.TaskItems.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == session.TaskId);
+
+            if (task != null && string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase) && !senderIsAdmin)
+                return (false, "Cannot send messages for completed task.", null);
 
             var chatMessage = new ChatMessage
             {
@@ -158,7 +165,17 @@ namespace TaskManagement.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            return (true, string.Empty);
+            var dto = new AdminChatMessageDto
+            {
+                Id = chatMessage.Id,
+                SenderId = chatMessage.SenderId,
+                SenderName = sender?.FullName ?? sender?.UserName,
+                Message = chatMessage.Message,
+                SentAt = chatMessage.SentAt,
+                IsRead = chatMessage.IsRead
+            };
+
+            return (true, string.Empty, dto);
         }
 
         public async Task<object?> GetChatAsync(
@@ -181,6 +198,25 @@ namespace TaskManagement.Infrastructure.Services
             if (isAdmin && session.AdminId != userId)
                 return null;
 
+            var task = await _context.TaskItems
+                .AsNoTracking()
+                .Where(x => x.Id == session.TaskId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Title,
+                    x.Status,
+                    x.ProjectId
+                })
+                .FirstOrDefaultAsync();
+
+            if (task == null)
+                return null;
+
+            // Users cannot access chats for completed tasks
+            if (!isAdmin && string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return null;
+
             var messages = await _context.ChatMessages
                 .AsNoTracking()
                 .Where(x => x.ChatSessionId == chatSessionId)
@@ -197,18 +233,6 @@ namespace TaskManagement.Infrastructure.Services
 
             if (isAdmin)
             {
-                var task = await _context.TaskItems
-                    .AsNoTracking()
-                    .Where(x => x.Id == session.TaskId)
-                    .Select(x => new
-                    {
-                        x.Id,
-                        x.Title,
-                        x.Status,
-                        x.ProjectId
-                    })
-                    .FirstOrDefaultAsync();
-
                 var user = await _userManager.FindByIdAsync(session.UserId);
 
                 return new
@@ -226,16 +250,12 @@ namespace TaskManagement.Infrastructure.Services
                 };
             }
 
-            var userTask = await _context.TaskItems
-                .AsNoTracking()
-                .Where(x => x.Id == session.TaskId)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.Title,
-                    x.Status
-                })
-                .FirstOrDefaultAsync();
+            var userTask = new
+            {
+                task.Id,
+                task.Title,
+                task.Status
+            };
 
             return new
             {
@@ -246,20 +266,74 @@ namespace TaskManagement.Infrastructure.Services
             };
         }
 
+        public async Task<IEnumerable<UserChatSessionDto>> GetUserChatSessionsAsync(string userId)
+        {
+            var sessions = await (from s in _context.ChatSessions.AsNoTracking()
+                                  where s.IsActive && s.UserId == userId
+                                  join t in _context.TaskItems.AsNoTracking() on s.TaskId equals t.Id
+                                  join m in _context.ChatMessages.AsNoTracking() on s.Id equals m.ChatSessionId into mg
+                                  select new UserChatSessionDto
+                                  {
+                                      ChatSessionId = s.Id,
+                                      TaskId = t.Id,
+                                      TaskTitle = t.Title,
+                                      TaskStatus = t.Status,
+                                      LatestMessage = mg.OrderByDescending(x => x.SentAt).Select(x => x.Message).FirstOrDefault(),
+                                      LatestMessageAt = mg.OrderByDescending(x => x.SentAt).Select(x => (DateTime?)x.SentAt).FirstOrDefault(),
+                                      UnreadCount = mg.Count(x => !x.IsRead && x.SenderId == s.AdminId)
+                                  })
+                                 .ToListAsync();
+
+            return sessions.OrderByDescending(x => x.LatestMessageAt ?? DateTime.MinValue).ToList();
+        }
+
+        public async Task<(bool Success, string Error)> MarkMessagesAsReadAsync(int chatSessionId, string userId)
+        {
+            var session = await _context.ChatSessions
+                .FirstOrDefaultAsync(x => x.Id == chatSessionId && x.IsActive);
+
+            if (session == null)
+                return (false, "Chat session not found.");
+
+            if (session.UserId != userId)
+                return (false, "You are not allowed to modify this chat.");
+
+            var messages = await _context.ChatMessages
+                .Where(x => x.ChatSessionId == chatSessionId && !x.IsRead && x.SenderId == session.AdminId)
+                .ToListAsync();
+
+            if (!messages.Any())
+                return (true, string.Empty);
+
+            foreach (var m in messages)
+            {
+                m.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return (true, string.Empty);
+        }
+
         public async Task<int?> GetActiveChatSessionIdAsync(
             int taskId,
             string userId)
         {
             var session = await _context.ChatSessions
                 .AsNoTracking()
-                .Where(x =>
-                    x.TaskId == taskId &&
-                    x.UserId == userId &&
-                    x.IsActive)
-                .Select(x => new { x.Id })
+                .Where(x => x.TaskId == taskId && x.UserId == userId && x.IsActive)
+                .Select(x => new { x.Id, x.TaskId })
                 .FirstOrDefaultAsync();
 
             if (session == null)
+                return null;
+
+            var task = await _context.TaskItems.AsNoTracking()
+                .Where(t => t.Id == session.TaskId && t.Status != "Completed")
+                .Select(t => t.Id)
+                .FirstOrDefaultAsync();
+
+            if (task == 0)
                 return null;
 
             return session.Id;

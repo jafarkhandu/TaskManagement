@@ -6,6 +6,7 @@ using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Identity;
 using TaskManagement.Application.Interfaces;
 using System.Linq;
+using System;
 
 namespace TaskManagement.WebApp.Hubs
 {
@@ -48,6 +49,12 @@ namespace TaskManagement.WebApp.Hubs
             if (isAdmin && session.AdminId != user.Id)
                 throw new HubException("You are not allowed to access this chat.");
 
+            // Prevent users from joining chats for completed tasks
+            var task = await _context.TaskItems.AsNoTracking().FirstOrDefaultAsync(t => t.Id == session.TaskId);
+
+            if (task != null && string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase) && !isAdmin)
+                throw new HubException("Chat session not available for completed tasks.");
+
             await Groups.AddToGroupAsync(
                 Context.ConnectionId,
                 $"chat-{chatSessionId}");
@@ -86,29 +93,23 @@ namespace TaskManagement.WebApp.Hubs
             if (!result.Success)
                 throw new HubException(result.Error);
 
-            // Retrieve the saved message to broadcast
-            var saved = await _context.ChatMessages
-                .AsNoTracking()
-                .Where(x => x.ChatSessionId == chatSessionId)
-                .OrderByDescending(x => x.SentAt)
-                .FirstOrDefaultAsync();
-
-            if (saved == null)
-                return;
-
-            var sender = await _userManager.FindByIdAsync(saved.SenderId);
-
-            var payload = new
+            // Broadcast the exact message returned by the service (prevents race conditions)
+            if (result.Message != null)
             {
-                chatSessionId = chatSessionId,
-                senderId = saved.SenderId,
-                senderName = sender?.FullName ?? sender?.UserName,
-                message = saved.Message,
-                sentAt = saved.SentAt
-            };
+                var payload = new
+                {
+                    chatSessionId = chatSessionId,
+                    id = result.Message.Id,
+                    senderId = result.Message.SenderId,
+                    senderName = result.Message.SenderName,
+                    message = result.Message.Message,
+                    sentAt = result.Message.SentAt,
+                    isRead = result.Message.IsRead
+                };
 
-            await Clients.Group($"chat-{chatSessionId}")
-                .SendAsync("ReceiveMessage", payload);
+                await Clients.Group($"chat-{chatSessionId}")
+                    .SendAsync("ReceiveMessage", payload);
+            }
         }
     }
 }
