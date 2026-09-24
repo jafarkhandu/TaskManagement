@@ -1,4 +1,26 @@
-﻿<aside class="sidebar">
+﻿@{
+    var currentPath = Context.Request.Path.Value?.TrimEnd('/');
+
+    var dashboardActive =
+        string.Equals(
+            currentPath,
+            "/User/Dashboard",
+            StringComparison.OrdinalIgnoreCase);
+
+    var myTasksActive =
+        string.Equals(
+            currentPath,
+            "/User/MyTasks",
+            StringComparison.OrdinalIgnoreCase);
+
+    var notificationsActive =
+        currentPath?.StartsWith(
+            "/User/Notifications",
+            StringComparison.OrdinalIgnoreCase) == true;
+}
+
+
+<aside class="sidebar">
 
     <div class="brand">
 
@@ -18,13 +40,12 @@
 
         <!-- Dashboard -->
 
-        <a href="@Url.Action(
-                                "Index",
-                                "Dashboard",
-                                new { area = "User" })"
-           class="nav-link active">
+        <a href="@Url.Action("Index", "Dashboard", new { area = "User" })"
+           class="nav-link @(dashboardActive ? "active" : "")">
 
-            <span class="nav-symbol">⌂</span>
+            <span class="nav-symbol">
+                ⌂
+            </span>
 
             <span>
                 Dashboard
@@ -35,16 +56,31 @@
 
         <!-- My Tasks -->
 
-        <a href="@Url.Action(
-                                "Index",
-                                "MyTasks",
-                                new { area = "User" })"
-           class="nav-link">
+        <a href="@Url.Action("Index", "MyTasks", new { area = "User" })"
+           class="nav-link @(myTasksActive ? "active" : "")">
 
-            <span class="nav-symbol">✓</span>
+            <span class="nav-symbol">
+                ✓
+            </span>
 
             <span>
                 My Tasks
+            </span>
+
+        </a>
+
+
+        <!-- Notifications -->
+
+        <a href="@Url.Action("Index", "Notifications", new { area = "User" })"
+           class="nav-link @(notificationsActive ? "active" : "")">
+
+            <span class="nav-symbol">
+                🔔
+            </span>
+
+            <span>
+                Notifications
             </span>
 
         </a>

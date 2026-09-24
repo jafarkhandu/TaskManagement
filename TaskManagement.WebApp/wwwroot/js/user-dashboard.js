@@ -920,38 +920,30 @@
         });
 
 
-    /* =====================================================
-       THEME
-    ===================================================== */
+    /* =========================================================
+   COMMON THEME SWITCH
+   Dark <-> Light Glassmorphism
+   ========================================================= */
 
-    const themeButton =
-        document.getElementById("themeButton");
+const themeButton = document.getElementById("themeButton");
 
+const savedTheme = localStorage.getItem("taskmanager-theme");
 
-    themeButton?.addEventListener("click", () => {
+if (savedTheme === "light") {
+    document.documentElement.classList.add("light-theme");
+}
 
-        const current =
-            getComputedStyle(document.documentElement)
-                .getPropertyValue("--bg")
-                .trim();
+themeButton?.addEventListener("click", () => {
 
-        if (current === "#071321") {
+    const isLight =
+        document.documentElement.classList.toggle("light-theme");
 
-            document.documentElement.style.setProperty(
-                "--bg",
-                "#101d30"
-            );
+    localStorage.setItem(
+        "taskmanager-theme",
+        isLight ? "light" : "dark"
+    );
 
-        } else {
-
-            document.documentElement.style.setProperty(
-                "--bg",
-                "#071321"
-            );
-
-        }
-
-    });
+});
 
 
     /* =====================================================
@@ -1142,9 +1134,13 @@
                 delay: Math.min(index * 45, 450),
                 easing: "cubic-bezier(.2,.8,.2,1)",
                 fill: "both"
-            }
+                       }
         );
-        /* =====================================================
+
+    });
+
+
+/* =====================================================
    LOGOUT
 ===================================================== */
 
@@ -1217,9 +1213,6 @@
 
                 alert("Unable to logout. Please try again.");
 
-            }
-
+                      }
         });
     });
-
-});

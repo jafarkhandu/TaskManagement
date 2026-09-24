@@ -27,8 +27,12 @@
     <title>TaskManager — Dashboard</title>
 
     <link rel="stylesheet"
-          href="~/css/user-dashboard.css"
-          asp-append-version="true" />
+      href="~/css/user-dashboard.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/theme.css"
+      asp-append-version="true" />
 
 </head>
 
@@ -59,59 +63,7 @@
 
         <!-- NOTIFICATION -->
 
-        <div class="notification-popup"
-             id="notificationPopup">
-
-            <div class="popup-title">
-
-                <strong>Notifications</strong>
-
-                <button type="button"
-                        id="closeNotifications">
-                    ×
-                </button>
-
-            </div>
-
-            @if (Model.DueSoonTasks > 0)
-            {
-                <div class="notification-item">
-
-                    <span>!</span>
-
-                    <div>
-
-                        <strong>
-                            @Model.DueSoonTasks task(s) due soon
-                        </strong>
-
-                        <small>
-                            Review your focus tasks.
-                        </small>
-
-                    </div>
-
-                </div>
-            }
-            else
-            {
-                <div class="notification-empty">
-
-                    <span>✓</span>
-
-                    <strong>
-                        You're all caught up
-                    </strong>
-
-                    <small>
-                        No urgent notifications.
-                    </small>
-
-                </div>
-            }
-
-        </div>
-
+     
 
         <!-- ================= HERO ================= -->
 
@@ -685,225 +637,12 @@
 
 </div>
 
+   @await Html.PartialAsync(
+    "~/Areas/User/Views/Shared/_UserModals.cshtml")
 
-<!-- ================= TASK MODAL ================= -->
 
-<div class="modal"
-     id="taskModal">
 
-    <div class="modal-box">
 
-        <button class="modal-close"
-                data-close>
-            ×
-        </button>
-
-        <span class="modal-symbol">
-            ✓
-        </span>
-
-        <small>TASK DETAILS</small>
-
-        <h2 id="taskTitle">
-            Task
-        </h2>
-
-        <p id="taskInfo">
-            Task information.
-        </p>
-
-        <button class="modal-button"
-                data-close>
-            Close
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- ================= PROJECT MODAL ================= -->
-
-<div class="modal"
-     id="projectModal">
-
-    <div class="modal-box">
-
-        <button class="modal-close"
-                data-close>
-            ×
-        </button>
-
-        <span class="modal-symbol purple">
-            ▱
-        </span>
-
-        <small>PROJECT</small>
-
-        <h2 id="projectTitle">
-            Project
-        </h2>
-
-        <p>
-            This project is part of your assigned workspace.
-        </p>
-
-        <button class="modal-button"
-                data-close>
-            Close
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- ================= PROFILE ================= -->
-
-<div class="modal"
-     id="profileModal">
-
-    <div class="modal-box">
-
-        <button class="modal-close"
-                data-close>
-            ×
-        </button>
-
-        <div class="profile-avatar">
-            @firstLetter
-        </div>
-
-        <small>PROFILE</small>
-
-        <h2>
-            @Model.UserName
-        </h2>
-
-        <p>
-            @Model.UserEmail
-        </p>
-
-        <div class="profile-line">
-
-            <span>Role</span>
-            <strong>Student</strong>
-
-        </div>
-
-        <button class="modal-button"
-                data-close>
-            Done
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- ================= FILES ================= -->
-
-<div class="modal"
-     id="filesModal">
-
-    <div class="modal-box">
-
-        <button class="modal-close"
-                data-close>
-            ×
-        </button>
-
-        <span class="modal-symbol">
-            ▤
-        </span>
-
-        <small>FILES</small>
-
-        <h2>
-            Files
-        </h2>
-
-        <p>
-            Your current database does not contain
-            file-management entities yet.
-        </p>
-
-        <button class="modal-button"
-                data-close>
-            Close
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- ================= SETTINGS ================= -->
-
-<div class="modal"
-     id="settingsModal">
-
-    <div class="modal-box">
-
-        <button class="modal-close"
-                data-close>
-            ×
-        </button>
-
-        <span class="modal-symbol">
-            ⚙
-        </span>
-
-        <small>SETTINGS</small>
-
-        <h2>
-            Dashboard Settings
-        </h2>
-
-
-        <label class="setting">
-
-            <span>
-                <strong>Animations</strong>
-                <small>
-                    Enable smooth dashboard motion.
-                </small>
-            </span>
-
-            <input type="checkbox"
-                   id="animationSwitch"
-                   checked />
-
-            <i></i>
-
-        </label>
-
-
-        <label class="setting">
-
-            <span>
-                <strong>Compact mode</strong>
-                <small>
-                    Reduce dashboard spacing.
-                </small>
-            </span>
-
-            <input type="checkbox"
-                   id="compactSwitch" />
-
-            <i></i>
-
-        </label>
-
-
-        <button class="modal-button"
-                data-close>
-            Save
-        </button>
-
-    </div>
-
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
     <script>

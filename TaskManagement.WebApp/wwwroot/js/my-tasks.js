@@ -512,7 +512,7 @@
             });
         });
 
-    })();
+       })();
 
 });
 
@@ -956,4 +956,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-});
+
