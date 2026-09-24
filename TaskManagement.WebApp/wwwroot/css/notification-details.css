@@ -616,6 +616,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
 
+
     .task-details-header,
     .task-details-card {
         animation: none;

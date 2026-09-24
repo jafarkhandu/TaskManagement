@@ -14,6 +14,11 @@
         @await Html.PartialAsync(
             "~/Areas/User/Views/Shared/_UserTopbar.cshtml")
 
+            
+ @await Html.PartialAsync(
+    "~/Areas/User/Views/Shared/_UserModals.cshtml")
+
+
         <div class="notifications-page">
 
             <div class="notifications-glow glow-one"></div>
@@ -113,6 +118,10 @@
 
 <link rel="stylesheet"
       href="~/css/notifications.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/theme.css"
       asp-append-version="true" />
 
 <script src="~/js/notifications.js"

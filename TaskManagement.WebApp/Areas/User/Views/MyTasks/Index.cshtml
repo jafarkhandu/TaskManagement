@@ -34,8 +34,16 @@
     <title>TaskManager — My Tasks</title>
 
     <link rel="stylesheet"
-          href="~/css/my-tasks.css"
-          asp-append-version="true" />
+      href="~/css/user-dashboard.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/my-tasks.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/theme.css"
+      asp-append-version="true" />
 </head>
 
 <body>
@@ -46,111 +54,21 @@
 
     <!-- ================= SIDEBAR ================= -->
 
-    <aside class="task-sidebar">
-
-        <div class="brand-area">
-            <div class="brand-icon">✓</div>
-
-            <div>
-                <div class="brand-name">TaskManager</div>
-                <div class="brand-tagline">Plan · Focus · Achieve</div>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a href="/User/Dashboard" class="sidebar-link">
-                <span class="sidebar-icon">⌂</span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="/User/MyTasks" class="sidebar-link active">
-                <span class="sidebar-icon">✓</span>
-                <span>My Tasks</span>
-            </a>
-
-            <a href="/User/Notifications" class="sidebar-link">
-                <span class="sidebar-icon">♧</span>
-                <span>Notifications</span>
-            </a>
-
-            <a href="/User/Profile" class="sidebar-link">
-                <span class="sidebar-icon">♙</span>
-                <span>Profile</span>
-            </a>
-
-            <a href="/User/Settings" class="sidebar-link">
-                <span class="sidebar-icon">⚙</span>
-                <span>Settings</span>
-            </a>
-
-        </nav>
-
-        <div class="sidebar-bottom">
-
-            <div class="sidebar-tip">
-                <span class="tip-star">✦</span>
-                <p>
-                    Small steps every day create big results.
-                </p>
-            </div>
-
-            <a href="/Account/Logout" class="logout-link">
-                <span>↪</span>
-                <span>Logout</span>
-            </a>
-
-        </div>
-
-    </aside>
-
+    @await Html.PartialAsync(
+    "~/Areas/User/Views/Shared/_UserSidebar.cshtml")
+    @await Html.PartialAsync(
+    "~/Areas/User/Views/Shared/_UserModals.cshtml")
 
     <!-- ================= MAIN ================= -->
 
-    <main class="task-main">
+    <main class="main-content">
 
         <!-- TOP BAR -->
 
-        <header class="task-topbar">
+        
 
-            <div class="top-search">
-                <span>⌕</span>
-
-                <input type="text"
-                       id="taskSearch"
-                       placeholder="Search tasks by title, description or status..." />
-
-                <span class="search-shortcut">Ctrl K</span>
-            </div>
-
-            <div class="top-actions">
-
-                <button type="button" class="top-icon-button">
-                    ⚙
-                </button>
-
-                <a href="/User/Notifications"
-                   class="top-icon-button notification-top">
-                    ♧
-                    <span class="notification-dot"></span>
-                </a>
-
-                <div class="user-mini">
-
-                    <div class="user-avatar">
-                        U
-                    </div>
-
-                    <div class="user-mini-info">
-                        <strong>User</strong>
-                        <small>Student</small>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </header>
+            @await Html.PartialAsync(
+                "~/Areas/User/Views/Shared/_UserTopbar.cshtml")
 
 
         <!-- HERO -->
@@ -673,8 +591,13 @@
 </div>
 
 
+<script src="~/js/user-dashboard.js"
+        asp-append-version="true"></script>
+
 <script src="~/js/my-tasks.js"
         asp-append-version="true"></script>
+    
+
 
 </body>
 </html>

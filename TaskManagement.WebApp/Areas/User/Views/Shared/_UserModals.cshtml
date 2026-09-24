@@ -1,0 +1,235 @@
+﻿@{
+    var userName =
+        User.Identity?.Name
+        ?? "User";
+
+    var firstLetter =
+        string.IsNullOrWhiteSpace(userName)
+            ? "U"
+            : userName.Substring(0, 1).ToUpper();
+}
+
+<!-- =========================================================
+     NOTIFICATION POPUP
+========================================================= -->
+
+<div class="notification-popup" id="notificationPopup">
+
+    <div class="popup-title">
+
+        <strong class="notifications-page-link">
+            Notifications
+        </strong>
+
+        <button type="button"
+                id="closeNotifications"
+                aria-label="Close notifications">
+            ×
+        </button>
+
+    </div>
+
+    <div id="notificationPopupContent">
+
+        <div class="notification-empty">
+
+            <span>✓</span>
+
+            <strong>
+                You're all caught up
+            </strong>
+
+            <small>
+                No urgent notifications.
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PROFILE MODAL
+========================================================= -->
+
+<div class="modal"
+     id="profileModal"
+     aria-hidden="true">
+
+    <div class="modal-box">
+
+        <button type="button"
+                class="modal-close"
+                data-close="profileModal"
+                aria-label="Close">
+            ×
+        </button>
+
+        <div class="profile-avatar">
+            @firstLetter
+        </div>
+
+        <small>
+            ACCOUNT
+        </small>
+
+        <h2>
+            @userName
+        </h2>
+
+        <p>
+            Your TaskManager student profile.
+        </p>
+
+        <div class="profile-line">
+            <span>Name</span>
+            <strong>@userName</strong>
+        </div>
+
+        <div class="profile-line">
+            <span>Role</span>
+            <strong>Student</strong>
+        </div>
+
+        <div class="profile-line">
+            <span>Status</span>
+            <strong>Active</strong>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FILES MODAL
+========================================================= -->
+
+<div class="modal"
+     id="filesModal"
+     aria-hidden="true">
+
+    <div class="modal-box">
+
+        <button type="button"
+                class="modal-close"
+                data-close="filesModal"
+                aria-label="Close">
+            ×
+        </button>
+
+        <div class="modal-symbol">
+            ▤
+        </div>
+
+        <small>
+            FILES
+        </small>
+
+        <h2>
+            Your Files
+        </h2>
+
+        <p>
+            File management is ready for integration.
+            No files are currently available.
+        </p>
+
+        <button type="button"
+                class="modal-button"
+                data-close="filesModal">
+            Close
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SETTINGS MODAL
+========================================================= -->
+
+<div class="modal"
+     id="settingsModal"
+     aria-hidden="true">
+
+    <div class="modal-box">
+
+        <button type="button"
+                class="modal-close"
+                data-close="settingsModal"
+                aria-label="Close">
+            ×
+        </button>
+
+        <div class="modal-symbol purple">
+            ⚙
+        </div>
+
+        <small>
+            SETTINGS
+        </small>
+
+        <h2>
+            Preferences
+        </h2>
+
+        <p>
+            Customize your TaskManager experience.
+        </p>
+
+        <label class="setting">
+
+            <span>
+
+                <strong>
+                    Animations
+                </strong>
+
+                <small>
+                    Enable interface animations
+                </small>
+
+            </span>
+
+            <input type="checkbox"
+                   id="animationSwitch"
+                   checked />
+
+            <i></i>
+
+        </label>
+
+        <label class="setting">
+
+            <span>
+
+                <strong>
+                    Compact Sidebar
+                </strong>
+
+                <small>
+                    Reduce sidebar width
+                </small>
+
+            </span>
+
+            <input type="checkbox"
+                   id="compactSwitch" />
+
+            <i></i>
+
+        </label>
+
+        <button type="button"
+                class="modal-button"
+                data-close="settingsModal">
+            Done
+        </button>
+
+    </div>
+
+</div>
