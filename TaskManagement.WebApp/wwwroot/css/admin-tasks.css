@@ -1464,3 +1464,223 @@ body {
         gap: 7px;
     }
 }
+
+/* =========================================================
+   ADMIN TASK BOARD
+   SHOW 4 TASKS + THEN COLUMN SCROLL
+========================================================= */
+
+/* Keep the page naturally scrollable */
+html,
+body {
+    overflow-x: hidden;
+}
+
+/* Slightly reduce vertical spacing above the board */
+.task-content {
+    padding: 18px 30px 25px;
+}
+
+/* Project header slightly more compact */
+.project-header-card {
+    min-height: 118px;
+    padding: 15px;
+}
+
+/* Reduce gap around statistics */
+.task-stat-grid {
+    margin-top: 8px;
+}
+
+.task-stat-card {
+    min-height: 78px;
+    padding: 12px;
+}
+
+/* Search/filter bar more compact */
+.task-filter-card {
+    margin-top: 8px;
+    padding: 8px;
+}
+
+    .task-search-box,
+    .task-filter-card select,
+    .reset-task-btn {
+        height: 34px;
+    }
+
+
+/* =========================================================
+   KANBAN BOARD
+========================================================= */
+
+.task-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+    /* Enough space for approximately 4 cards */
+    max-height: 720px;
+    overflow: visible;
+}
+
+
+/* =========================================================
+   COLUMN
+========================================================= */
+
+.task-column {
+    height: 720px;
+    min-height: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+
+/* Header stays visible */
+.task-column-header {
+    flex: 0 0 auto;
+}
+
+
+/* =========================================================
+   ONLY TASK LIST SCROLLS
+========================================================= */
+
+.task-column-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 8px;
+    padding-right: 5px;
+}
+
+
+    /* =========================================================
+   SCROLLBAR
+========================================================= */
+
+    .task-column-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .task-column-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .task-column-body::-webkit-scrollbar-thumb {
+        background: #b8c4d6;
+        border-radius: 10px;
+    }
+
+        .task-column-body::-webkit-scrollbar-thumb:hover {
+            background: #8fa0b9;
+        }
+
+.task-column-body {
+    scrollbar-width: thin;
+    scrollbar-color: #b8c4d6 transparent;
+}
+
+
+/* =========================================================
+   COMPACT TASK CARDS
+   Allows approximately 4 cards to be visible
+========================================================= */
+
+.task-card {
+    padding: 11px;
+    margin-bottom: 8px;
+}
+
+.task-card-title {
+    font-size: 12px;
+}
+
+.task-card-scenario {
+    margin: 5px 0 8px;
+    font-size: 9px;
+}
+
+.task-card-info {
+    padding: 7px 0;
+}
+
+.task-card-bottom {
+    margin-top: 7px;
+}
+
+.task-action {
+    padding: 4px 7px;
+}
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media (min-width: 1200px) {
+
+    .task-column {
+        height: 720px;
+    }
+
+    .task-board {
+        max-height: 720px;
+    }
+}
+
+
+/* =========================================================
+   LAPTOP
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .task-column {
+        height: 600px;
+    }
+
+    .task-board {
+        max-height: 600px;
+    }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .task-board {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .task-column {
+        height: 550px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .task-content {
+        padding: 15px;
+    }
+
+    .task-board {
+        grid-template-columns: 1fr;
+    }
+
+    .task-column {
+        height: 500px;
+    }
+}

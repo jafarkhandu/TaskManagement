@@ -28,6 +28,23 @@
 
         sessionStorage.setItem("lastDashboardQuote", index);
     }
+    // Dynamic dashboard greeting
+        const dashboardGreeting =
+            document.getElementById("dashboardGreeting");
+
+        if (dashboardGreeting) {
+            const hour = new Date().getHours();
+
+            if (hour >= 5 && hour < 12) {
+                dashboardGreeting.textContent = "Good Morning,";
+            } else if (hour >= 12 && hour < 17) {
+                dashboardGreeting.textContent = "Good Afternoon,";
+            } else if (hour >= 17 && hour < 21) {
+                dashboardGreeting.textContent = "Good Evening,";
+            } else {
+                dashboardGreeting.textContent = "Good Night,";
+            }
+        }
 
     // Live toast UI
     function showLiveToast(payload) {

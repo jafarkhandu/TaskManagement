@@ -1019,3 +1019,169 @@ html.light-theme .task-details-glow-two {
     background: #b19aff;
     opacity: .10;
 }
+
+/* =========================================================
+   NOTIFICATIONS INDEX — LIGHT GLASS THEME
+   ========================================================= */
+
+html.light-theme .notifications-page {
+    background: radial-gradient( circle at 85% 5%, rgba(92,126,255,.10), transparent 32% ), radial-gradient( circle at 10% 90%, rgba(130,100,255,.08), transparent 34% );
+    color: #17233b;
+}
+
+/* Header */
+
+html.light-theme .notifications-page-header {
+    background: rgba(255,255,255,.68) !important;
+    border-color: rgba(255,255,255,.85) !important;
+    box-shadow: 0 18px 50px rgba(55,75,110,.08), inset 0 1px 0 rgba(255,255,255,.95) !important;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+html.light-theme .notifications-back {
+    color: #4d7df5;
+}
+
+    html.light-theme .notifications-back:hover {
+        color: #315fe5;
+    }
+
+html.light-theme .notifications-title-icon {
+    background: rgba(75,140,255,.09);
+    border-color: rgba(75,140,255,.18);
+    box-shadow: 0 12px 30px rgba(75,140,255,.10);
+}
+
+html.light-theme .notifications-eyebrow {
+    color: #587ce5;
+}
+
+html.light-theme .notifications-heading h1 {
+    color: #17233b !important;
+}
+
+html.light-theme .notifications-heading p {
+    color: #71829a;
+}
+
+/* Clear button */
+
+html.light-theme .clear-all-button {
+    background: rgba(255,255,255,.72);
+    border-color: rgba(100,120,150,.14);
+    color: #596a82;
+}
+
+    html.light-theme .clear-all-button:hover {
+        background: rgba(255,245,246,.9);
+        border-color: rgba(255,91,120,.25);
+        color: #e05265;
+    }
+
+
+/* Main notification glass */
+
+html.light-theme .notifications-content {
+    background: rgba(255,255,255,.62) !important;
+    border-color: rgba(255,255,255,.86) !important;
+    box-shadow: 0 22px 65px rgba(55,75,110,.08), inset 0 1px 0 rgba(255,255,255,.95) !important;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+}
+
+
+/* Inbox heading */
+
+html.light-theme .notifications-content-top {
+    border-bottom-color: rgba(100,120,150,.10);
+}
+
+html.light-theme .section-label {
+    color: #6685b5;
+}
+
+html.light-theme .notifications-content-top h2 {
+    color: #24324b !important;
+}
+
+
+/* Live */
+
+html.light-theme .live-indicator {
+    background: rgba(50,214,161,.07);
+    border-color: rgba(50,214,161,.18);
+    color: #159c76;
+}
+
+
+/* Notification cards */
+
+html.light-theme .notification-card {
+    background: rgba(255,255,255,.72) !important;
+    border-color: rgba(255,255,255,.90) !important;
+    box-shadow: 0 8px 25px rgba(55,75,110,.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+    html.light-theme .notification-card:hover {
+        background: rgba(255,255,255,.90) !important;
+        border-color: rgba(75,140,255,.20) !important;
+        box-shadow: 0 15px 35px rgba(55,75,110,.10);
+    }
+
+
+/* Notification text */
+
+html.light-theme .notification-main strong {
+    color: #24324b !important;
+}
+
+html.light-theme .notification-main small {
+    color: #8493a8 !important;
+}
+
+
+/* Bell icon */
+
+html.light-theme .notification-icon {
+    background: rgba(255,190,82,.10);
+    border-color: rgba(255,190,82,.18);
+    color: #e9a72f;
+}
+
+
+/* Accepted status */
+
+html.light-theme .notification-status,
+html.light-theme .notification-action {
+    color: #159c76;
+}
+
+
+/* Empty state */
+
+html.light-theme .notification-empty {
+    color: #71829a;
+}
+
+    html.light-theme .notification-empty strong {
+        color: #24324b;
+    }
+
+
+/* Scrollbar */
+
+html.light-theme .notifications-list {
+    scrollbar-color: rgba(90,130,240,.35) transparent;
+}
+
+    html.light-theme .notifications-list::-webkit-scrollbar-track {
+        background: rgba(100,120,150,.04);
+    }
+
+    html.light-theme .notifications-list::-webkit-scrollbar-thumb {
+        background: linear-gradient( 180deg, rgba(91,145,255,.55), rgba(139,92,246,.45) );
+        border-color: rgba(255,255,255,.5);
+    }
