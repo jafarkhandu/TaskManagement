@@ -21,6 +21,10 @@ namespace TaskManagement.Infrastructure.Data
 
         public DbSet<Notification> Notifications { get; set; }
 
+        public DbSet<ChatSession> ChatSessions { get; set; }
+
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -100,6 +104,71 @@ namespace TaskManagement.Infrastructure.Data
                     .WithMany()
                     .HasForeignKey(x => x.TaskAssignmentId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ChatSession>(b =>
+            {
+                b.Property(x => x.UserId)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                b.Property(x => x.AdminId)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                b.HasIndex(x => x.TaskId);
+
+                b.HasIndex(x => x.UserId);
+
+                b.HasIndex(x => x.AdminId);
+
+                b.HasIndex(x => new
+                {
+                    x.TaskId,
+                    x.UserId,
+                    x.IsActive
+                });
+
+                b.HasOne<TaskItem>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne<TaskManagement.Infrastructure.Identity.ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne<TaskManagement.Infrastructure.Identity.ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.AdminId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            builder.Entity<ChatMessage>(b =>
+            {
+                b.Property(x => x.SenderId)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                b.Property(x => x.Message)
+                    .HasMaxLength(4000)
+                    .IsRequired();
+
+                b.HasIndex(x => x.ChatSessionId);
+
+                b.HasIndex(x => x.SenderId);
+
+                b.HasOne<ChatSession>()
+                    .WithMany()
+                    .HasForeignKey(x => x.ChatSessionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne<TaskManagement.Infrastructure.Identity.ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.SenderId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

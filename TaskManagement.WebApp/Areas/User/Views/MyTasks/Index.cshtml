@@ -363,6 +363,16 @@
                                 View Details →
                             </button>
 
+                            @if (!string.Equals(task.Status, "Completed", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                <button type="button"
+                                        class="task-chat-btn"
+                                        data-task-id="@task.Id">
+                                    <span>💬</span>
+                                    Chat with Admin
+                                </button>
+                            }
+
                         </article>
                     }
 
@@ -432,6 +442,15 @@
                                     type="button">
                                 View Details →
                             </button>
+                            @if (!string.Equals(task.Status, "Completed", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                <button type="button"
+                                        class="task-chat-btn"
+                                        data-task-id="@task.Id">
+                                    <span>💬</span>
+                                    Chat with Admin
+                                </button>
+                            }
 
                         </article>
                     }
@@ -502,6 +521,16 @@
                                     type="button">
                                 View Details →
                             </button>
+
+                            @if (!string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <button type="button"
+                                        class="task-chat-btn"
+                                        data-task-id="@task.Id">
+                                    <span>💬</span>
+                                    Chat with Admin
+                                </button>
+                            }
 
                         </article>
                     }
@@ -671,6 +700,82 @@
     </div>
 
 </div>
+
+<!-- TASK CHAT DRAWER -->
+<div id="taskChatOverlay" class="task-chat-overlay"></div>
+
+<aside id="taskChatDrawer" class="task-chat-drawer">
+
+    <div class="task-chat-header">
+        <div class="task-chat-admin">
+            <div class="task-chat-avatar">
+                <span>✦</span>
+            </div>
+
+            <div>
+                <div class="task-chat-title">Admin Support</div>
+                <div class="task-chat-status">
+                    <span class="status-dot"></span>
+                    Available
+                </div>
+            </div>
+        </div>
+
+        <button type="button"
+                id="closeTaskChat"
+                class="task-chat-close">
+            ×
+        </button>
+    </div>
+
+    <div class="task-chat-context">
+        <div class="task-chat-context-label">
+            TASK SUPPORT
+        </div>
+
+        <div id="chatTaskTitle" class="task-chat-context-title">
+            Select a task
+        </div>
+
+        <div class="task-chat-context-status">
+            <span id="chatTaskStatus">—</span>
+        </div>
+    </div>
+
+    <div id="taskChatMessages" class="task-chat-messages">
+        <div class="task-chat-empty">
+            <div class="task-chat-empty-icon">💬</div>
+            <h4>Need help with this task?</h4>
+            <p>
+                Start a conversation with Admin and discuss your task directly.
+            </p>
+
+            <button type="button"
+                    id="startTaskChat"
+                    class="task-chat-start">
+                <span>✦</span>
+                Start Chat
+            </button>
+        </div>
+    </div>
+
+    <div id="taskChatComposer" class="task-chat-composer">
+
+        <textarea id="taskChatInput"
+                  rows="1"
+                  maxlength="4000"
+                  placeholder="Type your message..."></textarea>
+
+        <button type="button"
+                id="sendTaskChat"
+                class="task-chat-send"
+                disabled>
+            <span>➤</span>
+        </button>
+
+    </div>
+
+</aside>
 
 
 <script src="~/js/my-tasks.js"

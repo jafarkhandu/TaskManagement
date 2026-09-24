@@ -18,17 +18,47 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITaskService _taskService;
         private readonly IHubContext<NotificationHub> _notificationHub;
+        private readonly IChatService _chatService;
 
         public MyTasksController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             ITaskService taskService,
-            IHubContext<NotificationHub> notificationHub)
+            IHubContext<NotificationHub> notificationHub,
+            IChatService chatService)
         {
             _context = context;
             _userManager = userManager;
             _taskService = taskService;
             _notificationHub = notificationHub;
+            _chatService = chatService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckActiveSession(int taskId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+
+            var chatSessionId = await _chatService.GetActiveChatSessionIdAsync(taskId, user.Id);
+
+            if (chatSessionId.HasValue)
+            {
+                return Json(new
+                {
+                    success = true,
+                    exists = true,
+                    chatSessionId = chatSessionId.Value
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                exists = false
+            });
         }
 
         [HttpGet]
@@ -92,6 +122,66 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 projectId = result.ProjectId,
                 oldStatus = result.OldStatus,
                 newStatus = result.NewStatus
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StartChat(int taskId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+
+            var result = await _chatService.StartChatAsync(
+                taskId,
+                user.Id);
+
+            if (!result.Success)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = result.Error
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                chatSessionId = result.ChatSessionId
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetChat(int chatSessionId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+
+            var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+
+            var chat = await _chatService.GetChatAsync(
+                chatSessionId,
+                user.Id,
+                isAdmin);
+
+            if (chat == null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Chat not found or unavailable."
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                data = chat
             });
         }
     }
