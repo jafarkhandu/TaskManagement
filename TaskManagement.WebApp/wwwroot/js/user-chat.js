@@ -126,14 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             let totalUnread = 0;
 
-            if (!sessions.length) {
-                userChatList.innerHTML = `
-                    <div class="task-chat-empty task-chat-list-empty">
-                        <div class="task-chat-empty-icon">✦</div>
-                        <p>No task conversations yet.</p>
-                    </div>`;
-            }
-
             sessions.forEach(s => {
                 totalUnread += s.unreadCount || 0;
 
@@ -190,8 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         renderedMessageIds.add(messageId);
 
-        const isMe = window.CurrentUserId &&
-            String(m.senderId) === String(window.CurrentUserId);
+        const isMe = window.CurrentUserId && m.senderId === window.CurrentUserId;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'task-chat-message ' + (isMe ? 'me' : 'them');
@@ -227,18 +218,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         activeChatSessionId = chatSessionId;
         activeChatTaskId = taskId;
-
-        // Highlight the selected task conversation in the list.
-        userChatList?.querySelectorAll('.task-chat-item.active')
-            .forEach(el => el.classList.remove('active'));
-
-        const activeItem = userChatList?.querySelector(
-            `[data-chat-session-id="${chatSessionId}"]`
-        );
-
-        if (activeItem) {
-            activeItem.classList.add('active');
-        }
 
         if (chatTaskTitle) chatTaskTitle.textContent = title || 'Conversation';
         if (chatTaskStatus) chatTaskStatus.textContent = status || '—';
@@ -437,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (startChatButton) {
             startChatButton.disabled = !selectedNewTask;
-            startChatButton.innerHTML = '<span>✦</span> Start Task Chat';
+            startChatButton.innerHTML = '<span>✦</span> Start Chat';
         }
     }
 
@@ -596,23 +575,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (input) {
         input.addEventListener('input', function () {
-            if (sendButton) {
-                sendButton.disabled = !activeChatSessionId || !input.value.trim();
+            const value = input.value;
+            const atIndex = value.lastIndexOf('@');
+
+            // In a new-chat state, typing @ opens the eligible task picker.
+            if (!activeChatSessionId && atIndex >= 0 && !selectedNewTask) {
+                const query = value.slice(atIndex + 1);
+
+                if (!query.includes(' ')) {
+                    loadAvailableChatTasks(query).catch(() => { });
+                } else {
+                    closeTaskPicker();
+                }
+            } else if (!activeChatSessionId) {
+                closeTaskPicker();
             }
+
+            if (sendButton) sendButton.disabled = !activeChatSessionId || !value.trim();
         });
 
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
-                closeDrawer();
+                closeTaskPicker();
                 return;
             }
 
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
 
-                if (sendButton && !sendButton.disabled) {
-                    sendButton.click();
+                if (!activeChatSessionId && selectedNewTask && startChatButton && !startChatButton.disabled) {
+                    startChatButton.click();
+                    return;
                 }
+
+                if (sendButton && !sendButton.disabled) sendButton.click();
+            }
+        });
+    }
+
+    if (clearSelectedTaskButton) {
+        clearSelectedTaskButton.addEventListener('click', function () {
+            setSelectedNewTask(null);
+            if (input) {
+                input.value = '@';
+                input.placeholder = 'Type @ to choose a task...';
+                input.focus();
+                loadAvailableChatTasks('').catch(() => { });
             }
         });
     }
@@ -673,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (startChatButton) {
                 startChatButton.style.display = '';
                 startChatButton.disabled = true;
-                startChatButton.innerHTML = '<span>✦</span> Checking task chat...';
+                startChatButton.innerHTML = '<span>✦</span> Checking chat...';
 
                 if (messagesContainer) {
                     messagesContainer.appendChild(startChatButton);
@@ -733,33 +741,35 @@ document.addEventListener('DOMContentLoaded', function () {
     // Start connection
     initConnection();
 
-    // Global chat button opens the existing task conversations.
-    // A new conversation is started only from a task's "Chat with Admin" action.
+    // Topbar chat button opens the global user chat drawer.
+    // A new global chat must choose a task explicitly via @ before it can start.
     try {
         const topbarChat = document.getElementById('chatButton');
-
         if (topbarChat) {
             topbarChat.addEventListener('click', async function () {
                 try {
                     activeChatSessionId = null;
                     activeChatTaskId = null;
-
-                    if (composer) composer.style.display = 'none';
+                    setSelectedNewTask(null);
+                    closeTaskPicker();
 
                     if (chatTaskTitle) chatTaskTitle.textContent = 'Select a task';
-                    if (chatTaskStatus) chatTaskStatus.textContent = 'Task chat';
+                    if (chatTaskStatus) chatTaskStatus.textContent = 'New chat';
 
                     if (messagesContainer) {
-                        messagesContainer.innerHTML = `
-                            <div class="task-chat-empty">
-                                <div class="task-chat-empty-icon">✦</div>
-                                <h4>Select a task</h4>
-                                <p>Choose a task conversation from the left to view messages.</p>
-                            </div>`;
+                        messagesContainer.innerHTML = '<div class="task-chat-empty"><div class="task-chat-empty-icon">💬</div><h4>Start a new task chat</h4><p>Type <strong>@</strong> in the message box and choose one of your tasks.</p></div>';
                     }
 
+                    if (composer) composer.style.display = '';
+                    if (input) {
+                        input.value = '';
+                        input.placeholder = 'Type @ to choose a task...';
+                    }
+                    if (sendButton) sendButton.disabled = true;
                     if (startChatButton) {
-                        startChatButton.style.display = 'none';
+                        startChatButton.style.display = '';
+                        startChatButton.disabled = true;
+                        startChatButton.innerHTML = '<span>✦</span> Start Chat';
                     }
 
                     await loadChats();
