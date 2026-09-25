@@ -507,6 +507,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             activeChatSessionId = json.chatSessionId;
 
+            // The task is now an active conversation; remove the new-chat picker state.
+            selectedNewTask = null;
+            if (selectedTaskBox) selectedTaskBox.hidden = true;
+            if (selectedTaskTitle) selectedTaskTitle.textContent = '';
+            closeTaskPicker();
+
             if (startChatButton) startChatButton.style.display = 'none';
 
             await openConversation(activeChatSessionId, activeChatTaskId, chatTaskTitle?.textContent, chatTaskStatus?.textContent);
