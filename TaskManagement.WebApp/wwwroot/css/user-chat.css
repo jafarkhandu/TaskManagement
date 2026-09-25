@@ -689,3 +689,43 @@
 }
 
 /* Composer */
+/* Initial task message: keep the first task context in the same visual chat sequence. */
+.task-chat-initial-message {
+    min-width: min(100%, 280px);
+}
+
+.task-chat-initial-title,
+.initial-task-title {
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.task-chat-initial-details,
+.initial-task-details {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid rgba(255,255,255,.10);
+}
+
+.task-chat-initial-row,
+.initial-task-row {
+    display: flex;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.task-chat-initial-label,
+.initial-task-label {
+    flex: 0 0 92px;
+    color: rgba(255,255,255,.52);
+    font-weight: 650;
+}
+
+.task-chat-initial-value,
+.initial-task-value {
+    min-width: 0;
+    color: rgba(255,255,255,.88);
+    word-break: break-word;
+}
