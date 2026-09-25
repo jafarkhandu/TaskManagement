@@ -311,6 +311,41 @@ namespace TaskManagement.Infrastructure.Services
             return sessions.OrderByDescending(x => x.LatestMessageAt ?? DateTime.MinValue).ToList();
         }
 
+        public async Task<IEnumerable<UserAvailableChatTaskDto>> GetAvailableChatTasksAsync(
+            string userId,
+            string? search = null)
+        {
+            var query =
+                from t in _context.TaskItems.AsNoTracking()
+                where t.AssignedToUserId == userId
+                      && !string.Equals(t.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                      && !_context.ChatSessions.Any(s =>
+                          s.TaskId == t.Id &&
+                          s.UserId == userId &&
+                          s.IsActive)
+                select new UserAvailableChatTaskDto
+                {
+                    TaskId = t.Id,
+                    Title = t.Title,
+                    Status = t.Status,
+                    Scenario = t.Scenario
+                };
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(t =>
+                    t.Title.Contains(term) ||
+                    (t.Scenario != null && t.Scenario.Contains(term)));
+            }
+
+            return await query
+                .OrderBy(t => t.Title)
+                .ThenByDescending(t => t.TaskId)
+                .Take(20)
+                .ToListAsync();
+        }
+
         public async Task<(bool Success, string Error)> MarkMessagesAsReadAsync(int chatSessionId, string userId)
         {
             var session = await _context.ChatSessions
