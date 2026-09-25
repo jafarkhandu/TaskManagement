@@ -47,8 +47,23 @@
 
     </div>
 
+
 </div>
 
+@* Shared User infrastructure. Keep this OUTSIDE notificationPopup because
+   notification refresh replaces notificationPopup.innerHTML. *@
+<form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
+<form id="userChatAntiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
+
+<script>
+    window.CurrentUserId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ""));
+</script>
+
+@await Html.PartialAsync("~/Areas/User/Views/Shared/_UserChat.cshtml")
+
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+<script src="~/js/user-chat.js" asp-append-version="true"></script>
 
 <!-- =========================================================
      PROFILE MODAL

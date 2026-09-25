@@ -147,11 +147,95 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 });
             }
 
+            // If this is a newly created session, notify admins so admin UI can update in real-time.
+            if (result.IsNew)
+            {
+                try
+                {
+                    var task = await _context.TaskItems
+                        .AsNoTracking()
+                        .Where(t => t.Id == taskId)
+                        .Select(t => new { t.Id, t.Title, t.Status, t.ProjectId })
+                        .FirstOrDefaultAsync();
+
+                    var projectTitle = await _context.Projects
+                        .AsNoTracking()
+                        .Where(p => p.Id == task.ProjectId)
+                        .Select(p => p.ProjectTitle)
+                        .FirstOrDefaultAsync();
+
+                    await _notificationHub.Clients.Group("admins")
+                        .SendAsync("NewChatSession", new
+                        {
+                            ChatSessionId = result.ChatSessionId,
+                            UserId = user.Id,
+                            UserFullName = user.FullName ?? user.UserName,
+                            TaskId = task.Id,
+                            TaskTitle = task.Title,
+                            TaskStatus = task.Status,
+                            ProjectId = task.ProjectId,
+                            ProjectTitle = projectTitle
+                        });
+                }
+                catch
+                {
+                    // Non-fatal
+                }
+            }
+
             return Json(new
             {
                 success = true,
                 chatSessionId = result.ChatSessionId
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableChatTasks(string? search = null)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+
+            var tasks = await _chatService.GetAvailableChatTasksAsync(user.Id, search);
+
+            return Json(new
+            {
+                success = true,
+                data = tasks
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserChats()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+
+            var sessions = await _chatService.GetUserChatSessionsAsync(user.Id);
+
+            return Json(new { success = true, data = sessions });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkChatRead(int chatSessionId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+            var result = await _chatService.MarkMessagesAsReadAsync(chatSessionId, user.Id);
+
+            if (!result.Success)
+            {
+                return Json(new { success = false, message = result.Error });
+            }
+
+            return Json(new { success = true });
         }
 
         [HttpGet]

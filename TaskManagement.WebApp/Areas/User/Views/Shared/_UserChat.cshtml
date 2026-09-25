@@ -1,0 +1,96 @@
+<link rel="stylesheet" href="~/css/user-chat.css" asp-append-version="true" />
+
+@*
+	Shared User Chat Drawer Partial
+*@
+
+<div id="taskChatOverlay" class="task-chat-overlay"></div>
+
+<aside id="taskChatDrawer" class="task-chat-drawer">
+
+	<div class="task-chat-container">
+
+		<div class="task-chat-sidebar">
+			<div class="task-chat-sidebar-header">
+				<strong>Conversations</strong>
+				<small class="text-muted">Recent</small>
+			</div>
+
+			<div id="userChatList" class="task-chat-conversations">
+				<div class="task-chat-empty text-center text-muted p-3">No active conversations.</div>
+			</div>
+		</div>
+
+		<div class="task-chat-main">
+
+			<div class="task-chat-header">
+				<div class="task-chat-admin">
+					<div class="task-chat-avatar">
+						<span>✦</span>
+					</div>
+
+					<div>
+						<div id="chatTaskTitle" class="task-chat-title">Select a conversation</div>
+						<div class="task-chat-status">
+							<span class="status-dot"></span>
+							<span id="chatTaskStatus">—</span>
+						</div>
+					</div>
+				</div>
+
+				<button type="button"
+						id="closeTaskChat"
+						class="task-chat-close">
+					×
+				</button>
+			</div>
+
+			<div id="taskChatMessages" class="task-chat-messages">
+				<div class="task-chat-empty">
+					<div class="task-chat-empty-icon">💬</div>
+					<h4>Need help?</h4>
+					<p>
+						Open a conversation or start a new chat with Admin.
+					</p>
+
+					<button type="button"
+							id="startTaskChat"
+							class="task-chat-start">
+						<span>✦</span>
+						Start Chat
+					</button>
+				</div>
+			</div>
+
+			<div id="taskChatComposer" class="task-chat-composer">
+
+				<div id="taskChatTaskPicker" class="task-chat-task-picker" hidden>
+					<div class="task-chat-task-picker-header">Select a task to start chat</div>
+					<div id="taskChatTaskList" class="task-chat-task-list"></div>
+				</div>
+
+				<div id="taskChatSelectedTask" class="task-chat-selected-task" hidden>
+					<span class="task-chat-selected-task-label">Task</span>
+					<span id="taskChatSelectedTaskTitle"></span>
+					<button type="button" id="clearTaskChatTask" aria-label="Clear selected task">×</button>
+				</div>
+
+				<textarea id="taskChatInput"
+						  rows="1"
+						  maxlength="4000"
+						  placeholder="Type @@ to choose a task..."></textarea>
+
+				<button type="button"
+						id="sendTaskChat"
+						class="task-chat-send"
+						disabled>
+					<span>➤</span>
+				</button>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</aside>
