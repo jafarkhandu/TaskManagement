@@ -924,23 +924,20 @@ document.addEventListener('DOMContentLoaded', function () {
             (isUser ? 'user' : 'admin');
 
 
-        const safeMessage =
-            escapeHtml(messageText);
+        const isInitialTaskMessage =
+            /^\s*New chat started for Task #\d+/i.test(messageText);
 
+        if (isInitialTaskMessage) {
+            renderAdminInitialTaskMessage(bubble, messageText);
+        } else {
+            bubble.innerHTML = `
+                <div>${escapeHtml(messageText)}</div>
 
-        const date =
-            sentAt
-                ? new Date(sentAt)
-                : new Date();
-
-
-        bubble.innerHTML = `
-            <div>${safeMessage}</div>
-
-            <div class="message-meta">
-                ${date.toLocaleString()}
-            </div>
-        `;
+                <div class="message-meta">
+                    ${sentAt ? new Date(sentAt).toLocaleString() : new Date().toLocaleString()}
+                </div>
+            `;
+        }
 
 
         row.appendChild(bubble);
@@ -949,6 +946,65 @@ document.addEventListener('DOMContentLoaded', function () {
         return row;
     }
 
+
+
+    /* =========================================================
+       INITIAL TASK MESSAGE FORMAT
+       Frontend-only: keeps the task-start message organized.
+    ========================================================= */
+
+    function renderAdminInitialTaskMessage(bubble, messageText) {
+        const normalized = String(messageText || '')
+            .replace(/&#xA;|&#xa;|&#10;/gi, '\n')
+            .replace(/\s+(?=(Task Title|Scenario|Status|Priority|Start Date|Expected End Date|Amount)\s*:)/gi, '\n')
+            .replace(/^\s*(New chat started for Task #\d+)\s*/i, '$1\n')
+            .trim();
+
+        const lines = normalized.split(/\n+/).map(line => line.trim()).filter(Boolean);
+
+        if (!lines.length || !/^New chat started for Task #\d+/i.test(lines[0])) {
+            bubble.textContent = messageText;
+            return;
+        }
+
+        bubble.classList.add('admin-initial-task-message');
+
+        const heading = document.createElement('div');
+        heading.className = 'admin-initial-task-title';
+        heading.textContent = lines.shift();
+        bubble.appendChild(heading);
+
+        const details = document.createElement('div');
+        details.className = 'admin-initial-task-details';
+
+        lines.forEach(function (line) {
+            const row = document.createElement('div');
+            row.className = 'admin-initial-task-row';
+
+            const separator = line.indexOf(':');
+
+            if (separator > 0) {
+                const label = document.createElement('span');
+                label.className = 'admin-initial-task-label';
+                label.textContent = line.slice(0, separator).trim();
+
+                const value = document.createElement('span');
+                value.className = 'admin-initial-task-value';
+                value.textContent = line.slice(separator + 1).trim();
+
+                row.appendChild(label);
+                row.appendChild(value);
+            } else {
+                row.textContent = line;
+            }
+
+            details.appendChild(row);
+        });
+
+        if (details.children.length) {
+            bubble.appendChild(details);
+        }
+    }
 
     /* =========================================================
        HTML SAFETY
