@@ -228,6 +228,18 @@ document.addEventListener('DOMContentLoaded', function () {
         activeChatSessionId = chatSessionId;
         activeChatTaskId = taskId;
 
+        // Highlight the selected task conversation in the list.
+        userChatList?.querySelectorAll('.task-chat-item.active')
+            .forEach(el => el.classList.remove('active'));
+
+        const activeItem = userChatList?.querySelector(
+            `[data-chat-session-id="${chatSessionId}"]`
+        );
+
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+
         if (chatTaskTitle) chatTaskTitle.textContent = title || 'Conversation';
         if (chatTaskStatus) chatTaskStatus.textContent = status || '—';
 
