@@ -1,5 +1,17 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // There must be exactly one global User Chat drawer.
+    // Remove accidental duplicate partials before binding any events.
+    const duplicateDrawers = document.querySelectorAll('#taskChatDrawer');
+    duplicateDrawers.forEach(function (element, index) {
+        if (index > 0) element.remove();
+    });
+
+    const duplicateOverlays = document.querySelectorAll('#taskChatOverlay');
+    duplicateOverlays.forEach(function (element, index) {
+        if (index > 0) element.remove();
+    });
+
     const overlay = document.getElementById('taskChatOverlay');
     const drawer = document.getElementById('taskChatDrawer');
     const userChatList = document.getElementById('userChatList');
