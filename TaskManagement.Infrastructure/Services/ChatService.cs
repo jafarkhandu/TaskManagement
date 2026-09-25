@@ -318,11 +318,10 @@ namespace TaskManagement.Infrastructure.Services
             var query =
                 from t in _context.TaskItems.AsNoTracking()
                 where t.AssignedToUserId == userId
-                      && !string.Equals(t.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                      && t.Status != "Completed"
                       && !_context.ChatSessions.Any(s =>
                           s.TaskId == t.Id &&
-                          s.UserId == userId &&
-                          s.IsActive)
+                          s.UserId == userId)
                 select new UserAvailableChatTaskDto
                 {
                     TaskId = t.Id,
