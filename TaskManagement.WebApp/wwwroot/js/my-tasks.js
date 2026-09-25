@@ -164,16 +164,17 @@
     }
 
 
-    // Use delegated handler for View Details so it continues to work after DOM changes
-    document.body.addEventListener('click', function (ev) {
+    // Delegated capture handler: works for all current and dynamically moved task cards.
+    // Capture phase ensures another page-level click handler cannot swallow the click first.
+    document.addEventListener('click', function (ev) {
         const btn = ev.target.closest('.view-task-btn');
         if (!btn) return;
 
         const card = btn.closest('.task-card');
-        if (!card) return;
+        if (!card || !modal) return;
 
         openTaskModal(card);
-    });
+    }, true);
 
 
     function closeTaskDetails() {
