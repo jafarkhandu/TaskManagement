@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatTaskStatus = document.getElementById('chatTaskStatus');
     const globalBadge = document.getElementById('globalChatBadge');
 
+    // The drawer/overlay are global fixed UI. Keep them directly under <body>
+    // so notification/modal containers can never clip, hide, or reposition them.
+    if (overlay && overlay.parentElement !== document.body) {
+        document.body.appendChild(overlay);
+    }
+    if (drawer && drawer.parentElement !== document.body) {
+        document.body.appendChild(drawer);
+    }
+
     let connection = null;
     let isConnected = false;
     let activeChatSessionId = null;
