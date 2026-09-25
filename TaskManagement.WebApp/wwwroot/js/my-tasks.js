@@ -164,20 +164,25 @@
     }
 
 
-    // Delegated capture handler: works for all current and dynamically moved task cards.
-    // Capture phase ensures another page-level click handler cannot swallow the click first.
-    document.addEventListener('click', function (ev) {
-        const btn = ev.target.closest('.view-task-btn');
-        if (!btn) return;
+    // View Details belongs to the task card itself.
+    // Bind directly to every button so the existing modal behavior is isolated
+    // from global notification/chat click handlers.
+    document.querySelectorAll('.view-task-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
 
-        const card = btn.closest('.task-card');
-        if (!card || !modal) return;
+            const card = btn.closest('.task-card');
+            if (!card || !modal) return;
 
-        openTaskModal(card);
-    }, true);
+            openTaskModal(card);
+        });
+    });
 
 
     function closeTaskDetails() {
+
+        if (!modal) return;
 
         modal.classList.remove("show");
 
