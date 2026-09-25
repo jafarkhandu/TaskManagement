@@ -253,10 +253,62 @@ document.addEventListener('DOMContentLoaded', function () {
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble ' + (isUser ? 'user' : 'admin');
 
-        const safe = escapeHtml(messageText);
         const date = sentAt ? new Date(sentAt) : new Date();
+        const taskStartMatch = messageText.match(/^New chat started for Task #(\\d+)\\s*$/m);
 
-        bubble.innerHTML = `<div>${safe}</div><div class="message-meta">${date.toLocaleString()}</div>`;
+        if (taskStartMatch) {
+            const parts = messageText.split(/\\n\\s*\\n/);
+            const heading = parts.shift()?.trim() || taskStartMatch[0];
+            const details = parts.join('\\n\\n').trim();
+
+            bubble.classList.add('initial-task-message');
+
+            const headingEl = document.createElement('div');
+            headingEl.className = 'initial-task-title';
+            headingEl.textContent = heading;
+            bubble.appendChild(headingEl);
+
+            if (details) {
+                const detailBox = document.createElement('div');
+                detailBox.className = 'initial-task-details';
+
+                details.split('\\n').forEach(line => {
+                    const clean = line.trim();
+                    if (!clean) return;
+
+                    const rowEl = document.createElement('div');
+                    rowEl.className = 'initial-task-row';
+
+                    const separator = clean.indexOf(':');
+                    if (separator > 0) {
+                        const labelEl = document.createElement('span');
+                        labelEl.className = 'initial-task-label';
+                        labelEl.textContent = clean.slice(0, separator).trim();
+
+                        const valueEl = document.createElement('span');
+                        valueEl.className = 'initial-task-value';
+                        valueEl.textContent = clean.slice(separator + 1).trim();
+
+                        rowEl.appendChild(labelEl);
+                        rowEl.appendChild(valueEl);
+                    } else {
+                        rowEl.textContent = clean;
+                    }
+
+                    detailBox.appendChild(rowEl);
+                });
+
+                bubble.appendChild(detailBox);
+            }
+        } else {
+            const safe = escapeHtml(messageText);
+            bubble.innerHTML = `<div>${safe}</div>`;
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'message-meta';
+        meta.textContent = date.toLocaleString();
+        bubble.appendChild(meta);
 
         row.appendChild(bubble);
 
