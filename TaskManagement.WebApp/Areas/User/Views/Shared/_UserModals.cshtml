@@ -1,18 +1,3 @@
-﻿@{
-    var userName =
-        User.Identity?.Name
-        ?? "User";
-
-    var firstLetter =
-        string.IsNullOrWhiteSpace(userName)
-            ? "U"
-            : userName.Substring(0, 1).ToUpper();
-}
-
-<!-- =========================================================
-     NOTIFICATION POPUP
-========================================================= -->
-
 <div class="notification-popup" id="notificationPopup">
 
     <div class="popup-title">
@@ -62,7 +47,22 @@
 <script src="~/js/user-chat.js" asp-append-version="true"></script>
 
 </div>
+</div>
 
+@* Shared User Chat infrastructure must stay outside the notification popup.
+   Notification refresh replaces notificationPopup.innerHTML, so placing chat here
+   would remove the drawer from the DOM and make the page appear frozen. *@
+<form id="userChatAntiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
+
+<script>
+    window.CurrentUserId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ""));
+</script>
+
+@await Html.PartialAsync("~/Areas/User/Views/Shared/_UserChat.cshtml")
+
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+<script src="~/js/user-chat.js" asp-append-version="true"></script>
 
 <!-- =========================================================
      PROFILE MODAL
