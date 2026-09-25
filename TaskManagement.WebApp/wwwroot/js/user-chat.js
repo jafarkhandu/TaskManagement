@@ -256,7 +256,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function markChatRead(chatSessionId) {
         try {
-            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || document.querySelector('#userChatAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || '';
 
             const res = await fetch('/User/MyTasks/MarkChatRead', {
                 method: 'POST',
@@ -390,7 +392,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || document.querySelector('#userChatAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || '';
 
             const res = await fetch('/User/MyTasks/StartChat', {
                 method: 'POST',
