@@ -999,3 +999,119 @@
         grid-template-columns: 105px minmax(0, 1fr);
     }
 }
+
+
+/* =========================================================
+   LIGHT THEME — ADMIN CHAT
+========================================================= */
+
+html.light-theme .admin-chat-page {
+    color: #263750;
+}
+
+html.light-theme .admin-chat-layout,
+html.light-theme .admin-chat-list-card,
+html.light-theme .admin-chat-drawer {
+    background: rgba(248, 251, 255, .96);
+    border-color: rgba(105, 130, 165, .18);
+    box-shadow: 0 18px 50px rgba(45, 70, 105, .08);
+}
+
+html.light-theme .admin-chat-list-header,
+html.light-theme .admin-chat-header {
+    background: rgba(255, 255, 255, .78);
+    border-bottom-color: rgba(105, 130, 165, .14);
+}
+
+html.light-theme .admin-chat-title-row h2,
+html.light-theme .drawer-user-name {
+    color: #263750;
+}
+
+html.light-theme .admin-chat-date,
+html.light-theme .drawer-context,
+html.light-theme .admin-chat-preview,
+html.light-theme .admin-chat-time {
+    color: #74849b;
+}
+
+html.light-theme .admin-chat-search {
+    background: #f0f4f9;
+    border-color: rgba(105, 130, 165, .18);
+}
+
+html.light-theme .admin-chat-search input {
+    color: #263750;
+}
+
+html.light-theme .admin-chat-search input::placeholder {
+    color: #8795a9;
+}
+
+html.light-theme .admin-chat-item:hover {
+    background: rgba(79, 128, 235, .06);
+}
+
+html.light-theme .admin-chat-item.active {
+    background: rgba(79, 128, 235, .08);
+    border-color: rgba(79, 128, 235, .22);
+}
+
+html.light-theme .chat-item-meta,
+html.light-theme .chat-project {
+    color: #71829a;
+}
+
+html.light-theme .chat-status {
+    background: rgba(79, 128, 235, .09);
+    color: #5576aa;
+}
+
+html.light-theme .admin-chat-messages {
+    background: #f6f9fd;
+}
+
+html.light-theme .message-bubble.user {
+    background: #e7edf5;
+    border-color: rgba(105, 130, 165, .16);
+    color: #263750;
+}
+
+html.light-theme .message-bubble.user .message-meta {
+    color: #7b8ba1;
+}
+
+html.light-theme .admin-chat-composer {
+    background: rgba(255,255,255,.84);
+    border-top-color: rgba(105, 130, 165, .16);
+}
+
+html.light-theme .admin-chat-input {
+    background: #edf2f8;
+    border-color: rgba(105, 130, 165, .20);
+    color: #263750;
+}
+
+html.light-theme .admin-chat-input::placeholder {
+    color: #8795a9;
+}
+
+html.light-theme .admin-chat-input:focus {
+    background: #f7faff;
+    border-color: rgba(37, 99, 235, .34);
+}
+
+html.light-theme .chat-close-button {
+    background: rgba(100, 130, 170, .09);
+    color: #66758c;
+}
+
+html.light-theme .chat-close-button:hover {
+    background: rgba(100, 130, 170, .16);
+    color: #263750;
+}
+
+html.light-theme .admin-chat-list,
+html.light-theme .admin-chat-messages {
+    scrollbar-color: rgba(85, 115, 155, .30) transparent;
+}
