@@ -1,3 +1,18 @@
+﻿@{
+    var userName =
+        User.Identity?.Name
+        ?? "User";
+
+    var firstLetter =
+        string.IsNullOrWhiteSpace(userName)
+            ? "U"
+            : userName.Substring(0, 1).ToUpper();
+}
+
+<!-- =========================================================
+     NOTIFICATION POPUP
+========================================================= -->
+
 <div class="notification-popup" id="notificationPopup">
 
     <div class="popup-title">
@@ -13,14 +28,6 @@
         </button>
 
     </div>
-
-@* Anti-forgery token available globally to user pages *@
-<form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
-
-@* Expose current user id to client scripts for chat rendering (safe identifier only) *@
-<script>
-    window.CurrentUserId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ""));
-</script>
 
     <div id="notificationPopupContent">
 
@@ -41,17 +48,11 @@
     </div>
 
 
-@* Include the global user chat drawer and its script so it's available on all user pages *@
-@await Html.PartialAsync("~/Areas/User/Views/Shared/_UserChat.cshtml")
-
-<script src="~/js/user-chat.js" asp-append-version="true"></script>
-
-</div>
 </div>
 
-@* Shared User Chat infrastructure must stay outside the notification popup.
-   Notification refresh replaces notificationPopup.innerHTML, so placing chat here
-   would remove the drawer from the DOM and make the page appear frozen. *@
+@* Shared User infrastructure. Keep this OUTSIDE notificationPopup because
+   notification refresh replaces notificationPopup.innerHTML. *@
+<form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
 <form id="userChatAntiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
 
 <script>
