@@ -511,36 +511,84 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.body.style.overflow = 'hidden';
             }
 
+            // Switching from another task must immediately clear the previous
+            // conversation from the main pane. The selected task owns the pane.
+            const previousSessionId = activeChatSessionId;
             activeChatTaskId = taskId;
+            activeChatSessionId = null;
 
-            // Check for existing active session for this task
+            if (previousSessionId && isConnected && connection) {
+                connection.invoke('LeaveChat', Number(previousSessionId)).catch(() => { });
+            }
+
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '';
+            }
+
+            if (composer) {
+                composer.style.display = 'none';
+            }
+
+            if (input) {
+                input.value = '';
+            }
+
+            if (sendButton) {
+                sendButton.disabled = true;
+            }
+
+            if (startChatButton) {
+                startChatButton.style.display = '';
+                startChatButton.disabled = true;
+                startChatButton.innerHTML = '<span>✦</span> Checking chat...';
+
+                if (messagesContainer) {
+                    messagesContainer.appendChild(startChatButton);
+                }
+            }
+
+            // Check for an existing active session for THIS task only.
             (async function () {
                 try {
                     const res = await fetch(`/User/MyTasks/CheckActiveSession?taskId=${encodeURIComponent(taskId)}`);
                     const json = await res.json();
 
+                    // Ignore a stale response if the user already selected another task.
+                    if (activeChatTaskId !== taskId) return;
+
                     if (json && json.success && json.exists && json.chatSessionId) {
                         activeChatSessionId = json.chatSessionId;
-                        // load conversation
+                        if (startChatButton) startChatButton.style.display = 'none';
+
                         await openConversation(activeChatSessionId, taskId, title, status);
                         return;
                     }
 
-                    // No existing session; show start button
+                    // No active session for this task: show a clean Start Chat state.
                     activeChatSessionId = null;
 
-                    if (messagesContainer && startChatButton && !messagesContainer.contains(startChatButton)) {
-                        messagesContainer.appendChild(startChatButton);
+                    if (messagesContainer) {
+                        messagesContainer.innerHTML = '';
                     }
 
                     if (startChatButton) {
                         startChatButton.style.display = '';
                         startChatButton.disabled = false;
                         startChatButton.innerHTML = '<span>✦</span> Start Chat';
+
+                        if (messagesContainer) {
+                            messagesContainer.appendChild(startChatButton);
+                        }
                     }
                 }
                 catch (err) {
+                    if (activeChatTaskId !== taskId) return;
+
                     console.error('CheckActiveSession failed:', err);
+
+                    if (messagesContainer) {
+                        messagesContainer.innerHTML = '<div class="task-chat-empty text-center text-muted p-3">Unable to check this task chat.</div>';
+                    }
                 }
             })();
 
