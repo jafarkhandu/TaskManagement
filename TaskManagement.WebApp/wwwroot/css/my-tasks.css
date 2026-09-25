@@ -1587,3 +1587,70 @@ html.light-theme .modal-info {
                 html.light-theme .task-hero .hero-quote small {
                     color: rgba(255,255,255,.78) !important;
                 }
+
+/* =========================================================
+   LIGHT THEME — MY TASKS CHAT
+========================================================= */
+
+html.light-theme .task-chat-drawer {
+    background: #f6f9fd;
+    border-left-color: rgba(105, 130, 165, .20);
+    box-shadow: -20px 0 60px rgba(45, 70, 105, .18);
+}
+
+html.light-theme .task-chat-header {
+    background: rgba(255, 255, 255, .78);
+    border-bottom-color: rgba(105, 130, 165, .16);
+}
+
+html.light-theme .task-chat-context {
+    color: #71829a;
+}
+
+html.light-theme .task-chat-messages {
+    background:
+        radial-gradient(circle at 85% 0%, rgba(108, 99, 255, .07), transparent 35%),
+        #f6f9fd;
+}
+
+html.light-theme .task-chat-message.admin .chat-message-bubble {
+    background: #e7edf5;
+    border-color: rgba(105, 130, 165, .16);
+    color: #263750;
+}
+
+html.light-theme .chat-message-time {
+    color: #8190a5;
+}
+
+html.light-theme .task-chat-composer {
+    background: rgba(255,255,255,.84);
+    border-top-color: rgba(105,130,165,.16);
+}
+
+html.light-theme .task-chat-composer textarea {
+    background: #edf2f8;
+    border-color: rgba(105,130,165,.20);
+    color: #263750;
+}
+
+html.light-theme .task-chat-composer textarea::placeholder {
+    color: #8795a9;
+}
+
+/* Chat action under View Details — readable but still subtle. */
+html.light-theme .task-card .task-chat-btn {
+    width: 100%;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(66, 89, 125, .11), rgba(108, 99, 255, .08));
+    border: 1px solid rgba(85, 110, 145, .18);
+    color: #354761;
+    box-shadow: 0 5px 14px rgba(45, 70, 105, .06);
+}
+
+html.light-theme .task-card .task-chat-btn:hover {
+    background: linear-gradient(135deg, #4f78b8, #667eea);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 9px 20px rgba(70, 105, 165, .18);
+}
