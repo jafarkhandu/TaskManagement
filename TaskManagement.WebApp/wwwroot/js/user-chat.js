@@ -190,7 +190,58 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const bubble = document.createElement('div');
         bubble.className = 'task-chat-bubble';
-        bubble.innerHTML = escapeHtml(m.message || '');
+
+        const messageText = String(m.message || '');
+        const taskStartMatch = messageText.match(/^New chat started for Task #(\\d+)\\s*$/m);
+
+        if (taskStartMatch) {
+            const parts = messageText.split(/\\n\\s*\\n/);
+            const heading = parts.shift()?.trim() || taskStartMatch[0];
+            const details = parts.join('\\n\\n').trim();
+
+            bubble.classList.add('task-chat-initial-message');
+
+            const headingEl = document.createElement('div');
+            headingEl.className = 'task-chat-initial-title';
+            headingEl.textContent = heading;
+            bubble.appendChild(headingEl);
+
+            if (details) {
+                const lines = details.split('\\n');
+                const detailBox = document.createElement('div');
+                detailBox.className = 'task-chat-initial-details';
+
+                lines.forEach(line => {
+                    const clean = line.trim();
+                    if (!clean) return;
+
+                    const row = document.createElement('div');
+                    row.className = 'task-chat-initial-row';
+
+                    const separator = clean.indexOf(':');
+                    if (separator > 0) {
+                        const label = document.createElement('span');
+                        label.className = 'task-chat-initial-label';
+                        label.textContent = clean.slice(0, separator).trim();
+
+                        const value = document.createElement('span');
+                        value.className = 'task-chat-initial-value';
+                        value.textContent = clean.slice(separator + 1).trim();
+
+                        row.appendChild(label);
+                        row.appendChild(value);
+                    } else {
+                        row.textContent = clean;
+                    }
+
+                    detailBox.appendChild(row);
+                });
+
+                bubble.appendChild(detailBox);
+            }
+        } else {
+            bubble.innerHTML = escapeHtml(messageText);
+        }
 
         const time = document.createElement('div');
         time.className = 'task-chat-time';
