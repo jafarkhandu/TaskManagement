@@ -191,6 +191,23 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetAvailableChatTasks(string? search = null)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Challenge();
+
+            var tasks = await _chatService.GetAvailableChatTasksAsync(user.Id, search);
+
+            return Json(new
+            {
+                success = true,
+                data = tasks
+            });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> GetUserChats()
         {
             var user = await _userManager.GetUserAsync(User);
