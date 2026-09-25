@@ -1654,3 +1654,46 @@ html.light-theme .task-card .task-chat-btn:hover {
     color: #fff;
     box-shadow: 0 9px 20px rgba(70, 105, 165, .18);
 }
+
+
+/* =========================================================
+   MY TASKS — LIGHT CHAT ACTION
+   Make "Chat with Admin" clearly visible under View Details.
+   Soft tinted button; not pure white.
+========================================================= */
+
+html.light-theme .task-card .task-chat-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 34px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    border: 1px solid rgba(74, 96, 130, .30) !important;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #dce5f1, #e8edf5) !important;
+    color: #30445f !important;
+    box-shadow: 0 4px 12px rgba(48, 68, 95, .10) !important;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .05px;
+    opacity: 1 !important;
+}
+
+html.light-theme .task-card .task-chat-btn span {
+    color: #526985 !important;
+    font-size: 13px;
+}
+
+html.light-theme .task-card .task-chat-btn:hover {
+    background: linear-gradient(135deg, #536f9b, #687fc1) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(62, 85, 125, .18) !important;
+    transform: translateY(-1px);
+}
+
+html.light-theme .task-card .task-chat-btn:hover span {
+    color: #fff !important;
+}
