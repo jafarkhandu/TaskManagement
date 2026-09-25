@@ -1,120 +1,325 @@
 @model IEnumerable<TaskManagement.Application.DTOs.AdminChatSessionDto>
+
 @{
-	ViewData["Title"] = "Admin Chat";
-	Layout = null;
+    ViewData["Title"] = "Admin Chat";
+    Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>TaskManager - Admin Chat</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-	<link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
-	<link rel="stylesheet" href="~/css/admin-common.css" asp-append-version="true" />
-	<link rel="stylesheet" href="~/css/admin-chat.css" asp-append-version="true" />
+    <title>TaskManager - Admin Chat</title>
 
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/admin-dashboard.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/admin-common.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/admin-chat.css"
+          asp-append-version="true" />
 </head>
 
 <body class="admin-dashboard">
 
-	@await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
+    @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
 
-	<main class="main-content">
+    <main class="main-content">
 
-		@await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
+        @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
 
-		<div class="dashboard-container">
+        <div class="dashboard-container admin-chat-page">
 
-			<section class="row">
+            <section class="admin-chat-layout">
 
-				<div class="col-12 col-lg-5 col-xl-4">
-					<div class="card admin-chat-list-card">
-						<div class="card-header d-flex justify-content-between align-items-center">
-							<h4 class="mb-0">Active Chats</h4>
-							<small class="text-muted">@DateTime.UtcNow.ToString("g")</small>
-						</div>
+                <!-- =====================================================
+                     LEFT : CHAT LIST
+                ====================================================== -->
 
-						<div class="card-body p-0">
-							<div id="adminChatList" class="list-group list-group-flush">
-								@if (!Model?.Any() ?? true)
-								{
-									<div class="p-4 text-center text-muted">No active chat sessions.</div>
-								}
-								else
-								{
-									foreach (var s in Model)
-									{
-										<a href="#" class="list-group-item list-group-item-action admin-chat-item" data-chat-session-id="@s.ChatSessionId" data-user-id="@s.UserId" data-task-id="@s.TaskId" data-project-id="@s.ProjectId">
-											<div class="d-flex w-100 justify-content-between">
-												<h5 class="mb-1 admin-chat-username">@Html.Encode(s.UserFullName)</h5>
-												<small class="text-muted admin-chat-time">@((s.LatestMessageAt.HasValue) ? s.LatestMessageAt.Value.ToLocalTime().ToString("g") : "—")</small>
-											</div>
-											<p class="mb-1 admin-chat-task">@Html.Encode(s.TaskTitle) <span class="badge bg-secondary ms-2">@Html.Encode(s.TaskStatus)</span></p>
-											<small class="text-muted d-block">Project: @Html.Encode(s.ProjectTitle)</small>
-											<div class="d-flex justify-content-between align-items-center mt-2">
-												<div class="text-truncate admin-chat-preview">@Html.Encode(s.LatestMessage)</div>
-												@if (s.UnreadCount > 0)
-												{
-													<span class="badge bg-danger admin-chat-badge">@s.UnreadCount</span>
-												}
-											</div>
-										</a>
-									}
-								}
-							</div>
-						</div>
-					</div>
-				</div>
+                <div class="admin-chat-list-card">
 
-				<div class="col-12 col-lg-7 col-xl-8 position-relative">
-					<!-- Chat Drawer -->
-					<aside id="adminChatDrawer" class="admin-chat-drawer" aria-hidden="true">
+                    <div class="admin-chat-list-header">
 
-						<div class="admin-chat-header px-4 py-3 d-flex align-items-start justify-content-between">
-							<div>
-								<div class="h5 mb-1" id="drawerUserName">Select a chat</div>
-								<div class="text-muted small" id="drawerContext">—</div>
-							</div>
+                        <div class="admin-chat-title-row">
 
-							<div>
-								<button type="button" id="closeAdminChat" class="btn btn-outline-light btn-sm">×</button>
-							</div>
-						</div>
+                            <div>
+                                <h2>Chats</h2>
 
-						<div class="admin-chat-messages" id="adminChatMessages">
-							<div class="text-center text-muted p-4">Open a chat to view messages.</div>
-						</div>
+                                <span class="admin-chat-count">
+                                    @(Model?.Count() ?? 0)
+                                </span>
+                            </div>
 
-						<div class="admin-chat-composer p-3 border-top bg-light">
-							<textarea id="adminChatInput" rows="2" class="form-control" placeholder="Type a message..."></textarea>
-							<button id="adminSendChat" class="btn btn-primary ms-2" disabled>Send</button>
-						</div>
+                            <small class="admin-chat-date">
+                                @DateTime.UtcNow.ToLocalTime().ToString("g")
+                            </small>
 
-					</aside>
-				</div>
+                        </div>
 
-			</section>
+                        <!-- Search -->
+                        <div class="admin-chat-search">
+                            <span class="admin-chat-search-icon">⌕</span>
 
-		</div>
+                            <input type="text"
+                                   id="chatSearchInput"
+                                   placeholder="Search chats..."
+                                   autocomplete="off" />
+                        </div>
 
-	</main>
+                        <!-- Filters -->
+                        <div class="admin-chat-filters">
 
-	<form id="antiForgeryForm" style="display:none;">
-		@Html.AntiForgeryToken()
-	</form>
+                            <button type="button"
+                                    class="chat-filter active"
+                                    data-filter="all">
+                                All
+                                <span class="filter-count">
+                                    @(Model?.Count() ?? 0)
+                                </span>
+                            </button>
 
-	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
-	<script src="~/js/admin-chat.js" asp-append-version="true"></script>
-	    <script src="~/js/admin-tasks.js"
-            asp-append-version="true">
-    </script>
+                            <button type="button"
+                                    class="chat-filter"
+                                    data-filter="unread">
+                                Unread
+                            </button>
+
+                            <button type="button"
+                                    class="chat-filter"
+                                    data-filter="open">
+                                Open
+                            </button>
+
+                            <button type="button"
+                                    class="chat-filter"
+                                    data-filter="hold">
+                                On Hold
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Chat list -->
+
+                    <div id="adminChatList"
+                         class="admin-chat-list">
+
+                        @if (!Model?.Any() ?? true)
+                        {
+                            <div class="admin-chat-empty-list">
+                                <strong>No active chats</strong>
+                                <span>There are no active chat sessions.</span>
+                            </div>
+                        }
+                        else
+                        {
+                            foreach (var s in Model)
+                            {
+                                <a href="#"
+                                   class="admin-chat-item"
+                                   data-chat-session-id="@s.ChatSessionId"
+                                   data-user-id="@s.UserId"
+                                   data-task-id="@s.TaskId"
+                                   data-project-id="@s.ProjectId"
+                                   data-status="@s.TaskStatus"
+                                   data-unread="@s.UnreadCount">
+
+                                    <div class="chat-item-main">
+
+                                        <div class="chat-avatar">
+                                            <span class="chat-avatar-letter">
+                                                U
+                                            </span>
+                                        </div>
+
+                                        <div class="chat-item-content">
+
+                                            <div class="chat-item-top">
+
+                                                <h5 class="admin-chat-username">
+                                                    @Html.Encode(s.UserFullName)
+                                                </h5>
+
+                                                <small class="admin-chat-time">
+                                                    @(
+                                                        s.LatestMessageAt.HasValue
+                                                            ? s.LatestMessageAt.Value.ToLocalTime().ToString("g")
+                                                            : "—"
+                                                    )
+                                                </small>
+
+                                            </div>
+
+                                            <div class="chat-item-message-row">
+
+                                                <span class="admin-chat-preview">
+                                                    @Html.Encode(s.LatestMessage)
+                                                </span>
+
+                                                @if (s.UnreadCount > 0)
+                                                {
+                                                    <span class="admin-chat-badge">
+                                                        @s.UnreadCount
+                                                    </span>
+                                                }
+
+                                            </div>
+
+                                            <div class="chat-item-meta">
+
+                                                <span class="chat-project">
+                                                    Project: @Html.Encode(s.ProjectTitle)
+                                                </span>
+
+                                                <span class="chat-status">
+                                                    @Html.Encode(s.TaskStatus)
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </a>
+                            }
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                     RIGHT : CHAT PANEL
+                ====================================================== -->
+
+                <div class="admin-chat-panel-wrapper">
+
+                    <aside id="adminChatDrawer"
+                           class="admin-chat-drawer"
+                           aria-hidden="true">
+
+                        <!-- Header -->
+
+                        <div class="admin-chat-header">
+
+                            <div class="admin-chat-user-info">
+
+                                <div class="chat-header-avatar">
+                                    <span id="drawerUserInitial">U</span>
+                                </div>
+
+                                <div>
+
+                                    <div id="drawerUserName"
+                                         class="drawer-user-name">
+                                        Select a chat
+                                    </div>
+
+                                    <div id="drawerContext"
+                                         class="drawer-context">
+                                        Select a conversation from the list
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <button type="button"
+                                    id="closeAdminChat"
+                                    class="chat-close-button"
+                                    aria-label="Close chat">
+                                ×
+                            </button>
+
+                        </div>
+
+
+                        <!-- Messages -->
+
+                        <div id="adminChatMessages"
+                             class="admin-chat-messages">
+
+                            <div class="chat-placeholder">
+
+                                <div class="chat-placeholder-icon">
+                                    💬
+                                </div>
+
+                                <strong>Select a chat</strong>
+
+                                <span>
+                                    Choose a conversation from the left to view messages.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Composer -->
+
+                        <div class="admin-chat-composer">
+
+                            <textarea id="adminChatInput"
+                                      rows="1"
+                                      class="admin-chat-input"
+                                      placeholder="Type a message..."
+                                      autocomplete="off"></textarea>
+
+                            <button id="adminSendChat"
+                                    type="button"
+                                    class="admin-send-button"
+                                    disabled>
+                                Send
+                            </button>
+
+                        </div>
+
+                    </aside>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <!-- Anti-forgery token -->
+    <form id="antiForgeryForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+
+    <!-- Existing scripts - KEEP -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
+
+    <script src="~/js/admin-chat.js"
+            asp-append-version="true"></script>
+
+    <script src="~/js/admin-tasks.js"
+            asp-append-version="true"></script>
+
     <script src="~/js/admin-common.js"
-        asp-append-version="true"></script>
+            asp-append-version="true"></script>
+
 </body>
 
 </html>
