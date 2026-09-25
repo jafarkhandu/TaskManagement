@@ -729,3 +729,171 @@
     color: rgba(255,255,255,.88);
     word-break: break-word;
 }
+
+
+/* =========================================================
+   LIGHT THEME — USER CHAT
+   Keep the light mode soft, readable and slightly tinted.
+========================================================= */
+
+html.light-theme .task-chat-overlay {
+    background: rgba(30, 45, 70, .30);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+}
+
+html.light-theme .task-chat-drawer {
+    background: rgba(248, 251, 255, .96);
+    border-color: rgba(135, 160, 195, .28);
+    box-shadow: -18px 18px 60px rgba(45, 70, 105, .20);
+}
+
+html.light-theme .task-chat-sidebar {
+    background: rgba(235, 241, 249, .98);
+    border-right-color: rgba(125, 150, 185, .20);
+}
+
+html.light-theme .task-chat-sidebar-header {
+    border-bottom-color: rgba(125, 150, 185, .16);
+}
+
+html.light-theme .task-chat-sidebar-header strong {
+    color: #24344d;
+}
+
+html.light-theme .task-chat-sidebar-header small,
+html.light-theme .task-chat-preview,
+html.light-theme .task-chat-time {
+    color: #74849b !important;
+}
+
+html.light-theme .task-chat-item {
+    color: #263750;
+}
+
+html.light-theme .task-chat-item:hover {
+    background: rgba(79, 128, 235, .08);
+    border-color: rgba(79, 128, 235, .14);
+}
+
+html.light-theme .task-chat-item.active {
+    background: linear-gradient(135deg, rgba(91, 125, 230, .14), rgba(139, 92, 246, .07));
+    border-color: rgba(91, 125, 230, .22);
+    box-shadow: inset 3px 0 0 #667eea;
+}
+
+html.light-theme .task-chat-item-title {
+    color: #25364f;
+}
+
+html.light-theme .task-chat-main {
+    background:
+        radial-gradient(circle at 85% 0%, rgba(108, 99, 255, .08), transparent 35%),
+        #f6f9fd;
+}
+
+html.light-theme .task-chat-header {
+    background: rgba(255, 255, 255, .72);
+    border-bottom-color: rgba(125, 150, 185, .16);
+}
+
+html.light-theme .task-chat-title {
+    color: #24344d;
+}
+
+html.light-theme .task-chat-status {
+    color: #74849b;
+}
+
+html.light-theme .task-chat-close {
+    background: rgba(100, 130, 170, .09);
+    color: #66758c;
+}
+
+html.light-theme .task-chat-close:hover {
+    background: rgba(100, 130, 170, .16);
+    color: #263750;
+}
+
+html.light-theme .task-chat-message.them .task-chat-bubble {
+    background: #e8eef6;
+    border-color: rgba(105, 130, 165, .16);
+    color: #263750;
+}
+
+html.light-theme .task-chat-message .task-chat-time {
+    color: #8190a5;
+}
+
+html.light-theme .task-chat-empty h4 {
+    color: #25364e;
+}
+
+html.light-theme .task-chat-empty p {
+    color: #74849b;
+}
+
+html.light-theme .task-chat-composer {
+    background: rgba(255, 255, 255, .82);
+    border-top-color: rgba(125, 150, 185, .18);
+}
+
+html.light-theme .task-chat-composer textarea {
+    background: #edf2f8;
+    border-color: rgba(105, 130, 165, .20);
+    color: #263750;
+}
+
+html.light-theme .task-chat-composer textarea::placeholder {
+    color: #8795a9;
+}
+
+html.light-theme .task-chat-composer textarea:focus {
+    background: #f7faff;
+    border-color: rgba(108, 99, 255, .40);
+}
+
+html.light-theme .task-chat-task-picker {
+    background: #f8fbff;
+    border-color: rgba(105, 130, 165, .20);
+    box-shadow: 0 18px 45px rgba(45, 70, 105, .18);
+}
+
+html.light-theme .task-chat-task-picker-header {
+    color: #71829a;
+}
+
+html.light-theme .task-chat-task-option {
+    color: #263750;
+}
+
+html.light-theme .task-chat-task-option:hover,
+html.light-theme .task-chat-task-option:focus {
+    background: rgba(108, 99, 255, .08);
+    border-color: rgba(108, 99, 255, .16);
+}
+
+html.light-theme .task-chat-task-option-meta,
+html.light-theme .task-chat-task-empty {
+    color: #7889a0;
+}
+
+html.light-theme .task-chat-selected-task {
+    background: rgba(108, 99, 255, .08);
+    border-color: rgba(108, 99, 255, .16);
+    color: #33445e;
+}
+
+html.light-theme .task-chat-selected-task-label {
+    color: #7889a0;
+}
+
+html.light-theme #clearTaskChatTask {
+    background: rgba(100, 130, 170, .10);
+    color: #66758c;
+}
+
+html.light-theme .task-chat-conversations::-webkit-scrollbar-thumb,
+html.light-theme .task-chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(85, 115, 155, .28);
+}
