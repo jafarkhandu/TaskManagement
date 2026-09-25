@@ -132,10 +132,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>`;
 
-                item.addEventListener('click', function () {
-                    openConversation(s.chatSessionId, s.taskId, s.taskTitle, s.taskStatus).catch(() => { });
-                });
-
                 userChatList.appendChild(item);
             });
 
