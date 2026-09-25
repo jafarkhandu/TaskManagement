@@ -64,10 +64,21 @@
 
 			<div id="taskChatComposer" class="task-chat-composer">
 
+				<div id="taskChatTaskPicker" class="task-chat-task-picker" hidden>
+					<div class="task-chat-task-picker-header">Select a task to start chat</div>
+					<div id="taskChatTaskList" class="task-chat-task-list"></div>
+				</div>
+
+				<div id="taskChatSelectedTask" class="task-chat-selected-task" hidden>
+					<span class="task-chat-selected-task-label">Task</span>
+					<span id="taskChatSelectedTaskTitle"></span>
+					<button type="button" id="clearTaskChatTask" aria-label="Clear selected task">×</button>
+				</div>
+
 				<textarea id="taskChatInput"
 						  rows="1"
 						  maxlength="4000"
-						  placeholder="Type your message..."></textarea>
+						  placeholder="Type @ to choose a task..."></textarea>
 
 				<button type="button"
 						id="sendTaskChat"
