@@ -192,51 +192,54 @@ document.addEventListener('DOMContentLoaded', function () {
         bubble.className = 'task-chat-bubble';
 
         const messageText = String(m.message || '');
-        const taskStartMatch = messageText.match(/^New chat started for Task #(\\d+)\\s*$/m);
 
-        if (taskStartMatch) {
-            const parts = messageText.split(/\\n\\s*\\n/);
-            const heading = parts.shift()?.trim() || taskStartMatch[0];
-            const details = parts.join('\\n\\n').trim();
+        const normalized = messageText
+            .replace(/&#xA;|&#xa;|&#10;/gi, '\n')
+            .replace(/\s+(?=(Task Title|Scenario|Status|Priority|Start Date|Expected End Date|Amount)\s*:)/gi, '\n')
+            .replace(/^\s*(New chat started for Task #\d+)\s*/i, '$1\n')
+            .trim();
 
+        const lines = normalized.split(/\n+/).map(line => line.trim()).filter(Boolean);
+        const isInitialTaskMessage =
+            lines.length > 0 &&
+            /^New chat started for Task #\d+/i.test(lines[0]);
+
+        if (isInitialTaskMessage) {
             bubble.classList.add('task-chat-initial-message');
 
             const headingEl = document.createElement('div');
             headingEl.className = 'task-chat-initial-title';
-            headingEl.textContent = heading;
+            headingEl.textContent = lines.shift();
             bubble.appendChild(headingEl);
 
-            if (details) {
-                const lines = details.split('\\n');
-                const detailBox = document.createElement('div');
-                detailBox.className = 'task-chat-initial-details';
+            const detailBox = document.createElement('div');
+            detailBox.className = 'task-chat-initial-details';
 
-                lines.forEach(line => {
-                    const clean = line.trim();
-                    if (!clean) return;
+            lines.forEach(line => {
+                const row = document.createElement('div');
+                row.className = 'task-chat-initial-row';
 
-                    const row = document.createElement('div');
-                    row.className = 'task-chat-initial-row';
+                const separator = line.indexOf(':');
 
-                    const separator = clean.indexOf(':');
-                    if (separator > 0) {
-                        const label = document.createElement('span');
-                        label.className = 'task-chat-initial-label';
-                        label.textContent = clean.slice(0, separator).trim();
+                if (separator > 0) {
+                    const label = document.createElement('span');
+                    label.className = 'task-chat-initial-label';
+                    label.textContent = line.slice(0, separator).trim();
 
-                        const value = document.createElement('span');
-                        value.className = 'task-chat-initial-value';
-                        value.textContent = clean.slice(separator + 1).trim();
+                    const value = document.createElement('span');
+                    value.className = 'task-chat-initial-value';
+                    value.textContent = line.slice(separator + 1).trim();
 
-                        row.appendChild(label);
-                        row.appendChild(value);
-                    } else {
-                        row.textContent = clean;
-                    }
+                    row.appendChild(label);
+                    row.appendChild(value);
+                } else {
+                    row.textContent = line;
+                }
 
-                    detailBox.appendChild(row);
-                });
+                detailBox.appendChild(row);
+            });
 
+            if (detailBox.children.length) {
                 bubble.appendChild(detailBox);
             }
         } else {
