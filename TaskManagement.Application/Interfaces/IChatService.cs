@@ -38,6 +38,11 @@
         // Returns active chat sessions for a user for the global chat list (user-side DTO, no project info).
         Task<IEnumerable<UserChatSessionDto>> GetUserChatSessionsAsync(string userId);
 
+        // Returns only the user's eligible tasks that do not already have an active chat.
+        Task<IEnumerable<UserAvailableChatTaskDto>> GetAvailableChatTasksAsync(
+            string userId,
+            string? search = null);
+
         // Mark admin->user messages as read for a given chat session.
         Task<(bool Success, string Error)> MarkMessagesAsReadAsync(int chatSessionId, string userId);
     }
