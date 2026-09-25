@@ -941,3 +941,61 @@
     color: rgba(255,255,255,.88);
     word-break: break-word;
 }
+
+
+/* =========================================================
+   INITIAL TASK MESSAGE
+   Keeps the automatic task-start message clean and readable.
+========================================================= */
+
+.admin-initial-task-message {
+    min-width: min(100%, 430px);
+}
+
+.admin-initial-task-title {
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 8px;
+}
+
+.admin-initial-task-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(15, 27, 56, .10);
+}
+
+.admin-initial-task-row {
+    display: grid;
+    grid-template-columns: 125px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.admin-initial-task-label {
+    font-weight: 650;
+    color: #69758a;
+}
+
+.admin-initial-task-value {
+    min-width: 0;
+    color: inherit;
+    word-break: break-word;
+}
+
+.message-bubble.admin .admin-initial-task-details {
+    border-top-color: rgba(255,255,255,.22);
+}
+
+.message-bubble.admin .admin-initial-task-label {
+    color: rgba(255,255,255,.78);
+}
+
+@media (max-width: 700px) {
+    .admin-initial-task-row {
+        grid-template-columns: 105px minmax(0, 1fr);
+    }
+}
