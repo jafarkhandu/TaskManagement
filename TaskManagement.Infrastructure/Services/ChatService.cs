@@ -108,6 +108,30 @@ namespace TaskManagement.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
+            // Create the first user message with the complete task context.
+            // This is what gives the Admin Chat the task-specific details immediately
+            // when a user starts a brand-new chat from a task card.
+            var initialMessage = new ChatMessage
+            {
+                ChatSessionId = session.Id,
+                SenderId = userId,
+                Message =
+                    $"New chat started for Task #{task.Id}\n\n" +
+                    $"Task Title: {task.Title}\n" +
+                    $"Scenario: {task.Scenario}\n" +
+                    $"Status: {task.Status}\n" +
+                    $"Priority: {task.Priority}\n" +
+                    $"Start Date: {task.StartDate:dd MMM yyyy}\n" +
+                    $"Expected End Date: {task.ExpectedEndDate:dd MMM yyyy}\n" +
+                    $"Amount: ₹ {task.Amount:0.00}\n\n" +
+                    "I would like to discuss this task with Admin.",
+                SentAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            _context.ChatMessages.Add(initialMessage);
+            await _context.SaveChangesAsync();
+
             return (true, string.Empty, session.Id, true);
         }
 
