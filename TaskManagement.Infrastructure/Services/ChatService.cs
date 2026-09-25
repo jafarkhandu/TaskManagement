@@ -360,6 +360,54 @@ namespace TaskManagement.Infrastructure.Services
             if (task == 0)
                 return null;
 
+            // Backfill the task-context message for an older blank session.
+            // This keeps previously created sessions consistent with new chats.
+            var hasMessages = await _context.ChatMessages
+                .AsNoTracking()
+                .AnyAsync(x => x.ChatSessionId == session.Id);
+
+            if (!hasMessages)
+            {
+                var taskDetails = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == session.TaskId)
+                    .Select(t => new
+                    {
+                        t.Id,
+                        t.Title,
+                        t.Scenario,
+                        t.Status,
+                        t.Priority,
+                        t.StartDate,
+                        t.ExpectedEndDate,
+                        t.Amount
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (taskDetails != null)
+                {
+                    _context.ChatMessages.Add(new ChatMessage
+                    {
+                        ChatSessionId = session.Id,
+                        SenderId = userId,
+                        Message =
+                            $"New chat started for Task #{taskDetails.Id}\n\n" +
+                            $"Task Title: {taskDetails.Title}\n" +
+                            $"Scenario: {taskDetails.Scenario}\n" +
+                            $"Status: {taskDetails.Status}\n" +
+                            $"Priority: {taskDetails.Priority}\n" +
+                            $"Start Date: {taskDetails.StartDate:dd MMM yyyy}\n" +
+                            $"Expected End Date: {taskDetails.ExpectedEndDate:dd MMM yyyy}\n" +
+                            $"Amount: ₹ {taskDetails.Amount:0.00}\n\n" +
+                            "I would like to discuss this task with Admin.",
+                        SentAt = DateTime.UtcNow,
+                        IsRead = false
+                    });
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             return session.Id;
         }
     }
