@@ -145,6 +145,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             scrollToBottom();
                         }
 
+                        // The currently open chat is read immediately.
+                        const activeItem =
+                            adminChatList?.querySelector(
+                                `[data-chat-session-id="${chatId}"]`
+                            );
+
+                        await markChatRead(chatId, activeItem);
+
                     } else {
 
                         /* Increase unread badge */
@@ -453,6 +461,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     /* =========================================================
+       MARK CHAT READ
+       Persist read state on the server so the badge does not
+       return after refresh/reload.
+    ========================================================= */
+
+    async function markChatRead(chatSessionId, item) {
+        if (!chatSessionId) return false;
+
+        try {
+            const token =
+                document.querySelector(
+                    '#antiForgeryForm input[name="__RequestVerificationToken"]'
+                )?.value || '';
+
+            const response = await fetch(
+                '/Admin/Chat/MarkChatRead',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    credentials: 'same-origin',
+                    body: new URLSearchParams({
+                        chatSessionId: String(chatSessionId),
+                        __RequestVerificationToken: token
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                console.warn('Admin MarkChatRead failed:', response.status);
+                return false;
+            }
+
+            const result = await response.json();
+
+            if (!result?.success) {
+                console.warn('Admin MarkChatRead rejected:', result?.message);
+                return false;
+            }
+
+            if (item) {
+                item.dataset.unread = '0';
+
+                const badge = item.querySelector('.admin-chat-badge');
+                if (badge) badge.remove();
+            }
+
+            return true;
+        }
+        catch (error) {
+            console.warn('Admin MarkChatRead failed:', error);
+            return false;
+        }
+    }
+
+
+    /* =========================================================
        OPEN CHAT
     ========================================================= */
 
@@ -465,6 +531,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     currentChatSessionId = chatSessionId;
+
+    // Persist the read state. UI removal alone would return on reload.
+    await markChatRead(chatSessionId, item);
 
     /* =====================================================
        MARK THIS CHAT AS READ IN THE UI
