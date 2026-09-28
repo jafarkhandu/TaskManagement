@@ -1,0 +1,199 @@
+@model TaskManagement.Application.DTOs.AdminReportsViewModel
+@using System.Globalization
+@{
+    Layout = null;
+    ViewData["Title"] = "Reports";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports - TaskManager</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-common.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-reports.css" asp-append-version="true" />
+</head>
+
+<body class="admin-reports-page">
+    @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
+
+    <main class="main-content">
+        @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
+
+        <div class="reports-container">
+            <section class="reports-header">
+                <div>
+                    <span class="reports-eyebrow">ADMIN / REPORTS</span>
+                    <h1>Reports</h1>
+                    <p>Review task status, project activity and student workload.</p>
+                </div>
+
+                <div class="reports-actions">
+                    <select id="reportRange" class="report-range">
+                        <option value="all" selected="@(Model.Range == "all")">All Time</option>
+                        <option value="7" selected="@(Model.Range == "7")">Last 7 Days</option>
+                        <option value="30" selected="@(Model.Range == "30")">Last 30 Days</option>
+                        <option value="month" selected="@(Model.Range == "month")">This Month</option>
+                    </select>
+                    <button type="button" id="printReport" class="report-action">PDF / Print</button>
+                    <button type="button" id="exportExcel" class="report-action primary">Excel</button>
+                </div>
+            </section>
+
+            <section class="report-stat-grid">
+                <article class="report-stat-card">
+                    <span class="report-stat-icon blue">▱</span>
+                    <div><small>Total Projects</small><strong>@Model.TotalProjects</strong></div>
+                </article>
+                <article class="report-stat-card">
+                    <span class="report-stat-icon green">✓</span>
+                    <div><small>Total Tasks</small><strong>@Model.TotalTasks</strong></div>
+                </article>
+                <article class="report-stat-card">
+                    <span class="report-stat-icon purple">✓</span>
+                    <div><small>Completed</small><strong>@Model.CompletedTasks</strong></div>
+                </article>
+                <article class="report-stat-card">
+                    <span class="report-stat-icon red">!</span>
+                    <div><small>Overdue</small><strong>@Model.OverdueTasks</strong></div>
+                </article>
+            </section>
+
+            <section class="reports-grid">
+                <article class="report-card status-report">
+                    <div class="report-card-header">
+                        <div>
+                            <span class="report-card-eyebrow">TASK STATUS</span>
+                            <h2>Status Distribution</h2>
+                        </div>
+                        <strong>@Model.TotalTasks tasks</strong>
+                    </div>
+
+                    <div class="status-bars">
+                        @foreach (var row in Model.StatusRows)
+                        {
+                            <div class="status-row">
+                                <div class="status-label">
+                                    <span>@row.Status</span>
+                                    <strong>@row.Count</strong>
+                                </div>
+                                <div class="status-track">
+                                    <span style="width:@row.Percent.ToString(CultureInfo.InvariantCulture)%"></span>
+                                </div>
+                                <small>@row.Percent%</small>
+                            </div>
+                        }
+                    </div>
+                </article>
+
+                <article class="report-card">
+                    <div class="report-card-header">
+                        <div>
+                            <span class="report-card-eyebrow">OVERVIEW</span>
+                            <h2>Task Breakdown</h2>
+                        </div>
+                    </div>
+
+                    <div class="mini-breakdown">
+                        <div><span>Pending</span><strong>@Model.PendingTasks</strong></div>
+                        <div><span>In Progress</span><strong>@Model.InProgressTasks</strong></div>
+                        <div><span>On Hold</span><strong>@Model.OnHoldTasks</strong></div>
+                        <div><span>Cancelled</span><strong>@Model.CancelledTasks</strong></div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="report-card full-card">
+                <div class="report-card-header">
+                    <div>
+                        <span class="report-card-eyebrow">PROJECT PERFORMANCE</span>
+                        <h2>Project-wise Report</h2>
+                    </div>
+                    <span class="report-count">@Model.ProjectRows.Count projects</span>
+                </div>
+
+                <div class="report-table-wrap">
+                    <table id="projectReportTable" class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Tasks</th>
+                                <th>Completed</th>
+                                <th>In Progress</th>
+                                <th>Overdue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.ProjectRows.Any())
+                        {
+                            foreach (var row in Model.ProjectRows)
+                            {
+                                <tr>
+                                    <td><strong>@row.ProjectTitle</strong></td>
+                                    <td>@row.TaskCount</td>
+                                    <td class="positive">@row.Completed</td>
+                                    <td>@row.InProgress</td>
+                                    <td class="negative">@row.Overdue</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="5" class="report-empty">No project data for this period.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="report-card full-card">
+                <div class="report-card-header">
+                    <div>
+                        <span class="report-card-eyebrow">ASSIGNMENTS</span>
+                        <h2>Student Workload</h2>
+                    </div>
+                    <span class="report-count">@Model.StudentRows.Count students</span>
+                </div>
+
+                <div class="report-table-wrap">
+                    <table id="studentReportTable" class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Assigned</th>
+                                <th>Completed</th>
+                                <th>Pending / Active</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.StudentRows.Any())
+                        {
+                            foreach (var row in Model.StudentRows)
+                            {
+                                <tr>
+                                    <td><strong>@row.StudentName</strong></td>
+                                    <td>@row.Assigned</td>
+                                    <td class="positive">@row.Completed</td>
+                                    <td>@row.Pending</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="4" class="report-empty">No assigned student data for this period.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="~/js/admin-reports.js" asp-append-version="true"></script>
+    <script src="~/js/admin-common.js" asp-append-version="true"></script>
+</body>
+</html>
