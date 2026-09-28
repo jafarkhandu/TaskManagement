@@ -105,9 +105,8 @@
 
         <!-- Profile -->
 
-        <button type="button"
-                class="nav-link"
-                data-modal="profileModal">
+        <a href="@Url.Action("Index", "Profile", new { area = "User" })"
+           class="nav-link @(currentPath?.StartsWith("/User/Profile", StringComparison.OrdinalIgnoreCase) == true ? "active" : "")">
 
             <span class="nav-symbol">
                 ♙
@@ -117,7 +116,7 @@
                 Profile
             </span>
 
-        </button>
+        </a>
 
 
         <!-- Settings -->
