@@ -1,3 +1,5 @@
+/* Global message handling is loaded by the corresponding account view. */
+
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
     const loginForm = document.getElementById("loginForm");
