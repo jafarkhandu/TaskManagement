@@ -113,28 +113,46 @@
                         var statusColors = new[] { "blue", "purple", "green", "orange", "red" };
                     }
 
-                    <div class="status-overview">
-                        <div class="status-stack" aria-label="Task status distribution">
-                            @for (var i = 0; i < Model.StatusRows.Count; i++)
-                            {
-                                var row = Model.StatusRows[i];
-                                <span class="status-segment @statusColors[i % statusColors.Length]"
-                                      style="width:@row.Percent.ToString(CultureInfo.InvariantCulture)%"
-                                      title="@row.Status: @row.Count"></span>
-                            }
+                    @{
+                        var donutStops = new List<string>();
+                        var cumulativePercent = 0d;
+                        for (var i = 0; i < Model.StatusRows.Count; i++)
+                        {
+                            var row = Model.StatusRows[i];
+                            var start = cumulativePercent;
+                            cumulativePercent += row.Percent;
+                            donutStops.Add($"#{(new[] { "3164f4", "7856ed", "20b987", "f5a623", "ef5350" })[i % 5]} {start.ToString(CultureInfo.InvariantCulture)}% {cumulativePercent.ToString(CultureInfo.InvariantCulture)}%");
+                        }
+
+                        var donutGradient = donutStops.Count > 0
+                            ? $"conic-gradient(from -90deg, {string.Join(", ", donutStops)})"
+                            : "conic-gradient(#e9edf4 0 100%)";
+                    }
+
+                    <div class="status-analytics">
+                        <div class="status-donut-wrap">
+                            <div class="status-donut" style="background:@donutGradient" aria-label="Task status distribution">
+                                <div class="status-donut-center">
+                                    <strong>@Model.TotalTasks</strong>
+                                    <span>Tasks</span>
+                                </div>
+                            </div>
+                            <span class="status-donut-caption">Total workload</span>
                         </div>
 
-                        <div class="status-list">
+                        <div class="status-legend">
                             @for (var i = 0; i < Model.StatusRows.Count; i++)
                             {
                                 var row = Model.StatusRows[i];
-                                <div class="status-list-item">
-                                    <span class="status-name">
+                                <div class="status-legend-item">
+                                    <div class="status-legend-label">
                                         <i class="status-dot @statusColors[i % statusColors.Length]"></i>
-                                        @row.Status
-                                    </span>
-                                    <strong>@row.Count</strong>
-                                    <small>@row.Percent%</small>
+                                        <span>@row.Status</span>
+                                    </div>
+                                    <div class="status-legend-value">
+                                        <strong>@row.Count</strong>
+                                        <small>@row.Percent%</small>
+                                    </div>
                                 </div>
                             }
                         </div>
