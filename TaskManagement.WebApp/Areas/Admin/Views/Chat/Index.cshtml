@@ -142,7 +142,7 @@
 
                                     <button type="button"
                                             class="admin-chat-student-header"
-                                            aria-expanded="true">
+                                            aria-expanded="false">
 
                                         <span class="student-avatar">
                                             @group.Key.UserFullName.FirstOrDefault().ToString().ToUpperInvariant()
@@ -166,7 +166,7 @@
                                         </span>
                                     </button>
 
-                                    <div class="admin-chat-student-tasks">
+                                    <div class="admin-chat-student-tasks" hidden>
 
                                         @foreach (var s in group
                                             .OrderByDescending(x => x.LatestMessageAt ?? DateTime.MinValue))
