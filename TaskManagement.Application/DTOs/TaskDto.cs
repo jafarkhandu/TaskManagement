@@ -22,6 +22,9 @@ namespace TaskManagement.Application.DTOs
         // Display-only: populated with the user's FullName or email as a fallback
         public string AssignedToUserName { get; set; } = string.Empty;
 
+        // Latest assignment request state. This is separate from the actual task workflow status.
+        public string AssignmentStatus { get; set; } = string.Empty;
+
         [Required]
         public string Priority { get; set; } = "Low";
 
