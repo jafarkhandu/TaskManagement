@@ -36,6 +36,25 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             return View(sessions);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkChatRead(int chatSessionId)
+        {
+            var admin = await _userManager.GetUserAsync(User);
+
+            if (admin == null)
+                return Unauthorized();
+
+            var result = await _chatService.MarkAdminMessagesAsReadAsync(
+                chatSessionId,
+                admin.Id);
+
+            if (!result.Success)
+                return BadRequest(new { success = false, message = result.Error });
+
+            return Ok(new { success = true });
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetChat(int chatSessionId)
         {
