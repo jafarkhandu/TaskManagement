@@ -1419,6 +1419,7 @@ html.light-theme .admin-chat-messages {
     background: #ffffff !important;
 }
 
+#adminChatList .admin-chat-student-tasks[hidden],
 #adminChatList .admin-chat-student-group.collapsed .admin-chat-student-tasks {
     display: none !important;
 }
