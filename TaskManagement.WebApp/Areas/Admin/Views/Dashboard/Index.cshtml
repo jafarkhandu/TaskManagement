@@ -28,6 +28,7 @@
     <link rel="stylesheet"
           href="~/css/admin-common.css"
           asp-append-version="true" />
+    <script src="~/js/admin-dashboard.js" asp-append-version="true"></script>
 
 </head>
 
@@ -123,109 +124,180 @@
 
             <section class="stats-grid">
 
-
-                <div class="stat-card">
-
-                    <div class="stat-icon stat-blue">
-                        ▱
-                    </div>
-
+                <div class="stat-card admin-stat-clickable"
+                     data-admin-stat="projects"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Open total projects">
+                    <div class="stat-icon stat-blue">▱</div>
                     <div class="stat-content">
-
-                        <strong>
-                            @Model.TotalProjects
-                        </strong>
-
-                        <span>
-                            Total Projects
-                        </span>
-
+                        <strong>@Model.TotalProjects</strong>
+                        <span>Total Projects</span>
                     </div>
-
-                    <div class="stat-arrow">
-                        ›
-                    </div>
-
+                    <div class="stat-arrow">›</div>
                 </div>
 
-
-                <div class="stat-card">
-
-                    <div class="stat-icon stat-green">
-                        ✓
-                    </div>
-
+                <div class="stat-card admin-stat-clickable"
+                     data-admin-stat="tasks"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Open total tasks">
+                    <div class="stat-icon stat-green">✓</div>
                     <div class="stat-content">
-
-                        <strong>
-                            @Model.TotalTasks
-                        </strong>
-
-                        <span>
-                            Total Tasks
-                        </span>
-
+                        <strong>@Model.TotalTasks</strong>
+                        <span>Total Tasks</span>
                     </div>
-
-                    <div class="stat-arrow">
-                        ›
-                    </div>
-
+                    <div class="stat-arrow">›</div>
                 </div>
 
-
-                <div class="stat-card">
-
-                    <div class="stat-icon stat-orange">
-                        ◷
-                    </div>
-
+                <div class="stat-card admin-stat-clickable"
+                     data-admin-stat="progress"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Open in progress tasks">
+                    <div class="stat-icon stat-orange">◷</div>
                     <div class="stat-content">
-
-                        <strong>
-                            @Model.InProgressTasks
-                        </strong>
-
-                        <span>
-                            In Progress
-                        </span>
-
+                        <strong>@Model.InProgressTasks</strong>
+                        <span>In Progress</span>
                     </div>
-
-                    <div class="stat-arrow">
-                        ›
-                    </div>
-
+                    <div class="stat-arrow">›</div>
                 </div>
 
-
-                <div class="stat-card">
-
-                    <div class="stat-icon stat-red">
-                        !
-                    </div>
-
+                <div class="stat-card admin-stat-clickable"
+                     data-admin-stat="overdue"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Open overdue tasks">
+                    <div class="stat-icon stat-red">!</div>
                     <div class="stat-content">
-
-                        <strong>
-                            @Model.OverdueTasks
-                        </strong>
-
-                        <span>
-                            Overdue
-                        </span>
-
+                        <strong>@Model.OverdueTasks</strong>
+                        <span>Overdue</span>
                     </div>
-
-                    <div class="stat-arrow">
-                        ›
-                    </div>
-
+                    <div class="stat-arrow">›</div>
                 </div>
 
             </section>
 
 
+
+
+
+            <!-- =====================================
+                 STAT DETAILS MODAL
+            ====================================== -->
+            <div class="admin-stat-modal"
+                 id="adminStatModal"
+                 aria-hidden="true">
+                <div class="admin-stat-modal-box"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-labelledby="adminStatModalTitle">
+
+                    <button type="button"
+                            class="admin-stat-modal-close"
+                            id="adminStatModalClose"
+                            aria-label="Close">
+                        ×
+                    </button>
+
+                    <span class="admin-stat-modal-eyebrow">DASHBOARD SUMMARY</span>
+                    <h2 id="adminStatModalTitle">Dashboard</h2>
+                    <p id="adminStatModalSubtitle"></p>
+
+                    <div class="admin-stat-modal-summary">
+                        <strong id="adminStatModalCount">0</strong>
+                        <span id="adminStatModalCountLabel">Items</span>
+                    </div>
+
+                    <div class="admin-stat-modal-list"
+                         id="adminStatModalList"></div>
+                </div>
+            </div>
+
+            <div id="adminStatModalData" hidden>
+                <div data-stat-template="projects">
+                    @foreach (var project in Model.RecentProjects)
+                    {
+                        <a class="admin-stat-modal-item"
+                           href="@Url.Action("Project", "Tasks", new { area = "Admin", id = project.Id })">
+                            <span class="admin-stat-modal-item-icon">▱</span>
+                            <span class="admin-stat-modal-item-main">
+                                <strong>@project.ProjectTitle</strong>
+                                <small>@project.Description</small>
+                            </span>
+                            <span class="admin-stat-modal-item-meta">@project.TaskCount tasks</span>
+                        </a>
+                    }
+                </div>
+
+                <div data-stat-template="tasks">
+                    @foreach (var project in Model.ProjectDistribution.OrderByDescending(x => x.TaskCount))
+                    {
+                        var matchingProject = Model.RecentProjects.FirstOrDefault(p => p.ProjectTitle == project.ProjectTitle);
+                        if (matchingProject != null)
+                        {
+                            <a class="admin-stat-modal-item"
+                               href="@Url.Action("Project", "Tasks", new { area = "Admin", id = matchingProject.Id })">
+                                <span class="admin-stat-modal-item-icon green">✓</span>
+                                <span class="admin-stat-modal-item-main">
+                                    <strong>@project.ProjectTitle</strong>
+                                    <small>Open this project's tasks</small>
+                                </span>
+                                <span class="admin-stat-modal-item-meta">@project.TaskCount</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="admin-stat-modal-item static">
+                                <span class="admin-stat-modal-item-icon green">✓</span>
+                                <span class="admin-stat-modal-item-main">
+                                    <strong>@project.ProjectTitle</strong>
+                                    <small>Project task summary</small>
+                                </span>
+                                <span class="admin-stat-modal-item-meta">@project.TaskCount</span>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div data-stat-template="progress">
+                    <div class="admin-stat-modal-note">
+                        <strong>@Model.InProgressTasks task@(Model.InProgressTasks == 1 ? "" : "s") in progress</strong>
+                        <small>Use the project task lists below to inspect individual task records.</small>
+                    </div>
+                    @foreach (var project in Model.RecentProjects)
+                    {
+                        <a class="admin-stat-modal-item"
+                           href="@Url.Action("Project", "Tasks", new { area = "Admin", id = project.Id })">
+                            <span class="admin-stat-modal-item-icon orange">◷</span>
+                            <span class="admin-stat-modal-item-main">
+                                <strong>@project.ProjectTitle</strong>
+                                <small>Open project tasks</small>
+                            </span>
+                            <span class="admin-stat-modal-item-meta">@project.TaskCount</span>
+                        </a>
+                    }
+                </div>
+
+                <div data-stat-template="overdue">
+                    <div class="admin-stat-modal-note overdue">
+                        <strong>@Model.OverdueTasks overdue task@(Model.OverdueTasks == 1 ? "" : "s")</strong>
+                        <small>The dashboard exposes the overdue count here. Individual overdue records are available through the project task lists.</small>
+                    </div>
+                    @foreach (var project in Model.RecentProjects)
+                    {
+                        <a class="admin-stat-modal-item"
+                           href="@Url.Action("Project", "Tasks", new { area = "Admin", id = project.Id })">
+                            <span class="admin-stat-modal-item-icon red">!</span>
+                            <span class="admin-stat-modal-item-main">
+                                <strong>@project.ProjectTitle</strong>
+                                <small>Open project tasks</small>
+                            </span>
+                            <span class="admin-stat-modal-item-meta">@project.TaskCount</span>
+                        </a>
+                    }
+                </div>
+            </div>
 
             <!-- =====================================
                  PROJECTS + DEADLINES
