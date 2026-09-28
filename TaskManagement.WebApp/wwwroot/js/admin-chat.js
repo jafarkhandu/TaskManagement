@@ -344,14 +344,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 const badge =
                     group.querySelector('.student-unread');
 
-                if (badge) {
-                    badge.textContent =
-                        String(groupUnread);
+                if (groupUnread > 0) {
+                    if (badge) {
+                        badge.textContent =
+                            groupUnread > 99
+                                ? '99+'
+                                : String(groupUnread);
 
-                    badge.style.display =
-                        groupUnread > 0
-                            ? 'inline-flex'
-                            : 'none';
+                        badge.style.display = 'inline-flex';
+                    }
+                }
+                else if (badge) {
+                    // Remove the badge completely once all messages
+                    // in this student's chats have been read.
+                    badge.remove();
                 }
             });
 
