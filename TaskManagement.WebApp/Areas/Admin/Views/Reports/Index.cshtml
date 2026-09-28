@@ -33,11 +33,11 @@
                 </div>
 
                 <div class="reports-actions">
-                    <select id="reportRange" class="report-range">
-                        <option value="all" selected="@(Model.Range == "all")">All Time</option>
-                        <option value="7" selected="@(Model.Range == "7")">Last 7 Days</option>
-                        <option value="30" selected="@(Model.Range == "30")">Last 30 Days</option>
-                        <option value="month" selected="@(Model.Range == "month")">This Month</option>
+                    <select id="reportRange" class="report-range" data-current-range="@Model.Range">
+                        <option value="all">All Time</option>
+                        <option value="7">Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="month">This Month</option>
                     </select>
                     <button type="button" id="printReport" class="report-action">PDF / Print</button>
                     <button type="button" id="exportExcel" class="report-action primary">Excel</button>
