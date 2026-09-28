@@ -51,6 +51,11 @@ namespace TaskManagement.Infrastructure.Services
                         .Where(u => u.Id == t.AssignedToUserId)
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
                         .FirstOrDefault() ?? string.Empty,
+                    AssignmentStatus = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.Status)
+                        .FirstOrDefault() ?? string.Empty,
                     Priority = t.Priority,
                     Status = t.Status,
                     StartDate = t.StartDate,
@@ -75,6 +80,11 @@ namespace TaskManagement.Infrastructure.Services
                     AssignedToUserName = _db.Users
                         .Where(u => u.Id == t.AssignedToUserId)
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                        .FirstOrDefault() ?? string.Empty,
+                    AssignmentStatus = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.Status)
                         .FirstOrDefault() ?? string.Empty,
                     Priority = t.Priority,
                     Status = t.Status,
@@ -209,6 +219,111 @@ namespace TaskManagement.Infrastructure.Services
 
                 return (false, errorMessage, 0);
             }
+
+        public async Task<(bool Success, string Error, int NotificationId)> ReassignAsync(int taskId, string newUserId)
+        {
+            if (string.IsNullOrWhiteSpace(newUserId))
+                return (false, "Please select a user.", 0);
+
+            var task = await _db.TaskItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+                return (false, "Task not found.", 0);
+
+            if (string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Completed tasks cannot be reassigned.", 0);
+
+            var latestAssignment = await _db.TaskAssignments
+                .Where(a => a.TaskId == taskId)
+                .OrderByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            if (latestAssignment == null ||
+                !string.Equals(latestAssignment.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                return (false, "Only rejected tasks can be reassigned.", 0);
+
+            if (string.Equals(latestAssignment.UserId, newUserId, StringComparison.Ordinal))
+                return (false, "Please select a different user.", 0);
+
+            var assignedUser = await _userManager.FindByIdAsync(newUserId);
+
+            if (assignedUser == null)
+                return (false, "Selected user not found.", 0);
+
+            if (!assignedUser.IsActive)
+                return (false, "The selected user is not active.", 0);
+
+            if (await _userManager.IsInRoleAsync(assignedUser, "Admin"))
+                return (false, "An administrator cannot be assigned to a task.", 0);
+
+            if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
+                return (false, "Only users can be assigned to tasks.", 0);
+
+            var pendingOrAccepted = await _db.TaskAssignments
+                .AnyAsync(a =>
+                    a.TaskId == taskId &&
+                    (a.Status == "Pending" || a.Status == "Accepted"));
+
+            if (pendingOrAccepted)
+                return (false, "This task already has an active assignment request.", 0);
+
+            try
+            {
+                var executionStrategy = _db.Database.CreateExecutionStrategy();
+                var notificationId = 0;
+
+                await executionStrategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction =
+                        await _db.Database.BeginTransactionAsync();
+
+                    var assignment = new TaskAssignment
+                    {
+                        TaskId = taskId,
+                        UserId = assignedUser.Id,
+                        Status = "Pending",
+                        AssignedAt = DateTime.UtcNow
+                    };
+
+                    _db.TaskAssignments.Add(assignment);
+                    await _db.SaveChangesAsync();
+
+                    var notification = new Notification
+                    {
+                        UserId = assignedUser.Id,
+                        TaskAssignmentId = assignment.Id,
+                        Type = "TaskAssignment",
+                        Title = "New Task Assignment",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _db.Notifications.Add(notification);
+                    await _db.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                    notificationId = notification.Id;
+                });
+
+                return (true, string.Empty, notificationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to reassign TaskId {TaskId} to UserId {UserId}.",
+                    taskId,
+                    newUserId);
+
+                var errorMessage = _environment.IsDevelopment()
+                    ? ex.GetBaseException().Message
+                    : "Unable to reassign the task. Please try again.";
+
+                return (false, errorMessage, 0);
+            }
+        }
 
         public async Task<(bool Success, string Error, int TaskId, int ProjectId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus)
         {
