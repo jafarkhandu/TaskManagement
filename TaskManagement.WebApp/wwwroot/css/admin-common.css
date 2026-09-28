@@ -231,3 +231,183 @@
     color: #8995a8;
     font-size: 10px;
 }
+
+
+/* =====================================================
+   ADMIN NOTIFICATION PANEL
+===================================================== */
+
+.notification-button {
+    z-index: 1002;
+}
+
+.admin-notification-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 62px;
+    width: 340px;
+    max-width: calc(100vw - 30px);
+    padding: 0;
+    border: 1px solid #dfe6f1;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 22px 55px rgba(31,49,82,.16);
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px) scale(.98);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    z-index: 1001;
+}
+
+.admin-notification-panel.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+.admin-notification-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 16px 13px;
+    border-bottom: 1px solid #edf1f6;
+}
+
+.admin-notification-panel-header strong,
+.admin-notification-panel-header small {
+    display: block;
+}
+
+.admin-notification-panel-header strong {
+    color: #1c2942;
+    font-size: 13px;
+}
+
+.admin-notification-panel-header small {
+    margin-top: 3px;
+    color: #8792a5;
+    font-size: 8px;
+}
+
+.admin-notification-panel-header button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: #f3f6fa;
+    color: #718097;
+    cursor: pointer;
+    font-size: 17px;
+}
+
+.admin-notification-list {
+    padding: 8px;
+}
+
+.admin-notification-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 9px;
+    border-radius: 10px;
+    color: inherit;
+    text-decoration: none;
+    transition: background .16s ease;
+}
+
+.admin-notification-item:hover {
+    background: #f5f8fd;
+}
+
+.admin-notification-item-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: #2864ed;
+    background: #edf3ff;
+}
+
+.admin-notification-item-icon.calendar {
+    color: #e58a16;
+    background: #fff4e4;
+}
+
+.admin-notification-item-icon.project {
+    color: #12a878;
+    background: #e8f8f1;
+}
+
+.admin-notification-item > span:nth-child(2) {
+    min-width: 0;
+    flex: 1;
+}
+
+.admin-notification-item strong,
+.admin-notification-item small {
+    display: block;
+}
+
+.admin-notification-item strong {
+    color: #25334c;
+    font-size: 10px;
+}
+
+.admin-notification-item small {
+    margin-top: 3px;
+    overflow: hidden;
+    color: #7e8ba1;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-notification-arrow {
+    color: #8a99af;
+    font-size: 17px;
+}
+
+@media (max-width: 700px) {
+    .admin-notification-panel {
+        right: 12px;
+    }
+}
+
+/* Shared dark theme compatibility */
+html:not(.light-theme) .admin-notification-panel {
+    border-color: rgba(255,255,255,.10);
+    background: #10233b;
+    box-shadow: 0 22px 55px rgba(0,0,0,.32);
+}
+
+html:not(.light-theme) .admin-notification-panel-header {
+    border-bottom-color: rgba(255,255,255,.07);
+}
+
+html:not(.light-theme) .admin-notification-panel-header strong,
+html:not(.light-theme) .admin-notification-item strong {
+    color: #edf4ff;
+}
+
+html:not(.light-theme) .admin-notification-panel-header small,
+html:not(.light-theme) .admin-notification-item small {
+    color: #8298b6;
+}
+
+html:not(.light-theme) .admin-notification-panel-header button {
+    background: rgba(255,255,255,.07);
+    color: #a7b7cb;
+}
+
+html:not(.light-theme) .admin-notification-item:hover {
+    background: rgba(255,255,255,.05);
+}
+
+html:not(.light-theme) .admin-notification-arrow {
+    color: #8fa3bd;
+}
