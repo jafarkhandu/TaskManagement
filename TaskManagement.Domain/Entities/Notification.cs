@@ -14,6 +14,10 @@
 
         public bool IsRead { get; set; } = false;
 
+        // True once the notification has been delivered to the user's UI.
+        // Read/unread remains independent from delivery status.
+        public bool IsDelivered { get; set; } = false;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
