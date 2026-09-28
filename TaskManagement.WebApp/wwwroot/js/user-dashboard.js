@@ -863,72 +863,153 @@
 
 
     /* =====================================================
+       DASHBOARD STAT SUMMARY MODAL
+    ===================================================== */
+
+    const dashboardTaskModal =
+        document.getElementById("dashboardTaskModal");
+
+    const dashboardTaskModalTitle =
+        document.getElementById("dashboardTaskModalTitle");
+
+    const dashboardTaskModalSubtitle =
+        document.getElementById("dashboardTaskModalSubtitle");
+
+    const dashboardTaskModalList =
+        document.getElementById("dashboardTaskModalList");
+
+    const dashboardTaskModalClose =
+        document.getElementById("dashboardTaskModalClose");
+
+    function closeDashboardTaskModal() {
+        dashboardTaskModal?.classList.remove("show");
+        dashboardTaskModal?.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+    }
+
+    function openDashboardTaskModal(filter) {
+        if (!dashboardTaskModal || !dashboardTaskModalList)
+            return;
+
+        const labels = {
+            all: ["Total Tasks", "All tasks currently shown in your dashboard."],
+            progress: ["In Progress", "Tasks currently marked as In Progress."],
+            completed: ["Completed", "Tasks currently marked as Completed."],
+            hold: ["On Hold", "Tasks currently marked as On Hold."]
+        };
+
+        const [title, subtitle] =
+            labels[filter] || labels.all;
+
+        dashboardTaskModalTitle.textContent = title;
+        dashboardTaskModalSubtitle.textContent = subtitle;
+
+        const tasks = Array.from(
+            document.querySelectorAll(".task-item")
+        ).filter(task => {
+            const status =
+                (task.dataset.status || "").trim().toLowerCase();
+
+            if (filter === "progress")
+                return status === "in progress";
+
+            if (filter === "completed")
+                return status === "completed";
+
+            if (filter === "hold")
+                return status === "on hold";
+
+            return true;
+        });
+
+        if (!tasks.length) {
+            dashboardTaskModalList.innerHTML = `
+                <div class="dashboard-task-modal-empty">
+                    <span>✓</span>
+                    <strong>No tasks in this category</strong>
+                    <small>There are no matching tasks available on the dashboard right now.</small>
+                </div>
+            `;
+        } else {
+            dashboardTaskModalList.innerHTML = tasks.map(task => {
+                const title =
+                    escapeHtml(task.dataset.title || "Task");
+
+                const status =
+                    escapeHtml(task.dataset.status || "Unknown");
+
+                const scenario =
+                    escapeHtml(
+                        task.querySelector(".task-text small")?.textContent.trim() || ""
+                    );
+
+                const priority =
+                    escapeHtml(
+                        task.querySelector("em")?.textContent.trim() || ""
+                    );
+
+                const due =
+                    escapeHtml(
+                        task.querySelector("time")?.textContent.trim() || ""
+                    );
+
+                return `
+                    <div class="dashboard-task-modal-item">
+                        <span class="dashboard-task-modal-icon">✓</span>
+
+                        <div class="dashboard-task-modal-content">
+                            <strong>${title}</strong>
+                            <small>${scenario || status}</small>
+                        </div>
+
+                        <div class="dashboard-task-modal-meta">
+                            ${priority ? `<span>${priority}</span>` : ""}
+                            ${due ? `<time>${due}</time>` : ""}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        dashboardTaskModal.classList.add("show");
+        dashboardTaskModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+    }
+
+    document.querySelectorAll(".stat[data-stat]")
+        .forEach(stat => {
+            stat.addEventListener("click", () => {
+                openDashboardTaskModal(stat.dataset.stat);
+            });
+        });
+
+    dashboardTaskModalClose?.addEventListener(
+        "click",
+        closeDashboardTaskModal
+    );
+
+    dashboardTaskModal?.addEventListener("click", event => {
+        if (event.target === dashboardTaskModal)
+            closeDashboardTaskModal();
+    });
+
+    document.addEventListener("keydown", event => {
+        if (
+            event.key === "Escape" &&
+            dashboardTaskModal?.classList.contains("show")
+        ) {
+            closeDashboardTaskModal();
+        }
+    });
+
+
+    /* =====================================================
        TASK FILTERS
     ===================================================== */
 
     const taskItems =
         document.querySelectorAll(".task-item");
 
-
-    document.querySelectorAll(".stat")
-        .forEach(stat => {
-
-            stat.addEventListener("click", () => {
-
-                const filter =
-                    stat.dataset.stat;
-
-
-                taskItems.forEach(task => {
-
-                    const status =
-                        task.dataset.status
-                            .toLowerCase();
-
-
-                    let show = true;
-
-
-                    if (filter === "progress") {
-
-                        show =
-                            status === "in progress";
-
-                    }
-
-
-                    if (filter === "completed") {
-
-                        show =
-                            status === "completed";
-
-                    }
-
-
-                    if (filter === "hold") {
-
-                        show =
-                            status === "on hold";
-
-                    }
-
-
-                    task.style.display =
-                        show ? "" : "flex";
-
-                });
-
-
-                document
-                    .querySelector(".focus")
-                    ?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-
-            });
-
-        });
 
 
     /* =====================================================
