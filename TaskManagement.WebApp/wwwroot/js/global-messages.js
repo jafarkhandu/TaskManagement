@@ -49,7 +49,7 @@
         showToast(String(message ?? ""));
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
+    function initializeGlobalMessages() {
         prepareMessages();
 
         const observer = new MutationObserver(mutations => {
@@ -86,5 +86,11 @@
             attributes: true,
             attributeFilter: ["class"]
         });
-    });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeGlobalMessages);
+    } else {
+        initializeGlobalMessages();
+    }
 })();
