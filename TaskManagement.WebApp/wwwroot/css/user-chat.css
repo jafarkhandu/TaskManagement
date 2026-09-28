@@ -76,6 +76,7 @@
     flex-direction: column;
     background: #0a0e16;
     border-right: 1px solid var(--task-chat-border);
+    transition: width .3s cubic-bezier(.22,1,.36,1), min-width .3s cubic-bezier(.22,1,.36,1);
 }
 
 .task-chat-drawer.conversations-collapsed .task-chat-sidebar {
