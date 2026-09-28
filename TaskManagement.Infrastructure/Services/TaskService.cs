@@ -219,6 +219,7 @@ namespace TaskManagement.Infrastructure.Services
 
                 return (false, errorMessage, 0);
             }
+        }
 
         public async Task<(bool Success, string Error, int NotificationId)> ReassignAsync(int taskId, string newUserId)
         {
