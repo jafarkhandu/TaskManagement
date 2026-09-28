@@ -181,6 +181,42 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reassign(int taskId, string userId)
+        {
+            if (taskId <= 0 || string.IsNullOrWhiteSpace(userId))
+                return BadRequest(new { success = false, message = "Task and user are required." });
+
+            var result = await _taskService.ReassignAsync(taskId, userId);
+
+            if (!result.Success)
+                return BadRequest(new { success = false, message = result.Error });
+
+            var task = await _taskService.GetByIdAsync(taskId);
+
+            await _notificationHub.Clients
+                .User(userId)
+                .SendAsync(
+                    "TaskAssignmentReceived",
+                    new
+                    {
+                        notificationId = result.NotificationId,
+                        title = task?.Title ?? "New Task",
+                        scenario = task?.Scenario ?? string.Empty,
+                        priority = task?.Priority ?? "Low",
+                        startDate = task?.StartDate,
+                        expectedEndDate = task?.ExpectedEndDate,
+                        amount = task?.Amount ?? 0
+                    });
+
+            return Json(new
+            {
+                success = true,
+                message = "Task re-assigned successfully."
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, int projectId)
         {
             // Ensure the task belongs to the project (service checks ownership in Update/Delete)
