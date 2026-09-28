@@ -6,6 +6,8 @@ using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Identity;
 using TaskManagement.WebApp.Hubs;
+using Microsoft.EntityFrameworkCore;
+using TaskManagement.Infrastructure.Data;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
 {
@@ -16,15 +18,21 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         private readonly ITaskService _taskService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<NotificationHub> _notificationHub;
+        private readonly IHubContext<ChatHub> _chatHub;
+        private readonly ApplicationDbContext _context;
 
         public TasksController(
             ITaskService taskService,
             UserManager<ApplicationUser> userManager,
-            IHubContext<NotificationHub> notificationHub)
+            IHubContext<NotificationHub> notificationHub,
+            IHubContext<ChatHub> chatHub,
+            ApplicationDbContext context)
         {
             _taskService = taskService;
             _userManager = userManager;
             _notificationHub = notificationHub;
+            _chatHub = chatHub;
+            _context = context;
         }
 
         // GET: /Admin/Tasks/Project/{id}
@@ -138,8 +146,36 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return BadRequest(new { success = false, message = string.Join(" | ", errors) });
             }
 
+            var chatSessionIdsToDelete =
+                string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                    ? await _context.ChatSessions
+                        .AsNoTracking()
+                        .Where(x => x.TaskId == model.Id && x.IsActive)
+                        .Select(x => x.Id)
+                        .ToListAsync()
+                    : new List<int>();
+
             var result = await _taskService.UpdateAsync(model);
-            if (!result.Success) return Json(new { success = false, message = result.Error });
+            if (!result.Success)
+                return Json(new { success = false, message = result.Error });
+
+            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var chatSessionId in chatSessionIdsToDelete)
+                {
+                    try
+                    {
+                        await _chatHub.Clients
+                            .Group($"chat-{chatSessionId}")
+                            .SendAsync("ChatDeleted", new { chatSessionId });
+                    }
+                    catch
+                    {
+                        // Non-fatal: the chat was already removed by TaskService.
+                    }
+                }
+            }
+
             return Json(new { success = true, message = "Task updated successfully." });
         }
 
