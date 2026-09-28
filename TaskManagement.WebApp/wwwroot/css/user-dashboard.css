@@ -304,6 +304,85 @@ button {
     place-items: center;
 }
 
+.chat-button {
+    position: relative;
+    overflow: visible;
+}
+
+.chat-button .chat-icon {
+    width: 19px;
+    height: 19px;
+    display: grid;
+    place-items: center;
+    color: #b9c8df;
+    transition: color .22s ease, filter .22s ease, transform .22s ease;
+}
+
+.chat-button .chat-icon svg {
+    width: 19px;
+    height: 19px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.chat-button .chat-icon .chat-icon-lines {
+    stroke-width: 1.35;
+    opacity: .78;
+}
+
+.chat-button:hover .chat-icon {
+    color: #dce7ff;
+    transform: translateY(-1px) scale(1.05);
+}
+
+.chat-button.has-unread .chat-icon {
+    color: #9bbcff;
+    filter: drop-shadow(0 0 7px rgba(91,145,255,.62));
+    animation: chatIconPulse 1.9s ease-in-out infinite;
+}
+
+.chat-button .chat-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border: 2px solid #101827;
+    border-radius: 999px;
+    background: linear-gradient(135deg,#5e8dff,#8b5cf6);
+    color: #fff;
+    font-size: 8px;
+    line-height: 1;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px rgba(94,141,255,.10), 0 5px 13px rgba(76,106,220,.35);
+    pointer-events: none;
+    animation: chatBadgeIn .22s ease both, chatBadgePulse 2s ease-in-out infinite .25s;
+}
+
+@keyframes chatIconPulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes chatBadgeIn {
+    from { opacity: 0; transform: scale(.45); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes chatBadgePulse {
+    0%,100% { box-shadow: 0 0 0 2px rgba(94,141,255,.10), 0 5px 13px rgba(76,106,220,.35); }
+    50% { box-shadow: 0 0 0 4px rgba(94,141,255,.08), 0 6px 17px rgba(76,106,220,.48); }
+}
+
+
+
 .notification-icon-glyph {
     display: inline-flex;
     align-items: center;
