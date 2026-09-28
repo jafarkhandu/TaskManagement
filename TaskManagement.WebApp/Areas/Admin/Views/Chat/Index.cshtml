@@ -131,75 +131,113 @@
                         }
                         else
                         {
-                            foreach (var s in Model)
+                            foreach (var group in Model
+                                .GroupBy(x => new { x.UserId, x.UserFullName })
+                                .OrderBy(g => g.Key.UserFullName))
                             {
-                                <a href="#"
-                                   class="admin-chat-item"
-                                   data-chat-session-id="@s.ChatSessionId"
-                                   data-user-id="@s.UserId"
-                                   data-task-id="@s.TaskId"
-                                   data-project-id="@s.ProjectId"
-                                   data-status="@s.TaskStatus"
-                                   data-unread="@s.UnreadCount">
+                                var userUnread = group.Sum(x => x.UnreadCount);
 
-                                    <div class="chat-item-main">
+                                <section class="admin-chat-student-group"
+                                         data-user-id="@group.Key.UserId">
 
-                                        <div class="chat-avatar">
-                                            <span class="chat-avatar-letter">
-                                                U
+                                    <button type="button"
+                                            class="admin-chat-student-header"
+                                            aria-expanded="true">
+
+                                        <span class="student-avatar">
+                                            @group.Key.UserFullName.FirstOrDefault().ToString().ToUpperInvariant()
+                                        </span>
+
+                                        <span class="student-header-content">
+                                            <strong>@Html.Encode(group.Key.UserFullName)</strong>
+                                            <small>
+                                                @group.Count() @(group.Count() == 1 ? "conversation" : "conversations")
+                                            </small>
+                                        </span>
+
+                                        <span class="student-header-right">
+                                            <span class="student-unread"
+                                                  style="@(userUnread > 0 ? "" : "display:none;")">
+                                                @userUnread
                                             </span>
-                                        </div>
+                                            <span class="student-chevron">⌄</span>
+                                        </span>
+                                    </button>
 
-                                        <div class="chat-item-content">
+                                    <div class="admin-chat-student-tasks">
 
-                                            <div class="chat-item-top">
+                                        @foreach (var s in group
+                                            .OrderByDescending(x => x.LatestMessageAt ?? DateTime.MinValue))
+                                        {
+                                            <div class="admin-chat-item"
+                                                 data-chat-session-id="@s.ChatSessionId"
+                                                 data-user-id="@s.UserId"
+                                                 data-task-id="@s.TaskId"
+                                                 data-project-id="@s.ProjectId"
+                                                 data-status="@s.TaskStatus"
+                                                 data-unread="@s.UnreadCount">
 
-                                                <h5 class="admin-chat-username">
-                                                    @Html.Encode(s.UserFullName)
-                                                </h5>
+                                                <button type="button"
+                                                        class="admin-chat-open"
+                                                        aria-label="Open @Html.Encode(s.TaskTitle) chat">
 
-                                                <small class="admin-chat-time">
-                                                    @(
-                                                        s.LatestMessageAt.HasValue
-                                                            ? s.LatestMessageAt.Value.ToLocalTime().ToString("g")
-                                                            : "—"
-                                                    )
-                                                </small>
-
-                                            </div>
-
-                                            <div class="chat-item-message-row">
-
-                                                <span class="admin-chat-preview">
-                                                    @Html.Encode(s.LatestMessage)
-                                                </span>
-
-                                                @if (s.UnreadCount > 0)
-                                                {
-                                                    <span class="admin-chat-badge">
-                                                        @s.UnreadCount
+                                                    <span class="chat-avatar task-chat-avatar">
+                                                        <span class="chat-avatar-letter">
+                                                            @s.TaskTitle.FirstOrDefault().ToString().ToUpperInvariant()
+                                                        </span>
                                                     </span>
-                                                }
 
+                                                    <span class="chat-item-content">
+
+                                                        <span class="chat-item-top">
+                                                            <span class="admin-chat-username">
+                                                                @Html.Encode(s.TaskTitle)
+                                                            </span>
+
+                                                            <small class="admin-chat-time">
+                                                                @(s.LatestMessageAt.HasValue
+                                                                    ? s.LatestMessageAt.Value.ToLocalTime().ToString("g")
+                                                                    : "—")
+                                                            </small>
+                                                        </span>
+
+                                                        <span class="chat-item-message-row">
+                                                            <span class="admin-chat-preview">
+                                                                @Html.Encode(s.LatestMessage)
+                                                            </span>
+
+                                                            @if (s.UnreadCount > 0)
+                                                            {
+                                                                <span class="admin-chat-badge">
+                                                                    @s.UnreadCount
+                                                                </span>
+                                                            }
+                                                        </span>
+
+                                                        <span class="chat-item-meta">
+                                                            <span class="chat-project">
+                                                                Project: @Html.Encode(s.ProjectTitle)
+                                                            </span>
+
+                                                            <span class="chat-status">
+                                                                @Html.Encode(s.TaskStatus)
+                                                            </span>
+                                                        </span>
+
+                                                    </span>
+                                                </button>
+
+                                                <button type="button"
+                                                        class="admin-chat-delete"
+                                                        title="Delete chat"
+                                                        aria-label="Delete @Html.Encode(s.TaskTitle) chat">
+                                                    <span aria-hidden="true">🗑</span>
+                                                </button>
                                             </div>
-
-                                            <div class="chat-item-meta">
-
-                                                <span class="chat-project">
-                                                    Project: @Html.Encode(s.ProjectTitle)
-                                                </span>
-
-                                                <span class="chat-status">
-                                                    @Html.Encode(s.TaskStatus)
-                                                </span>
-
-                                            </div>
-
-                                        </div>
+                                        }
 
                                     </div>
-
-                                </a>
+                                </section>
                             }
                         }
 
