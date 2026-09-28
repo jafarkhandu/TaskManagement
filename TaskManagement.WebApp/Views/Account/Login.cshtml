@@ -19,6 +19,10 @@
     <link rel="stylesheet"
           href="~/css/account.css"
           asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/global-messages.css"
+          asp-append-version="true" />
 </head>
 
 <body class="account-page">
@@ -329,12 +333,18 @@
                             <span class="input-icon">🔒</span>
                             <input type="password" id="forgotNewPassword" class="form-control"
                                    autocomplete="new-password" placeholder="Enter new password" />
+                            <button type="button" id="toggleForgotNewPassword"
+                                    class="password-toggle forgot-password-toggle"
+                                    aria-label="Show password" title="Show password">◉</button>
                         </div>
                         <label for="forgotConfirmPassword" class="form-label mt-3">Confirm password</label>
                         <div class="input-wrapper">
                             <span class="input-icon">🔒</span>
                             <input type="password" id="forgotConfirmPassword" class="form-control"
                                    autocomplete="new-password" placeholder="Confirm new password" />
+                            <button type="button" id="toggleForgotConfirmPassword"
+                                    class="password-toggle forgot-password-toggle"
+                                    aria-label="Show password" title="Show password">◉</button>
                         </div>
                         <button type="button" id="resetForgotPasswordButton" class="btn account-btn w-100 mt-3">Reset Password</button>
                     </div>
@@ -379,6 +389,10 @@
     </script>
 
     <script src="~/js/Account/forgot-password.js"
+            asp-append-version="true">
+    </script>
+
+    <script src="~/js/global-messages.js"
             asp-append-version="true">
     </script>
 
