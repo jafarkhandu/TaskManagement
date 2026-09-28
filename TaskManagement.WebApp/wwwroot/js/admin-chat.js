@@ -268,6 +268,33 @@ document.addEventListener('DOMContentLoaded', function () {
                     parseInt(item.dataset.unread || '0', 10) || 0;
             });
 
+        adminChatList
+            .querySelectorAll('.admin-chat-student-group')
+            .forEach(function (group) {
+
+                let groupUnread = 0;
+
+                group
+                    .querySelectorAll('.admin-chat-item')
+                    .forEach(function (item) {
+                        groupUnread +=
+                            parseInt(item.dataset.unread || '0', 10) || 0;
+                    });
+
+                const badge =
+                    group.querySelector('.student-unread');
+
+                if (badge) {
+                    badge.textContent =
+                        String(groupUnread);
+
+                    badge.style.display =
+                        groupUnread > 0
+                            ? 'inline-flex'
+                            : 'none';
+                }
+            });
+
         summary.textContent = String(totalUnread);
 
         summary.style.display =
@@ -321,64 +348,73 @@ document.addEventListener('DOMContentLoaded', function () {
                 ?.trim()
                 .toLowerCase() || '';
 
-
-        const items =
+        const groups =
             adminChatList?.querySelectorAll(
-                '.admin-chat-item'
+                '.admin-chat-student-group'
             ) || [];
 
+        groups.forEach(function (group) {
 
-        items.forEach(function (item) {
+            const items =
+                group.querySelectorAll(
+                    '.admin-chat-item'
+                );
 
-            const text =
-                item.textContent.toLowerCase();
+            let visibleItems = 0;
 
+            items.forEach(function (item) {
 
-            const status =
-                (
-                    item.dataset.status || ''
-                ).toLowerCase();
+                const text =
+                    item.textContent.toLowerCase();
 
+                const status =
+                    (
+                        item.dataset.status || ''
+                    ).toLowerCase();
 
-            const unread =
-                parseInt(
-                    item.dataset.unread || '0',
-                    10
-                ) || 0;
+                const unread =
+                    parseInt(
+                        item.dataset.unread || '0',
+                        10
+                    ) || 0;
 
+                let matchesFilter = true;
 
-            let matchesFilter = true;
+                if (activeFilter === 'unread') {
+                    matchesFilter = unread > 0;
+                }
+                else if (activeFilter === 'hold') {
+                    matchesFilter = status.includes('hold');
+                }
+                else if (activeFilter === 'open') {
+                    matchesFilter =
+                        !status.includes('hold') &&
+                        !status.includes('pending') &&
+                        !status.includes('completed') &&
+                        !status.includes('closed');
+                }
 
+                const matchesSearch =
+                    !search ||
+                    text.includes(search) ||
+                    group.textContent
+                        .toLowerCase()
+                        .includes(search);
 
-            if (activeFilter === 'unread') {
+                const visible =
+                    matchesFilter &&
+                    matchesSearch;
 
-                matchesFilter =
-                    unread > 0;
+                item.style.display =
+                    visible ? '' : 'none';
 
-            } else if (activeFilter === 'hold') {
+                if (visible) {
+                    visibleItems++;
+                }
+            });
 
-                matchesFilter =
-                    status.includes('hold');
-
-            } else if (activeFilter === 'open') {
-
-                matchesFilter =
-                    !status.includes('hold') &&
-                    !status.includes('pending') &&
-                    !status.includes('completed') &&
-                    !status.includes('closed');
-            }
-
-
-            const matchesSearch =
-                !search ||
-                text.includes(search);
-
-
-            item.style.display =
-                matchesFilter && matchesSearch
-                    ? ''
-                    : 'none';
+            group.style.display =
+                visibleItems > 0 ? '' : 'none';
         });
     }
 
@@ -393,10 +429,52 @@ document.addEventListener('DOMContentLoaded', function () {
             'click',
             function (event) {
 
-                const item =
-                    event.target.closest(
-                        '.admin-chat-item'
+                const deleteButton =
+                    event.target.closest('.admin-chat-delete');
+
+                if (deleteButton) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const item =
+                        deleteButton.closest('.admin-chat-item');
+
+                    if (item) {
+                        deleteChat(item);
+                    }
+
+                    return;
+                }
+
+                const studentHeader =
+                    event.target.closest('.admin-chat-student-header');
+
+                if (studentHeader) {
+                    event.preventDefault();
+
+                    const group =
+                        studentHeader.closest('.admin-chat-student-group');
+
+                    if (!group) {
+                        return;
+                    }
+
+                    const collapsed =
+                        group.classList.toggle('collapsed');
+
+                    studentHeader.setAttribute(
+                        'aria-expanded',
+                        String(!collapsed)
                     );
+
+                    return;
+                }
+
+                const openButton =
+                    event.target.closest('.admin-chat-open');
+
+                const item =
+                    openButton?.closest('.admin-chat-item');
 
                 if (!item) {
                     return;
@@ -551,6 +629,128 @@ document.addEventListener('DOMContentLoaded', function () {
         catch (error) {
             console.warn('Admin MarkChatRead failed:', error);
             return false;
+        }
+    }
+
+
+    /* =========================================================
+       DELETE CHAT
+       Deletes only the chat session and its messages.
+       Task, project, assignment and notification remain intact.
+    ========================================================= */
+
+    async function deleteChat(item) {
+
+        const chatSessionId =
+            item?.dataset.chatSessionId;
+
+        if (!chatSessionId) {
+            return;
+        }
+
+        const taskTitle =
+            item.querySelector('.admin-chat-username')
+                ?.textContent
+                ?.trim() || 'this task';
+
+        const confirmed =
+            window.confirm(
+                `Delete the chat for "${taskTitle}"?\n\nThis removes the conversation and its messages. The task itself will not be deleted.`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const token =
+            document.querySelector(
+                '#antiForgeryForm input[name="__RequestVerificationToken"]'
+            )?.value || '';
+
+        try {
+
+            const response =
+                await fetch(
+                    '/Admin/Chat/Delete',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type':
+                                'application/x-www-form-urlencoded; charset=UTF-8'
+                        },
+                        credentials: 'same-origin',
+                        body: new URLSearchParams({
+                            chatSessionId:
+                                String(chatSessionId),
+                            __RequestVerificationToken:
+                                token
+                        })
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (!response.ok || !result?.success) {
+                throw new Error(
+                    result?.message ||
+                    'Unable to delete the chat.'
+                );
+            }
+
+            const group =
+                item.closest('.admin-chat-student-group');
+
+            const deletingCurrent =
+                currentChatSessionId &&
+                String(currentChatSessionId) ===
+                    String(chatSessionId);
+
+            if (deletingCurrent) {
+                await closeDrawer();
+            }
+
+            item.remove();
+
+            if (group) {
+
+                const remaining =
+                    group.querySelectorAll(
+                        '.admin-chat-item'
+                    );
+
+                if (remaining.length === 0) {
+                    group.remove();
+                }
+                else {
+                    const countElement =
+                        group.querySelector(
+                            '.student-header-content small'
+                        );
+
+                    if (countElement) {
+                        countElement.textContent =
+                            `${remaining.length} ${remaining.length === 1 ? 'conversation' : 'conversations'}`;
+                    }
+                }
+            }
+
+            updateUnreadSummary();
+
+            applyChatFilters();
+
+        }
+        catch (error) {
+
+            console.error(
+                'Delete chat failed:',
+                error
+            );
+
+            alert(
+                error?.message ||
+                'Unable to delete the chat.'
+            );
         }
     }
 
