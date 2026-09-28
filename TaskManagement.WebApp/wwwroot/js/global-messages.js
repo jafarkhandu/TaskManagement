@@ -50,6 +50,14 @@
     };
 
     function initializeGlobalMessages() {
+        if (!document.querySelector('link[data-global-message-style="true"]')) {
+            const style = document.createElement("link");
+            style.rel = "stylesheet";
+            style.href = "/css/global-messages.css";
+            style.dataset.globalMessageStyle = "true";
+            document.head.appendChild(style);
+        }
+
         prepareMessages();
 
         const observer = new MutationObserver(mutations => {
