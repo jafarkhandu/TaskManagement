@@ -720,9 +720,13 @@
         grid-template-columns: 1fr;
     }
 
-    .status-list {
-        grid-template-columns: repeat(5, minmax(100px, 1fr));
-        overflow-x: auto;
+    .status-analytics {
+        gap: 28px;
+    }
+
+    .status-donut-wrap {
+        width: 190px;
+        flex-basis: 190px;
     }
 }
 
@@ -764,6 +768,21 @@
 
     .report-action {
         justify-content: center;
+    }
+
+    .status-analytics {
+        flex-direction: column;
+        gap: 18px;
+        padding-top: 20px;
+    }
+
+    .status-donut-wrap {
+        width: 100%;
+        flex-basis: auto;
+    }
+
+    .status-legend {
+        width: 100%;
     }
 }
 
