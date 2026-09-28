@@ -96,6 +96,45 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.warn('ChatHub closed', err);
             });
 
+            connection.on('ChatDeleted', async function (payload) {
+
+                const deletedSessionId =
+                    String(
+                        payload?.chatSessionId ??
+                        payload?.ChatSessionId ??
+                        ''
+                    );
+
+                if (
+                    !deletedSessionId ||
+                    !activeChatSessionId ||
+                    String(activeChatSessionId) !== deletedSessionId
+                ) {
+                    await loadChats().catch(() => { });
+                    return;
+                }
+
+                activeChatSessionId = null;
+                activeChatTaskId = null;
+                renderedMessageIds = new Set();
+
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = `
+                        <div class="task-chat-empty">
+                            <strong>Chat deleted</strong>
+                            <span>This task conversation is no longer available.</span>
+                        </div>
+                    `;
+                }
+
+                if (composer) {
+                    composer.hidden = true;
+                }
+
+                await loadChats().catch(() => { });
+            });
+
+
             connection.on('ReceiveMessage', function (payload) {
                 handleIncomingMessage(payload).catch(err => console.error('ReceiveMessage error', err));
             });
