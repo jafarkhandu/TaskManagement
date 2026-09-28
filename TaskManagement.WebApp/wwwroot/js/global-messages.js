@@ -54,15 +54,37 @@
 
         const observer = new MutationObserver(mutations => {
             mutations.forEach(mutation => {
+
+                if (mutation.type === "attributes" &&
+                    mutation.target.matches?.(".alert")) {
+
+                    const alert = mutation.target;
+
+                    if (!alert.classList.contains("d-none") &&
+                        !alert.dataset.tmMessageScheduled) {
+
+                        alert.classList.add("tm-auto-message");
+                        dismissElement(alert);
+                    }
+                }
+
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.matches?.(".alert")) prepareMessages(node.parentElement || document);
+                        if (node.matches?.(".alert")) {
+                            prepareMessages(node.parentElement || document);
+                        }
+
                         prepareMessages(node);
                     }
                 });
             });
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["class"]
+        });
     });
 })();
