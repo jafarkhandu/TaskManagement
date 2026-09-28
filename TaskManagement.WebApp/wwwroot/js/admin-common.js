@@ -1,3 +1,12 @@
+(function loadGlobalMessages() {
+    if (!document.querySelector('script[data-global-messages="true"]')) {
+        const script = document.createElement("script");
+        script.src = "/js/global-messages.js";
+        script.dataset.globalMessages = "true";
+        document.head.appendChild(script);
+    }
+})();
+
 ﻿document.addEventListener("DOMContentLoaded", function () {
 
     /* =====================================================
