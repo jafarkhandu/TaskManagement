@@ -522,6 +522,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     const collapsed =
                         group.classList.toggle('collapsed');
 
+                    const tasks =
+                        group.querySelector(
+                            '.admin-chat-student-tasks'
+                        );
+
+                    if (tasks) {
+                        tasks.hidden = collapsed;
+                    }
+
                     studentHeader.setAttribute(
                         'aria-expanded',
                         String(!collapsed)
