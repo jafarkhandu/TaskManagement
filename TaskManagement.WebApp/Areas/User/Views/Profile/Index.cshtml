@@ -1,0 +1,246 @@
+@model TaskManagement.Application.DTOs.UserProfileViewModel
+
+@{
+    Layout = null;
+
+    var userName = string.IsNullOrWhiteSpace(Model.FullName) ? "Student" : Model.FullName;
+    var firstLetter = userName.Substring(0, 1).ToUpper();
+    var statusText = Model.IsActive ? "Active" : "Inactive";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>TaskManager — Profile</title>
+
+    <link rel="stylesheet" href="~/css/user-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/user-profile.css" asp-append-version="true" />
+</head>
+
+<body>
+    @Html.AntiForgeryToken()
+
+    <div class="dashboard-shell">
+
+        @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserSidebar.cshtml")
+
+        <main class="main-content profile-main">
+            @{
+                ViewData["UserName"] = Model.FullName;
+            }
+
+            @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserTopbar.cshtml")
+
+            <section class="profile-page">
+
+                <div class="profile-glow profile-glow-one"></div>
+                <div class="profile-glow profile-glow-two"></div>
+
+                <header class="profile-hero-card">
+                    <div class="profile-hero-avatar">@firstLetter</div>
+
+                    <div class="profile-hero-copy">
+                        <span class="profile-eyebrow">STUDENT PROFILE</span>
+                        <h1>@userName</h1>
+                        <p>Manage your account, password and learning performance.</p>
+
+                        <div class="profile-hero-meta">
+                            <span>Student</span>
+                            <span class="profile-dot"></span>
+                            <span class="@(Model.IsActive ? "profile-active" : "profile-inactive")">@statusText</span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="profile-password-hero-btn" id="openPasswordSection">
+                        <span>⌑</span>
+                        Change Password
+                    </button>
+                </header>
+
+                <div class="profile-content-grid">
+
+                    <section class="profile-card account-card">
+                        <div class="profile-card-heading">
+                            <div>
+                                <span>ACCOUNT</span>
+                                <h2>Personal Details</h2>
+                            </div>
+                            <div class="profile-card-icon">♙</div>
+                        </div>
+
+                        <div class="profile-details">
+                            <div class="profile-detail-row">
+                                <span>Full Name</span>
+                                <strong>@userName</strong>
+                            </div>
+
+                            <div class="profile-detail-row">
+                                <span>Email</span>
+                                <strong>@Model.Email</strong>
+                            </div>
+
+                            <div class="profile-detail-row">
+                                <span>Phone</span>
+                                <strong>@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not added" : Model.PhoneNumber)</strong>
+                            </div>
+
+                            <div class="profile-detail-row">
+                                <span>Account Status</span>
+                                <strong class="@(Model.IsActive ? "profile-active" : "profile-inactive")">@statusText</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="profile-card security-card" id="passwordSection">
+                        <div class="profile-card-heading">
+                            <div>
+                                <span>SECURITY</span>
+                                <h2>Change Password</h2>
+                            </div>
+                            <div class="profile-card-icon purple">⌁</div>
+                        </div>
+
+                        <p class="profile-card-description">
+                            Verify your current password and confirm an email OTP before changing it.
+                        </p>
+
+                        <form id="passwordChangeForm" autocomplete="off">
+                            <div class="profile-field">
+                                <label for="currentPassword">Current Password</label>
+                                <div class="password-input-wrap">
+                                    <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />
+                                    <button type="button" class="password-toggle" data-target="currentPassword">Show</button>
+                                </div>
+                            </div>
+
+                            <div class="profile-field">
+                                <label for="newPassword">New Password</label>
+                                <div class="password-input-wrap">
+                                    <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required />
+                                    <button type="button" class="password-toggle" data-target="newPassword">Show</button>
+                                </div>
+                            </div>
+
+                            <div class="profile-field">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <div class="password-input-wrap">
+                                    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required />
+                                    <button type="button" class="password-toggle" data-target="confirmPassword">Show</button>
+                                </div>
+                            </div>
+
+                            <div class="profile-password-rule">
+                                <span>Identity password rules apply.</span>
+                                <span>OTP expires in 10 minutes.</span>
+                            </div>
+
+                            <div id="passwordFormMessage" class="profile-form-message" aria-live="polite"></div>
+
+                            <button type="submit" class="profile-primary-btn" id="sendOtpButton">
+                                <span>✉</span>
+                                Send OTP to Email
+                            </button>
+                        </form>
+
+                        <div class="otp-panel" id="otpPanel" hidden>
+                            <div class="otp-panel-header">
+                                <div>
+                                    <span>EMAIL VERIFICATION</span>
+                                    <h3>Enter your 6-digit OTP</h3>
+                                </div>
+                                <div class="otp-clock" id="otpExpiryCountdown">10:00</div>
+                            </div>
+
+                            <p id="otpMessage">Enter the code sent to your registered email address.</p>
+
+                            <input type="text" id="otpInput" class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" />
+
+                            <div class="otp-actions">
+                                <button type="button" class="profile-primary-btn" id="verifyOtpButton">
+                                    Verify &amp; Change Password
+                                </button>
+
+                                <button type="button" class="profile-secondary-btn" id="resendOtpButton" disabled>
+                                    Resend OTP
+                                </button>
+                            </div>
+
+                            <div id="otpFormMessage" class="profile-form-message" aria-live="polite"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="profile-card reports-card">
+                    <div class="profile-card-heading">
+                        <div>
+                            <span>REPORTS</span>
+                            <h2>Performance</h2>
+                        </div>
+                        <div class="profile-card-icon">◈</div>
+                    </div>
+
+                    <div class="reports-grid">
+
+                        <article class="completion-report">
+                            <div class="report-heading">
+                                <div>
+                                    <span>OVERALL</span>
+                                    <h3>Completion Rate</h3>
+                                </div>
+                                <strong>@Model.CompletionRate.ToString("0.#")%</strong>
+                            </div>
+
+                            <div class="completion-ring" style="--completion:@Model.CompletionRate%;">
+                                <div>
+                                    <strong>@Model.CompletionRate.ToString("0.#")%</strong>
+                                    <span>Completed</span>
+                                </div>
+                            </div>
+
+                            <p>@Model.CompletedTasks of @Model.TotalTasks assigned tasks completed.</p>
+                        </article>
+
+                        <article class="monthly-report">
+                            <div class="report-heading">
+                                <div>
+                                    <span>LAST 6 MONTHS</span>
+                                    <h3>Monthly Performance</h3>
+                                </div>
+                            </div>
+
+                            <div class="monthly-chart" aria-label="Monthly performance chart">
+                                @foreach (var month in Model.MonthlyPerformance)
+                                {
+                                    var height = month.TotalTasks == 0
+                                        ? 6
+                                        : Math.Max(8, Math.Min(100, month.CompletionRate));
+
+                                    <div class="month-column">
+                                        <div class="month-value">@month.CompletedTasks</div>
+                                        <div class="month-bar-track">
+                                            <div class="month-bar" style="height:@height%;"></div>
+                                        </div>
+                                        <span>@month.Month</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <p>Completed tasks compared with tasks ending in each month.</p>
+                        </article>
+
+                    </div>
+                </section>
+
+            </section>
+        </main>
+    </div>
+
+    @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserModals.cshtml")
+
+    <script src="~/js/user-profile.js" asp-append-version="true"></script>
+</body>
+</html>
