@@ -82,9 +82,15 @@ builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
+// Apply pending EF Core migrations before the application starts.
+// This guarantees schema fixes such as IsDelivered are applied to
+// the configured database before SignalR/controllers query them.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+
+    var db = services.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
 
     await IdentitySeeder.SeedAsync(
         services,
