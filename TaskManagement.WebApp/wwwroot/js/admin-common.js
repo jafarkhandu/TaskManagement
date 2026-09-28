@@ -171,50 +171,71 @@
 
 
     /* =====================================================
-       ADMIN NOTIFICATION
+       ADMIN NOTIFICATION PANEL
     ===================================================== */
 
     const notificationButton =
-        document.getElementById(
-            "adminNotificationButton"
-        );
+        document.getElementById("adminNotificationButton");
 
-    const notificationDot =
-        document.getElementById(
-            "adminNotificationDot"
-        );
+    const notificationPanel =
+        document.getElementById("adminNotificationPanel");
 
+    const closeNotifications =
+        document.getElementById("closeAdminNotifications");
 
-    function setNotificationState(
-        hasNotification
-    ) {
-
-        if (!notificationButton)
-            return;
-
-
-        notificationButton.classList.toggle(
-            "has-notification",
-            hasNotification
-        );
-
-
-        if (notificationDot) {
-
-            notificationDot.hidden =
-                !hasNotification;
-
-        }
-
+    function closeAdminNotifications() {
+        notificationPanel?.classList.remove("show");
+        notificationPanel?.setAttribute("aria-hidden", "true");
     }
 
+    notificationButton?.addEventListener("click", event => {
+        event.stopPropagation();
 
-    /*
-     * No fake notification.
-     * Until a real Admin notification arrives,
-     * the bell remains clean.
-     */
+        const isOpen =
+            notificationPanel?.classList.toggle("show") ?? false;
 
-    setNotificationState(false);
+        notificationPanel?.setAttribute(
+            "aria-hidden",
+            isOpen ? "false" : "true"
+        );
+    });
+
+    closeNotifications?.addEventListener("click", event => {
+        event.stopPropagation();
+        closeAdminNotifications();
+    });
+
+    notificationPanel?.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    document.addEventListener("click", event => {
+        if (
+            notificationPanel &&
+            !notificationPanel.contains(event.target) &&
+            !notificationButton?.contains(event.target)
+        ) {
+            closeAdminNotifications();
+        }
+    });
+
+    document.addEventListener("keydown", event => {
+        if (
+            event.key === "Escape" &&
+            notificationPanel?.classList.contains("show")
+        ) {
+            closeAdminNotifications();
+        }
+    });
+
+    /* Keep the bell clean until the backend provides an Admin notification feed. */
+    const notificationDot =
+        document.getElementById("adminNotificationDot");
+
+    notificationButton?.classList.remove("has-notification");
+
+    if (notificationDot) {
+        notificationDot.hidden = true;
+    }
 
 });
