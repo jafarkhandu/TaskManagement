@@ -19,6 +19,10 @@
     <link rel="stylesheet"
           href="~/css/account.css"
           asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/global-messages.css"
+          asp-append-version="true" />
 </head>
 
 <body class="account-page">
@@ -194,6 +198,12 @@
                                 Password
                             </label>
 
+                            <button type="button"
+                                    id="forgotPasswordLink"
+                                    class="forgot-password-link">
+                                Forgot password?
+                            </button>
+
                         </div>
 
                         <div class="input-wrapper">
@@ -268,6 +278,78 @@
                 </form>
 
 
+                <!-- FORGOT PASSWORD -->
+                <div id="forgotPasswordPanel"
+                     class="forgot-password-panel d-none"
+                     aria-hidden="true">
+
+                    <div class="forgot-panel-header">
+                        <button type="button"
+                                id="forgotBackButton"
+                                class="forgot-back-button">
+                            ← Back to login
+                        </button>
+
+                        <div class="form-icon forgot-form-icon"><span>🔐</span></div>
+                        <h3 id="forgotPanelTitle">Forgot password?</h3>
+                        <p id="forgotPanelSubtitle">Enter your registered email and we'll send you a verification OTP.</p>
+                    </div>
+
+                    <div id="forgotMessage" class="alert d-none account-alert" role="alert"></div>
+
+                    <div id="forgotStepEmail" class="forgot-step">
+                        <label for="forgotEmail" class="form-label">Registered email</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">✉</span>
+                            <input type="email" id="forgotEmail" class="form-control"
+                                   placeholder="Enter your registered email" autocomplete="email" />
+                        </div>
+                        <button type="button" id="sendForgotOtpButton" class="btn account-btn w-100 mt-3">
+                            <span id="sendForgotOtpText">Send OTP</span>
+                            <span id="sendForgotOtpSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+                    </div>
+
+                    <div id="forgotStepOtp" class="forgot-step d-none">
+                        <label class="form-label">Verification OTP</label>
+                        <div class="otp-input-group">
+                            <input type="text" maxlength="1" inputmode="numeric" class="otp-input" />
+                            <input type="text" maxlength="1" inputmode="numeric" class="otp-input" />
+                            <input type="text" maxlength="1" inputmode="numeric" class="otp-input" />
+                            <input type="text" maxlength="1" inputmode="numeric" class="otp-input" />
+                            <input type="text" maxlength="1" inputmode="numeric" class="otp-input" />
+                            <input type="text" maxlength="1" inputmode="numeric" class="otp-input" />
+                        </div>
+                        <div class="otp-meta">
+                            <span id="otpCountdown">OTP expires in 10:00</span>
+                            <button type="button" id="resendForgotOtpButton" class="forgot-resend-button" disabled>Resend OTP</button>
+                        </div>
+                        <button type="button" id="verifyForgotOtpButton" class="btn account-btn w-100 mt-3">Verify OTP</button>
+                    </div>
+
+                    <div id="forgotStepReset" class="forgot-step d-none">
+                        <label for="forgotNewPassword" class="form-label">New password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="forgotNewPassword" class="form-control"
+                                   autocomplete="new-password" placeholder="Enter new password" />
+                            <button type="button" id="toggleForgotNewPassword"
+                                    class="password-toggle forgot-password-toggle"
+                                    aria-label="Show password" title="Show password">◉</button>
+                        </div>
+                        <label for="forgotConfirmPassword" class="form-label mt-3">Confirm password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="forgotConfirmPassword" class="form-control"
+                                   autocomplete="new-password" placeholder="Confirm new password" />
+                            <button type="button" id="toggleForgotConfirmPassword"
+                                    class="password-toggle forgot-password-toggle"
+                                    aria-label="Show password" title="Show password">◉</button>
+                        </div>
+                        <button type="button" id="resetForgotPasswordButton" class="btn account-btn w-100 mt-3">Reset Password</button>
+                    </div>
+                </div>
+
                 <!-- REGISTER -->
                 <div class="form-bottom">
 
@@ -303,6 +385,14 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="~/js/Account/login.js"
+            asp-append-version="true">
+    </script>
+
+    <script src="~/js/Account/forgot-password.js"
+            asp-append-version="true">
+    </script>
+
+    <script src="~/js/global-messages.js"
             asp-append-version="true">
     </script>
 

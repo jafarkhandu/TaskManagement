@@ -854,6 +854,63 @@
         </div>
 
     </div>
+    <!-- REASSIGN TASK MODAL -->
+    <div class="modal fade"
+         id="reassignTaskModal"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content task-details-modal">
+                <div class="modal-header">
+                    <div>
+                        <span class="task-detail-id">TASK REASSIGNMENT</span>
+                        <h5 class="modal-title">Re-assign Task</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="reassignTaskId" />
+
+                    <div class="form-field">
+                        <label>Task</label>
+                        <input type="text"
+                               id="reassignTaskTitle"
+                               class="form-control"
+                               readonly />
+                    </div>
+
+                    <div class="form-field mt-3">
+                        <label>Select User</label>
+                        <select id="reassignUserId"
+                                class="form-control"
+                                required>
+                            <option value="">Loading users...</option>
+                        </select>
+                    </div>
+
+                    <div id="reassignTaskError"
+                         class="task-form-error"
+                         style="display:none;">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button"
+                            id="confirmReassignTask"
+                            class="btn btn-primary">
+                        Re-assign
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TASK DETAILS MODAL -->
     <div class="modal fade"
          id="taskDetailsModal"

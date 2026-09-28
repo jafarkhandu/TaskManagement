@@ -612,9 +612,14 @@
                 </h4>
             </div>
 
-            <span class="task-priority priority-${priorityClass(task.priority)}">
-                ${escapeHtml(task.priority || 'Low')}
-            </span>
+            <div class="task-card-status-wrap">
+                <span class="task-priority priority-${priorityClass(task.priority)}">
+                    ${escapeHtml(task.priority || 'Low')}
+                </span>
+                ${String(task.assignmentStatus || '').toLowerCase() === 'rejected'
+                    ? '<span class="task-assignment-rejected">Rejected</span>'
+                    : ''}
+            </div>
 
         </div>
 
@@ -671,6 +676,16 @@
                     data-task-id="${task.id}">
                     Details
                 </button>
+
+                ${String(task.assignmentStatus || '').toLowerCase() === 'rejected'
+                    ? `<button
+                    type="button"
+                    class="task-action task-reassign-btn"
+                    data-task-id="${task.id}"
+                    data-task-title="${escapeHtml(task.title || 'Task')}">
+                    Re-assign
+                </button>`
+                    : ''}
 
                 <button
                     type="button"
@@ -783,8 +798,9 @@
 
                             <span class="all-task-status">
                                 ${escapeHtml(
-                                    task.status ||
-                                    'Pending'
+                                    String(task.assignmentStatus || '').toLowerCase() === 'rejected'
+                                        ? 'Rejected'
+                                        : (task.status || 'Pending')
                                 )}
                             </span>
 
@@ -1831,6 +1847,156 @@
 
             }
         );
+
+
+        /* =====================================================
+           REASSIGN REJECTED TASK
+        ===================================================== */
+
+        const reassignModalElement =
+            document.getElementById('reassignTaskModal');
+
+        const reassignTaskId =
+            document.getElementById('reassignTaskId');
+
+        const reassignTaskTitle =
+            document.getElementById('reassignTaskTitle');
+
+        const reassignUserId =
+            document.getElementById('reassignUserId');
+
+        const reassignTaskError =
+            document.getElementById('reassignTaskError');
+
+        const confirmReassignTask =
+            document.getElementById('confirmReassignTask');
+
+        async function loadReassignUsers() {
+            if (!reassignUserId) return;
+
+            reassignUserId.innerHTML =
+                '<option value="">Loading users...</option>';
+
+            try {
+                const response = await fetch(
+                    '/Admin/Tasks/Users?_=' + Date.now(),
+                    {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        cache: 'no-store'
+                    }
+                );
+
+                const data = await readJson(response);
+                const users = Array.isArray(data?.users) ? data.users : [];
+
+                reassignUserId.innerHTML =
+                    '<option value="">Select User</option>';
+
+                users.forEach(function (user) {
+                    const option = document.createElement('option');
+                    option.value = user.id || user.userId || '';
+                    option.textContent =
+                        user.fullName || user.email || 'User';
+                    reassignUserId.appendChild(option);
+                });
+
+                if (!users.length) {
+                    reassignUserId.innerHTML =
+                        '<option value="">No users available</option>';
+                }
+            }
+            catch (error) {
+                console.error('Reassign user loading error:', error);
+                reassignUserId.innerHTML =
+                    '<option value="">Unable to load users</option>';
+            }
+        }
+
+        document.addEventListener('click', function (event) {
+            const button =
+                event.target.closest('.task-reassign-btn');
+
+            if (!button) return;
+
+            if (reassignTaskId)
+                reassignTaskId.value = button.dataset.taskId || '';
+
+            if (reassignTaskTitle)
+                reassignTaskTitle.value =
+                    button.dataset.taskTitle || 'Task';
+
+            if (reassignTaskError) {
+                reassignTaskError.textContent = '';
+                reassignTaskError.style.display = 'none';
+            }
+
+            loadReassignUsers();
+
+            bootstrap.Modal
+                .getOrCreateInstance(reassignModalElement)
+                .show();
+        });
+
+        confirmReassignTask?.addEventListener('click', async function () {
+            const taskId = reassignTaskId?.value || '';
+            const userId = reassignUserId?.value || '';
+
+            if (!taskId || !userId) {
+                if (reassignTaskError) {
+                    reassignTaskError.textContent = 'Please select a user.';
+                    reassignTaskError.style.display = 'block';
+                }
+                return;
+            }
+
+            confirmReassignTask.disabled = true;
+
+            try {
+                const body = new URLSearchParams();
+                body.append('taskId', taskId);
+                body.append('userId', userId);
+                body.append('__RequestVerificationToken', getToken());
+
+                const response = await fetch('/Admin/Tasks/Reassign', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type':
+                            'application/x-www-form-urlencoded'
+                    },
+                    body: body.toString()
+                });
+
+                const data = await readJson(response);
+
+                if (!response.ok || !data?.success) {
+                    throw new Error(
+                        data?.message || 'Unable to re-assign task.'
+                    );
+                }
+
+                bootstrap.Modal
+                    .getOrCreateInstance(reassignModalElement)
+                    .hide();
+
+                window.location.reload();
+            }
+            catch (error) {
+                console.error('Reassign error:', error);
+
+                if (reassignTaskError) {
+                    reassignTaskError.textContent =
+                        error?.message || 'Unable to re-assign task.';
+                    reassignTaskError.style.display = 'block';
+                }
+            }
+            finally {
+                confirmReassignTask.disabled = false;
+            }
+        });
 
 
         /* =====================================================

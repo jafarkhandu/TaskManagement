@@ -373,6 +373,56 @@ namespace TaskManagement.Infrastructure.Services
             return (true, string.Empty);
         }
 
+        public async Task<(bool Success, string Error)> MarkAdminMessagesAsReadAsync(int chatSessionId, string adminId)
+        {
+            var session = await _context.ChatSessions
+                .FirstOrDefaultAsync(x => x.Id == chatSessionId && x.IsActive);
+
+            if (session == null)
+                return (false, "Chat session not found.");
+
+            if (session.AdminId != adminId)
+                return (false, "You are not allowed to modify this chat.");
+
+            var messages = await _context.ChatMessages
+                .Where(x =>
+                    x.ChatSessionId == chatSessionId &&
+                    !x.IsRead &&
+                    x.SenderId == session.UserId)
+                .ToListAsync();
+
+            if (!messages.Any())
+                return (true, string.Empty);
+
+            foreach (var message in messages)
+            {
+                message.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return (true, string.Empty);
+        }
+
+        public async Task<(bool Success, string Error)> DeleteChatAsync(int chatSessionId, string adminId)
+        {
+            var session = await _context.ChatSessions
+                .FirstOrDefaultAsync(x => x.Id == chatSessionId && x.IsActive);
+
+            if (session == null)
+                return (false, "Chat not found.");
+
+            if (session.AdminId != adminId)
+                return (false, "You are not allowed to delete this chat.");
+
+            // ChatMessage has a cascade relationship to ChatSession,
+            // so deleting the session also removes all of its messages.
+            _context.ChatSessions.Remove(session);
+            await _context.SaveChangesAsync();
+
+            return (true, string.Empty);
+        }
+
         public async Task<int?> GetActiveChatSessionIdAsync(
             int taskId,
             string userId)

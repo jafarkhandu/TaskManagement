@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
@@ -12,15 +14,23 @@ namespace TaskManagement.Infrastructure.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<TaskService> _logger;
+        private readonly IHostEnvironment _environment;
 
         private static readonly string[] AllowedPriorities = new[] { "Low", "Medium", "High", "Critical" };
 
         private static readonly string[] AllowedStatuses = new[] { "Pending", "In Progress", "Completed", "On Hold", "Cancelled" };
 
-        public TaskService(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public TaskService(
+            ApplicationDbContext db,
+            UserManager<ApplicationUser> userManager,
+            ILogger<TaskService> logger,
+            IHostEnvironment environment)
         {
             _db = db;
             _userManager = userManager;
+            _logger = logger;
+            _environment = environment;
         }
 
         public async Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId)
@@ -40,6 +50,11 @@ namespace TaskManagement.Infrastructure.Services
                     AssignedToUserName = _db.Users
                         .Where(u => u.Id == t.AssignedToUserId)
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                        .FirstOrDefault() ?? string.Empty,
+                    AssignmentStatus = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.Status)
                         .FirstOrDefault() ?? string.Empty,
                     Priority = t.Priority,
                     Status = t.Status,
@@ -65,6 +80,11 @@ namespace TaskManagement.Infrastructure.Services
                     AssignedToUserName = _db.Users
                         .Where(u => u.Id == t.AssignedToUserId)
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                        .FirstOrDefault() ?? string.Empty,
+                    AssignmentStatus = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.Status)
                         .FirstOrDefault() ?? string.Empty,
                     Priority = t.Priority,
                     Status = t.Status,
@@ -118,75 +138,191 @@ namespace TaskManagement.Infrastructure.Services
             if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
                 return (false, "Only users can be assigned to tasks.", 0);
 
-            await using var transaction =
-                await _db.Database.BeginTransactionAsync();
+            try
+            {
+                var executionStrategy =
+                    _db.Database.CreateExecutionStrategy();
+
+                var notificationId = 0;
+
+                await executionStrategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction =
+                        await _db.Database.BeginTransactionAsync();
+
+                    var task = new TaskItem
+                    {
+                        ProjectId = model.ProjectId,
+                        Title = model.Title,
+                        Scenario = model.Scenario,
+
+                        // Keep existing field for compatibility.
+                        // Official assignment is controlled by TaskAssignment.
+                        AssignedToUserId = null,
+
+                        Priority = model.Priority,
+
+                        // Task waits for user's response.
+                        Status = "Pending",
+
+                        StartDate = model.StartDate,
+                        ExpectedEndDate = model.ExpectedEndDate,
+                        Amount = model.Amount
+                    };
+
+                    _db.TaskItems.Add(task);
+                    await _db.SaveChangesAsync();
+
+                    var assignment = new TaskAssignment
+                    {
+                        TaskId = task.Id,
+                        UserId = assignedUser.Id,
+                        Status = "Pending",
+                        AssignedAt = DateTime.UtcNow
+                    };
+
+                    _db.TaskAssignments.Add(assignment);
+                    await _db.SaveChangesAsync();
+
+                    var notification = new Notification
+                    {
+                        UserId = assignedUser.Id,
+                        TaskAssignmentId = assignment.Id,
+                        Type = "TaskAssignment",
+                        Title = "New Task Assignment",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _db.Notifications.Add(notification);
+                    await _db.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    notificationId = notification.Id;
+                });
+
+                return (true, string.Empty, notificationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create task assignment for Task Title {TaskTitle}, ProjectId {ProjectId}, UserId {UserId}.",
+                    model.Title,
+                    model.ProjectId,
+                    model.AssignedToUserId);
+
+                var errorMessage = _environment.IsDevelopment()
+                    ? ex.GetBaseException().Message
+                    : "Unable to create the task assignment. Please try again.";
+
+                return (false, errorMessage, 0);
+            }
+        }
+
+        public async Task<(bool Success, string Error, int NotificationId)> ReassignAsync(int taskId, string newUserId)
+        {
+            if (string.IsNullOrWhiteSpace(newUserId))
+                return (false, "Please select a user.", 0);
+
+            var task = await _db.TaskItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+                return (false, "Task not found.", 0);
+
+            if (string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Completed tasks cannot be reassigned.", 0);
+
+            var latestAssignment = await _db.TaskAssignments
+                .Where(a => a.TaskId == taskId)
+                .OrderByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            if (latestAssignment == null ||
+                !string.Equals(latestAssignment.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                return (false, "Only rejected tasks can be reassigned.", 0);
+
+            if (string.Equals(latestAssignment.UserId, newUserId, StringComparison.Ordinal))
+                return (false, "Please select a different user.", 0);
+
+            var assignedUser = await _userManager.FindByIdAsync(newUserId);
+
+            if (assignedUser == null)
+                return (false, "Selected user not found.", 0);
+
+            if (!assignedUser.IsActive)
+                return (false, "The selected user is not active.", 0);
+
+            if (await _userManager.IsInRoleAsync(assignedUser, "Admin"))
+                return (false, "An administrator cannot be assigned to a task.", 0);
+
+            if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
+                return (false, "Only users can be assigned to tasks.", 0);
+
+            var pendingOrAccepted = await _db.TaskAssignments
+                .AnyAsync(a =>
+                    a.TaskId == taskId &&
+                    (a.Status == "Pending" || a.Status == "Accepted"));
+
+            if (pendingOrAccepted)
+                return (false, "This task already has an active assignment request.", 0);
 
             try
             {
-                // Task is created, but it is NOT officially assigned yet.
-                var task = new TaskItem
+                var executionStrategy = _db.Database.CreateExecutionStrategy();
+                var notificationId = 0;
+
+                await executionStrategy.ExecuteAsync(async () =>
                 {
-                    ProjectId = model.ProjectId,
-                    Title = model.Title,
-                    Scenario = model.Scenario,
+                    await using var transaction =
+                        await _db.Database.BeginTransactionAsync();
 
-                    // Keep existing field for compatibility.
-                    // Official assignment is controlled by TaskAssignment.
-                    AssignedToUserId = null,
+                    var assignment = new TaskAssignment
+                    {
+                        TaskId = taskId,
+                        UserId = assignedUser.Id,
+                        Status = "Pending",
+                        AssignedAt = DateTime.UtcNow
+                    };
 
-                    Priority = model.Priority,
+                    _db.TaskAssignments.Add(assignment);
+                    await _db.SaveChangesAsync();
 
-                    // Task waits for user's response.
-                    Status = "Pending",
+                    var notification = new Notification
+                    {
+                        UserId = assignedUser.Id,
+                        TaskAssignmentId = assignment.Id,
+                        Type = "TaskAssignment",
+                        Title = "New Task Assignment",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                    StartDate = model.StartDate,
-                    ExpectedEndDate = model.ExpectedEndDate,
-                    Amount = model.Amount
-                };
+                    _db.Notifications.Add(notification);
+                    await _db.SaveChangesAsync();
 
-                _db.TaskItems.Add(task);
+                    await transaction.CommitAsync();
+                    notificationId = notification.Id;
+                });
 
-                await _db.SaveChangesAsync();
-
-                var assignment = new TaskAssignment
-                {
-                    TaskId = task.Id,
-                    UserId = assignedUser.Id,
-                    Status = "Pending",
-                    AssignedAt = DateTime.UtcNow
-                };
-
-                _db.TaskAssignments.Add(assignment);
-
-                await _db.SaveChangesAsync();
-
-                var notification = new Notification
-                {
-                    UserId = assignedUser.Id,
-                    TaskAssignmentId = assignment.Id,
-                    Type = "TaskAssignment",
-                    Title = "New Task Assignment",
-                    IsRead = false,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _db.Notifications.Add(notification);
-
-                await _db.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
-                return (true, string.Empty, notification.Id);
+                return (true, string.Empty, notificationId);
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                _logger.LogError(
+                    ex,
+                    "Failed to reassign TaskId {TaskId} to UserId {UserId}.",
+                    taskId,
+                    newUserId);
 
-                return (
-                    false,
-                    "Unable to create the task assignment. Please try again.",
-                    0
-                );
+                var errorMessage = _environment.IsDevelopment()
+                    ? ex.GetBaseException().Message
+                    : "Unable to reassign the task. Please try again.";
+
+                return (false, errorMessage, 0);
             }
         }
 
@@ -236,6 +372,18 @@ namespace TaskManagement.Infrastructure.Services
                 return (false, "Status transition is not allowed.", taskId, task.ProjectId, oldStatus, newStatus);
 
             task.Status = newStatus;
+
+            // Completed tasks must no longer retain their task-specific chat.
+            // ChatMessage -> ChatSession is configured with cascade delete.
+            if (string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                var taskChats = await _db.ChatSessions
+                    .Where(x => x.TaskId == taskId)
+                    .ToListAsync();
+
+                if (taskChats.Count > 0)
+                    _db.ChatSessions.RemoveRange(taskChats);
+            }
 
             try
             {
@@ -290,6 +438,19 @@ namespace TaskManagement.Infrastructure.Services
             task.AssignedToUserId = model.AssignedToUserId;
             task.Priority = model.Priority;
             task.Status = model.Status;
+
+            // Keep the same cleanup rule when an admin changes a task
+            // directly to Completed through the task editor.
+            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                var taskChats = await _db.ChatSessions
+                    .Where(x => x.TaskId == task.Id)
+                    .ToListAsync();
+
+                if (taskChats.Count > 0)
+                    _db.ChatSessions.RemoveRange(taskChats);
+            }
+
             task.StartDate = model.StartDate;
             task.ExpectedEndDate = model.ExpectedEndDate;
             task.Amount = model.Amount;

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -184,9 +184,6 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 });
             }
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
             try
             {
                 assignment.Status = "Accepted";
@@ -204,9 +201,10 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 if (notification != null)
                     notification.IsRead = true;
 
+                // A single SaveChangesAsync call is atomic in EF Core's
+                // implicit database transaction and works with the
+                // configured SQL retry execution strategy.
                 await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
 
                 return Json(new
                 {
@@ -214,10 +212,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Task accepted successfully."
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-
                 return StatusCode(500, new
                 {
                     success = false,
@@ -257,9 +253,6 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 });
             }
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
             try
             {
                 assignment.Status = "Rejected";
@@ -274,13 +267,10 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 if (notification != null)
                     notification.IsRead = true;
 
-                // IMPORTANT:
-                // Task is NOT deleted.
-                // Task remains available for another user.
-
+                // A single SaveChangesAsync call is atomic in EF Core's
+                // implicit database transaction and works with the
+                // configured SQL retry execution strategy.
                 await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
 
                 return Json(new
                 {
@@ -288,10 +278,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Task assignment rejected."
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-
                 return StatusCode(500, new
                 {
                     success = false,
