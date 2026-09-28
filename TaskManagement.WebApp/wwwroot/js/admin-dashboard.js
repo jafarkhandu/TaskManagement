@@ -14,25 +14,21 @@ document.addEventListener("DOMContentLoaded", () => {
         projects: {
             title: "Total Projects",
             subtitle: "Projects currently represented on the dashboard.",
-            count: "@Model.TotalProjects",
             label: "projects"
         },
         tasks: {
             title: "Total Tasks",
             subtitle: "Task distribution available from the dashboard.",
-            count: "@Model.TotalTasks",
             label: "tasks"
         },
         progress: {
             title: "In Progress",
             subtitle: "Tasks currently counted as In Progress.",
-            count: "@Model.InProgressTasks",
             label: "tasks"
         },
         overdue: {
             title: "Overdue",
             subtitle: "Tasks currently counted as overdue.",
-            count: "@Model.OverdueTasks",
             label: "tasks"
         }
     };
@@ -46,11 +42,14 @@ document.addEventListener("DOMContentLoaded", () => {
     function openModal(type) {
         const info = stats[type];
         const template = data.querySelector('[data-stat-template="' + type + '"]');
-        if (!info || !template) return;
+        const card = document.querySelector('[data-admin-stat="' + type + '"]');
+
+        if (!info || !template || !card) return;
 
         title.textContent = info.title;
         subtitle.textContent = info.subtitle;
-        count.textContent = info.count;
+        count.textContent =
+            card.querySelector(".stat-content strong")?.textContent.trim() || "0";
         countLabel.textContent = info.label;
         list.innerHTML = template.innerHTML;
 
@@ -61,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll(".admin-stat-clickable").forEach(card => {
         card.addEventListener("click", () => openModal(card.dataset.adminStat));
+
         card.addEventListener("keydown", event => {
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
