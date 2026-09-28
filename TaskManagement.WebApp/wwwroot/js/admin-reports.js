@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     const range = document.getElementById("reportRange");
 
+    if (range?.dataset.currentRange) {
+        range.value = range.dataset.currentRange;
+    }
+
     range?.addEventListener("change", () => {
         const value = range.value || "all";
         const url = new URL(window.location.href);
