@@ -411,3 +411,96 @@ html:not(.light-theme) .admin-notification-item:hover {
 html:not(.light-theme) .admin-notification-arrow {
     color: #8fa3bd;
 }
+
+
+/* =====================================================
+   ADMIN CHAT NOTIFICATION CONTENT
+===================================================== */
+
+.admin-chat-notification-item {
+    align-items: center;
+}
+
+.admin-chat-notification-count {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.admin-chat-notification-empty {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 18px;
+}
+
+.admin-chat-notification-empty > span {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #2864ed;
+    background: #edf3ff;
+}
+
+.admin-chat-notification-empty strong {
+    margin-top: 9px;
+    color: #25334c;
+    font-size: 10px;
+}
+
+.admin-chat-notification-empty small {
+    margin-top: 4px;
+    color: #7e8ba1;
+    font-size: 8px;
+}
+
+.admin-notification-view-all {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    border-top: 1px solid #edf1f6;
+    color: #2864ed;
+    font-size: 9px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-notification-view-all:hover {
+    background: #f5f8fd;
+    color: #1e55cf;
+}
+
+html:not(.light-theme) .admin-chat-notification-empty strong {
+    color: #edf4ff;
+}
+
+html:not(.light-theme) .admin-chat-notification-empty small {
+    color: #8298b6;
+}
+
+html:not(.light-theme) .admin-chat-notification-empty > span {
+    background: rgba(75,140,255,.10);
+}
+
+html:not(.light-theme) .admin-notification-view-all {
+    border-top-color: rgba(255,255,255,.07);
+    color: #78a9ff;
+}
+
+html:not(.light-theme) .admin-notification-view-all:hover {
+    background: rgba(255,255,255,.05);
+    color: #9bc0ff;
+}
