@@ -55,6 +55,43 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             return Ok(new { success = true });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int chatSessionId)
+        {
+            var admin = await _userManager.GetUserAsync(User);
+
+            if (admin == null)
+                return Unauthorized();
+
+            var result = await _chatService.DeleteChatAsync(
+                chatSessionId,
+                admin.Id);
+
+            if (!result.Success)
+                return BadRequest(new { success = false, message = result.Error });
+
+            try
+            {
+                await _chatHub.Clients
+                    .Group($"chat-{chatSessionId}")
+                    .SendAsync("ChatDeleted", new
+                    {
+                        chatSessionId
+                    });
+            }
+            catch
+            {
+                // Non-fatal: the persisted deletion is already complete.
+            }
+
+            return Ok(new
+            {
+                success = true,
+                message = "Chat deleted successfully."
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetChat(int chatSessionId)
         {
