@@ -2,8 +2,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace TaskManagement.Infrastructure.Migrations
+namespace TaskManagement.Infrastructure.Data.Migrations
 {
+    [Migration("20260928150000_AddNotificationDelivery")]
     public partial class AddNotificationDelivery : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
