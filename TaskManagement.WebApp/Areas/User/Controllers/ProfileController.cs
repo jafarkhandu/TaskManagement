@@ -185,16 +185,16 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
             var safeName = System.Net.WebUtility.HtmlEncode(user.FullName ?? user.Email);
             var emailBody =
-                "<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:28px;background:#0b1830;color:#eef4ff;border-radius:18px;">" +
-                "<h2 style="margin-top:0;color:#ffffff;">TaskManager Password Change</h2>" +
+                "<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:28px;background:#0b1830;color:#eef4ff;border-radius:18px;'>" +
+                "<h2 style='margin-top:0;color:#ffffff;'>TaskManager Password Change</h2>" +
                 "<p>Hello <strong>" + safeName + "</strong>,</p>" +
                 "<p>Use the following one-time verification code to change your TaskManager password:</p>" +
-                "<div style="margin:24px 0;padding:18px;text-align:center;border-radius:14px;background:#172b4d;font-size:32px;font-weight:800;letter-spacing:8px;color:#8eb9ff;">" +
+                "<div style='margin:24px 0;padding:18px;text-align:center;border-radius:14px;background:#172b4d;font-size:32px;font-weight:800;letter-spacing:8px;color:#8eb9ff;'>" +
                 otp +
                 "</div>" +
                 "<p>This OTP expires in <strong>10 minutes</strong> and can be used only once.</p>" +
                 "<p>If you did not request a password change, you can safely ignore this email.</p>" +
-                "<p style="color:#91a7c2;">Regards,<br/>TaskManager Team</p>" +
+                "<p style='color:#91a7c2;'>Regards,<br/>TaskManager Team</p>" +
                 "</div>";
 
             try
