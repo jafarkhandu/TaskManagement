@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .build();
 
 
-            connection.on('ReceiveMessage', function (payload) {
+            connection.on('ReceiveMessage', async function (payload) {
 
                 try {
 
@@ -158,42 +158,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         /* Increase unread badge */
 
                         if (item) {
+                            const currentUnread =
+                                parseInt(
+                                    item.dataset.unread || '0',
+                                    10
+                                ) || 0;
 
-                            const badge =
-                                item.querySelector('.admin-chat-badge');
-
-
-                            if (badge) {
-
-                                const value =
-                                    parseInt(
-                                        badge.textContent || '0',
-                                        10
-                                    ) || 0;
-
-                                badge.textContent =
-                                    String(value + 1);
-
-                            } else {
-
-                                const row =
-                                    item.querySelector(
-                                        '.chat-item-message-row'
-                                    );
-
-                                if (row) {
-
-                                    const newBadge =
-                                        document.createElement('span');
-
-                                    newBadge.className =
-                                        'admin-chat-badge';
-
-                                    newBadge.textContent = '1';
-
-                                    row.appendChild(newBadge);
-                                }
-                            }
+                            setChatUnread(
+                                item,
+                                currentUnread + 1
+                            );
                         }
                     }
 
@@ -232,6 +206,10 @@ document.addEventListener('DOMContentLoaded', function () {
             );
         }
     }
+
+
+    // Calculate the aggregate unread count from the server-rendered list.
+    updateUnreadSummary();
 
 
     /* =========================================================
@@ -273,6 +251,68 @@ document.addEventListener('DOMContentLoaded', function () {
         );
     });
 
+
+    function updateUnreadSummary() {
+        const summary = document.getElementById('adminChatUnreadCount');
+
+        if (!summary || !adminChatList) {
+            return;
+        }
+
+        let totalUnread = 0;
+
+        adminChatList
+            .querySelectorAll('.admin-chat-item')
+            .forEach(function (item) {
+                totalUnread +=
+                    parseInt(item.dataset.unread || '0', 10) || 0;
+            });
+
+        summary.textContent = String(totalUnread);
+
+        summary.style.display =
+            totalUnread > 0 ? 'inline-flex' : 'none';
+    }
+
+
+    function setChatUnread(item, count) {
+        if (!item) {
+            return;
+        }
+
+        const unread = Math.max(0, Number(count) || 0);
+
+        item.dataset.unread = String(unread);
+
+        const row =
+            item.querySelector('.chat-item-message-row');
+
+        let badge =
+            item.querySelector('.admin-chat-badge');
+
+        if (unread === 0) {
+            badge?.remove();
+        }
+        else {
+            if (!badge && row) {
+                badge = document.createElement('span');
+                badge.className = 'admin-chat-badge';
+                row.appendChild(badge);
+            }
+
+            if (badge) {
+                badge.textContent =
+                    unread > 99 ? '99+' : String(unread);
+            }
+        }
+
+        updateUnreadSummary();
+    }
+
+
+    /* =========================================================
+       CHAT FILTERS
+    ========================================================= */
 
     function applyChatFilters() {
 
@@ -503,10 +543,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (item) {
-                item.dataset.unread = '0';
-
-                const badge = item.querySelector('.admin-chat-badge');
-                if (badge) badge.remove();
+                setChatUnread(item, 0);
             }
 
             return true;
