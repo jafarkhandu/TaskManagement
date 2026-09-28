@@ -257,6 +257,18 @@ namespace TaskManagement.Infrastructure.Services
 
             task.Status = newStatus;
 
+            // Completed tasks must no longer retain their task-specific chat.
+            // ChatMessage -> ChatSession is configured with cascade delete.
+            if (string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                var taskChats = await _db.ChatSessions
+                    .Where(x => x.TaskId == taskId)
+                    .ToListAsync();
+
+                if (taskChats.Count > 0)
+                    _db.ChatSessions.RemoveRange(taskChats);
+            }
+
             try
             {
                 await _db.SaveChangesAsync();
@@ -310,6 +322,19 @@ namespace TaskManagement.Infrastructure.Services
             task.AssignedToUserId = model.AssignedToUserId;
             task.Priority = model.Priority;
             task.Status = model.Status;
+
+            // Keep the same cleanup rule when an admin changes a task
+            // directly to Completed through the task editor.
+            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                var taskChats = await _db.ChatSessions
+                    .Where(x => x.TaskId == task.Id)
+                    .ToListAsync();
+
+                if (taskChats.Count > 0)
+                    _db.ChatSessions.RemoveRange(taskChats);
+            }
+
             task.StartDate = model.StartDate;
             task.ExpectedEndDate = model.ExpectedEndDate;
             task.Amount = model.Amount;
