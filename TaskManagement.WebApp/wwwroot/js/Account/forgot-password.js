@@ -23,6 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const resetButton = document.getElementById("resetForgotPasswordButton");
     const newPassword = document.getElementById("forgotNewPassword");
     const confirmPassword = document.getElementById("forgotConfirmPassword");
+    const toggleNewPassword = document.getElementById("toggleForgotNewPassword");
+    const toggleConfirmPassword = document.getElementById("toggleForgotConfirmPassword");
     const countdown = document.getElementById("otpCountdown");
     const otpInputs = [...document.querySelectorAll(".otp-input")];
 
@@ -123,8 +125,31 @@ document.addEventListener("DOMContentLoaded", () => {
         return result;
     }
 
+    function togglePasswordVisibility(input, button) {
+        if (!input || !button) return;
+
+        const showing = input.type === "text";
+        input.type = showing ? "password" : "text";
+        button.textContent = showing ? "◉" : "◉";
+        button.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+        button.setAttribute("title", showing ? "Show password" : "Hide password");
+    }
+
+    toggleNewPassword?.addEventListener("click", () =>
+        togglePasswordVisibility(newPassword, toggleNewPassword));
+
+    toggleConfirmPassword?.addEventListener("click", () =>
+        togglePasswordVisibility(confirmPassword, toggleConfirmPassword));
+
     function openForgot() {
         clearMessage();
+
+        const loginMessage = document.getElementById("loginMessage");
+        if (loginMessage) {
+            loginMessage.className = "alert d-none account-alert";
+            loginMessage.textContent = "";
+            loginMessage.dataset.tmMessageScheduled = "";
+        }
         otpVerified = false;
         email = emailInput?.value.trim() || "";
         forgotEmail.value = email;
