@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedTaskBox = document.getElementById('taskChatSelectedTask');
     const selectedTaskTitle = document.getElementById('taskChatSelectedTaskTitle');
     const clearSelectedTaskButton = document.getElementById('clearTaskChatTask');
+    const conversationsToggle = document.getElementById('toggleTaskChatConversations');
 
     // The drawer/overlay are global fixed UI. Keep them directly under <body>
     // so notification/modal containers can never clip, hide, or reposition them.
@@ -163,13 +164,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateGlobalBadge(count) {
         if (!globalBadge) return;
-        if (!count) {
+
+        const chatButton = document.getElementById('chatButton');
+        const unreadCount = Number(count) || 0;
+
+        if (!unreadCount) {
             globalBadge.style.display = 'none';
             globalBadge.textContent = '';
+            chatButton?.classList.remove('has-unread');
         }
         else {
-            globalBadge.style.display = '';
-            globalBadge.textContent = String(count);
+            globalBadge.style.display = 'grid';
+            globalBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+            chatButton?.classList.add('has-unread');
         }
     }
 
@@ -609,6 +616,25 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.style.overflow = '';
         activeChatSessionId = null;
         activeChatTaskId = null;
+    }
+
+    // Conversation sidebar slider
+    if (conversationsToggle && drawer) {
+        conversationsToggle.addEventListener('click', function () {
+            const collapsed = drawer.classList.toggle('conversations-collapsed');
+
+            conversationsToggle.setAttribute(
+                'aria-expanded',
+                String(!collapsed)
+            );
+
+            const label = collapsed
+                ? 'Show recent conversations'
+                : 'Hide recent conversations';
+
+            conversationsToggle.setAttribute('aria-label', label);
+            conversationsToggle.setAttribute('title', label);
+        });
     }
 
     // UI wiring
