@@ -55,6 +55,51 @@
             "~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
 
                 <!-- =================================================
+                 PAGE HEADER
+            ================================================== -->
+
+                <div class="task-page-header">
+
+                    <div>
+
+                        <div class="task-breadcrumb">
+                            <span>Admin</span>
+                            <span>/</span>
+                            <strong>Tasks</strong>
+                        </div>
+
+                        <h1>
+                            Project Tasks
+                        </h1>
+
+                        <p>
+                            Manage tasks for the selected project.
+                        </p>
+
+                    </div>
+
+                    <div class="task-header-actions">
+
+                        <a href="/Admin/Projects"
+                           class="back-project-btn">
+                            ← Back to Projects
+                        </a>
+
+                        <button type="button"
+                                id="addTaskBtn"
+                                class="add-task-btn"
+                                data-project-id="@projectId"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addTaskModal">
+                            + Add Task
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
                  PROJECT HEADER
             ================================================== -->
 
