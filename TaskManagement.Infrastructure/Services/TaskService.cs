@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
@@ -12,15 +14,23 @@ namespace TaskManagement.Infrastructure.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<TaskService> _logger;
+        private readonly IHostEnvironment _environment;
 
         private static readonly string[] AllowedPriorities = new[] { "Low", "Medium", "High", "Critical" };
 
         private static readonly string[] AllowedStatuses = new[] { "Pending", "In Progress", "Completed", "On Hold", "Cancelled" };
 
-        public TaskService(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public TaskService(
+            ApplicationDbContext db,
+            UserManager<ApplicationUser> userManager,
+            ILogger<TaskService> logger,
+            IHostEnvironment environment)
         {
             _db = db;
             _userManager = userManager;
+            _logger = logger;
+            _environment = environment;
         }
 
         public async Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId)
@@ -178,15 +188,22 @@ namespace TaskManagement.Infrastructure.Services
 
                 return (true, string.Empty, notification.Id);
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
 
-                return (
-                    false,
-                    "Unable to create the task assignment. Please try again.",
-                    0
-                );
+                _logger.LogError(
+                    ex,
+                    "Failed to create task assignment for Task Title {TaskTitle}, ProjectId {ProjectId}, UserId {UserId}.",
+                    model.Title,
+                    model.ProjectId,
+                    model.AssignedToUserId);
+
+                var errorMessage = _environment.IsDevelopment()
+                    ? ex.GetBaseException().Message
+                    : "Unable to create the task assignment. Please try again.";
+
+                return (false, errorMessage, 0);
             }
         }
 
