@@ -1537,3 +1537,186 @@ body {
         display: none;
     }
 }
+
+
+/* =====================================================
+   ADMIN BELL PANEL - DASHBOARD FALLBACK
+   Kept here as well as admin-common.css so the dashboard
+   always gets the notification panel styles.
+===================================================== */
+
+.admin-dashboard .topbar-right {
+    position: relative;
+}
+
+.admin-dashboard .admin-notification-panel {
+    position: absolute !important;
+    top: calc(100% + 10px) !important;
+    right: 0 !important;
+    width: 340px !important;
+    max-width: calc(100vw - 30px) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 1px solid #dfe6f1 !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    box-shadow: 0 22px 55px rgba(31,49,82,.16) !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(-6px) scale(.98) !important;
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease !important;
+    z-index: 2000 !important;
+    display: block !important;
+}
+
+.admin-dashboard .admin-notification-panel.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+.admin-dashboard .admin-notification-panel-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 15px 16px 13px !important;
+    border-bottom: 1px solid #edf1f6 !important;
+}
+
+.admin-dashboard .admin-notification-panel-header strong,
+.admin-dashboard .admin-notification-panel-header small {
+    display: block !important;
+}
+
+.admin-dashboard .admin-notification-panel-header strong {
+    color: #1c2942 !important;
+    font-size: 13px !important;
+}
+
+.admin-dashboard .admin-notification-panel-header small {
+    margin-top: 3px !important;
+    color: #8792a5 !important;
+    font-size: 8px !important;
+}
+
+.admin-dashboard .admin-notification-panel-header button {
+    width: 28px !important;
+    height: 28px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: #f3f6fa !important;
+    color: #718097 !important;
+    cursor: pointer !important;
+    font-size: 17px !important;
+}
+
+.admin-dashboard .admin-notification-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 8px !important;
+}
+
+.admin-dashboard .admin-notification-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 11px 9px !important;
+    border-radius: 10px !important;
+    color: inherit !important;
+    text-decoration: none !important;
+    transition: background .16s ease !important;
+}
+
+.admin-dashboard .admin-notification-item:hover {
+    background: #f5f8fd !important;
+}
+
+.admin-dashboard .admin-notification-item-icon {
+    width: 32px !important;
+    height: 32px !important;
+    flex: 0 0 32px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 9px !important;
+    color: #2864ed !important;
+    background: #edf3ff !important;
+}
+
+.admin-dashboard .admin-notification-item-icon.calendar {
+    color: #e58a16 !important;
+    background: #fff4e4 !important;
+}
+
+.admin-dashboard .admin-notification-item-icon.project {
+    color: #12a878 !important;
+    background: #e8f8f1 !important;
+}
+
+.admin-dashboard .admin-notification-item > span:nth-child(2) {
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+.admin-dashboard .admin-notification-item strong,
+.admin-dashboard .admin-notification-item small {
+    display: block !important;
+}
+
+.admin-dashboard .admin-notification-item strong {
+    color: #25334c !important;
+    font-size: 10px !important;
+}
+
+.admin-dashboard .admin-notification-item small {
+    margin-top: 3px !important;
+    overflow: hidden !important;
+    color: #7e8ba1 !important;
+    font-size: 8px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.admin-dashboard .admin-notification-arrow {
+    color: #8a99af !important;
+    font-size: 17px !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel {
+    border-color: rgba(255,255,255,.10) !important;
+    background: #10233b !important;
+    box-shadow: 0 22px 55px rgba(0,0,0,.32) !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header {
+    border-bottom-color: rgba(255,255,255,.07) !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header strong,
+html:not(.light-theme) .admin-dashboard .admin-notification-item strong {
+    color: #edf4ff !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header small,
+html:not(.light-theme) .admin-dashboard .admin-notification-item small {
+    color: #8298b6 !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header button {
+    background: rgba(255,255,255,.07) !important;
+    color: #a7b7cb !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-item:hover {
+    background: rgba(255,255,255,.05) !important;
+}
+
+@media (max-width: 700px) {
+    .admin-dashboard .admin-notification-panel {
+        right: 0 !important;
+        width: min(340px, calc(100vw - 24px)) !important;
+    }
+}
