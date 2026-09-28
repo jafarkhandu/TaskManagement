@@ -640,14 +640,37 @@
    @await Html.PartialAsync(
     "~/Areas/User/Views/Shared/_UserModals.cshtml")
 
+<!-- ================= DASHBOARD TASK SUMMARY MODAL ================= -->
+<div class="dashboard-task-modal"
+     id="dashboardTaskModal"
+     aria-hidden="true">
+    <div class="dashboard-task-modal-box"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="dashboardTaskModalTitle">
+
+        <button type="button"
+                class="dashboard-task-modal-close"
+                id="dashboardTaskModalClose"
+                aria-label="Close">
+            ×
+        </button>
+
+        <span class="dashboard-task-modal-eyebrow">TASK SUMMARY</span>
+        <h2 id="dashboardTaskModalTitle">Tasks</h2>
+        <p id="dashboardTaskModalSubtitle">
+            Tasks currently available on your dashboard.
+        </p>
+
+        <div class="dashboard-task-modal-list"
+             id="dashboardTaskModalList"></div>
+    </div>
+</div>
 
 
 
 
-<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
-    <script>
-            console.log("SignalR library:", typeof signalR !== "undefined" ? "LOADED" : "NOT LOADED");
-    </script>
+
 <script src="~/js/user-dashboard.js" asp-append-version="true"></script>
 
 </body>

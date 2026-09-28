@@ -667,6 +667,180 @@ html.light-theme select {
 
 
 /* =========================================================
+   USER PROFILE — SHARED LIGHT GLASS THEME
+   Uses the same light palette as Dashboard / My Tasks /
+   Notifications. No profile layout changes.
+   ========================================================= */
+
+html.light-theme .profile-hero-card,
+html.light-theme .profile-card {
+    border-color: rgba(255,255,255,.78);
+    background: linear-gradient(145deg, rgba(255,255,255,.70), rgba(239,246,255,.54));
+    box-shadow: 0 18px 50px rgba(61,99,145,.08), inset 0 1px rgba(255,255,255,.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+html.light-theme .profile-hero-copy h1,
+html.light-theme .profile-card-heading h2,
+html.light-theme .report-heading h3,
+html.light-theme .otp-panel-header h3 {
+    color: #1d2c43;
+}
+
+html.light-theme .profile-eyebrow,
+html.light-theme .profile-card-heading > div > span,
+html.light-theme .report-heading > div > span,
+html.light-theme .otp-panel-header > div > span {
+    color: #6688b8;
+}
+
+html.light-theme .profile-hero-copy p,
+html.light-theme .profile-card-description,
+html.light-theme .reports-card p,
+html.light-theme .otp-panel p {
+    color: #7a8ba4;
+}
+
+html.light-theme .profile-hero-meta {
+    color: #71819a;
+}
+
+html.light-theme .profile-dot {
+    background: #8ca0bb;
+}
+
+html.light-theme .profile-password-hero-btn {
+    color: #4c6f9f;
+    background: rgba(75,140,255,.10);
+    border-color: rgba(75,140,255,.20);
+}
+
+html.light-theme .profile-card-icon {
+    color: #4b83ef;
+    background: rgba(75,140,255,.09);
+    border-color: rgba(75,140,255,.16);
+}
+
+html.light-theme .profile-card-icon.purple {
+    color: #8b5cff;
+    background: rgba(139,92,246,.09);
+    border-color: rgba(139,92,246,.15);
+}
+
+html.light-theme .profile-detail-row {
+    border-bottom-color: rgba(120,150,190,.12);
+}
+
+html.light-theme .profile-detail-row span {
+    color: #7b8da5;
+}
+
+html.light-theme .profile-detail-row strong {
+    color: #25364e;
+}
+
+html.light-theme .profile-field label {
+    color: #71829b;
+}
+
+html.light-theme .password-input-wrap input,
+html.light-theme .otp-input {
+    border-color: rgba(120,150,190,.18);
+    background: rgba(255,255,255,.62);
+    color: #17243a;
+}
+
+html.light-theme .password-input-wrap input::placeholder,
+html.light-theme .otp-input::placeholder {
+    color: #91a0b5;
+}
+
+html.light-theme .password-toggle {
+    color: #4c88ed;
+}
+
+html.light-theme .profile-password-rule {
+    color: #7b8da5;
+}
+
+html.light-theme .profile-secondary-btn {
+    background: rgba(255,255,255,.62);
+    border-color: rgba(120,150,190,.18);
+    color: #596f8d;
+}
+
+html.light-theme .profile-form-message {
+    color: #7188a6;
+}
+
+html.light-theme .otp-panel {
+    border-top-color: rgba(120,150,190,.12);
+}
+
+html.light-theme .otp-clock {
+    color: #4c83ea;
+    background: rgba(75,140,255,.08);
+}
+
+html.light-theme .completion-report,
+html.light-theme .monthly-report {
+    border-color: rgba(120,150,190,.10);
+    background: rgba(255,255,255,.48);
+    box-shadow: inset 0 1px rgba(255,255,255,.78);
+}
+
+html.light-theme .report-heading strong {
+    color: #159c76;
+}
+
+html.light-theme .completion-ring {
+    background: conic-gradient(#4f8cff var(--completion), rgba(100,135,180,.14) 0);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.70), 0 15px 38px rgba(67,120,220,.13);
+}
+
+html.light-theme .completion-ring > div {
+    background: radial-gradient(circle at 40% 35%, #ffffff, #edf5ff);
+    box-shadow: inset 0 0 20px rgba(65,105,155,.08);
+}
+
+html.light-theme .completion-ring strong {
+    color: #1d2c43;
+}
+
+html.light-theme .completion-ring span {
+    color: #7b8da7;
+}
+
+html.light-theme .month-value {
+    color: #5f7fbd;
+}
+
+html.light-theme .month-bar-track {
+    background: rgba(100,135,180,.12);
+}
+
+html.light-theme .month-column > span {
+    color: #7087a6;
+}
+
+
+/* =========================================================
+   USER PROFILE — LIGHT PAGE GLOWS
+   ========================================================= */
+
+html.light-theme .profile-glow-one {
+    background: #7da5ff;
+    opacity: .12;
+}
+
+html.light-theme .profile-glow-two {
+    background: #b09aff;
+    opacity: .10;
+}
+
+
+/* =========================================================
    MY TASKS — LIGHT GLASS THEME
    Theme only — no layout or functionality changes
    ========================================================= */

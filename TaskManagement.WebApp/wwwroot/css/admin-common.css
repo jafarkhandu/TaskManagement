@@ -231,3 +231,368 @@
     color: #8995a8;
     font-size: 10px;
 }
+
+
+/* =====================================================
+   ADMIN NOTIFICATION PANEL
+===================================================== */
+
+.notification-button {
+    z-index: 1002;
+}
+
+.admin-notification-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 62px;
+    width: 340px;
+    max-width: calc(100vw - 30px);
+    padding: 0;
+    border: 1px solid #dfe6f1;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 22px 55px rgba(31,49,82,.16);
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px) scale(.98);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    z-index: 1001;
+}
+
+.admin-notification-panel.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+.admin-notification-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 16px 13px;
+    border-bottom: 1px solid #edf1f6;
+}
+
+.admin-notification-panel-header strong,
+.admin-notification-panel-header small {
+    display: block;
+}
+
+.admin-notification-panel-header strong {
+    color: #1c2942;
+    font-size: 13px;
+}
+
+.admin-notification-panel-header small {
+    margin-top: 3px;
+    color: #8792a5;
+    font-size: 8px;
+}
+
+.admin-notification-panel-header button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: #f3f6fa;
+    color: #718097;
+    cursor: pointer;
+    font-size: 17px;
+}
+
+.admin-notification-list {
+    padding: 8px;
+}
+
+.admin-notification-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 9px;
+    border-radius: 10px;
+    color: inherit;
+    text-decoration: none;
+    transition: background .16s ease;
+}
+
+.admin-notification-item:hover {
+    background: #f5f8fd;
+}
+
+.admin-notification-item-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: #2864ed;
+    background: #edf3ff;
+}
+
+.admin-notification-item-icon.calendar {
+    color: #e58a16;
+    background: #fff4e4;
+}
+
+.admin-notification-item-icon.project {
+    color: #12a878;
+    background: #e8f8f1;
+}
+
+.admin-notification-item > span:nth-child(2) {
+    min-width: 0;
+    flex: 1;
+}
+
+.admin-notification-item strong,
+.admin-notification-item small {
+    display: block;
+}
+
+.admin-notification-item strong {
+    color: #25334c;
+    font-size: 10px;
+}
+
+.admin-notification-item small {
+    margin-top: 3px;
+    overflow: hidden;
+    color: #7e8ba1;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-notification-arrow {
+    color: #8a99af;
+    font-size: 17px;
+}
+
+@media (max-width: 700px) {
+    .admin-notification-panel {
+        right: 12px;
+    }
+}
+
+/* Shared dark theme compatibility */
+html:not(.light-theme) .admin-notification-panel {
+    border-color: rgba(255,255,255,.10);
+    background: #10233b;
+    box-shadow: 0 22px 55px rgba(0,0,0,.32);
+}
+
+html:not(.light-theme) .admin-notification-panel-header {
+    border-bottom-color: rgba(255,255,255,.07);
+}
+
+html:not(.light-theme) .admin-notification-panel-header strong,
+html:not(.light-theme) .admin-notification-item strong {
+    color: #edf4ff;
+}
+
+html:not(.light-theme) .admin-notification-panel-header small,
+html:not(.light-theme) .admin-notification-item small {
+    color: #8298b6;
+}
+
+html:not(.light-theme) .admin-notification-panel-header button {
+    background: rgba(255,255,255,.07);
+    color: #a7b7cb;
+}
+
+html:not(.light-theme) .admin-notification-item:hover {
+    background: rgba(255,255,255,.05);
+}
+
+html:not(.light-theme) .admin-notification-arrow {
+    color: #8fa3bd;
+}
+
+
+/* =====================================================
+   ADMIN CHAT NOTIFICATION CONTENT
+===================================================== */
+
+.admin-chat-notification-item {
+    align-items: center;
+}
+
+.admin-chat-notification-count {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.admin-chat-notification-empty {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 18px;
+}
+
+.admin-chat-notification-empty > span {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #2864ed;
+    background: #edf3ff;
+}
+
+.admin-chat-notification-empty strong {
+    margin-top: 9px;
+    color: #25334c;
+    font-size: 10px;
+}
+
+.admin-chat-notification-empty small {
+    margin-top: 4px;
+    color: #7e8ba1;
+    font-size: 8px;
+}
+
+.admin-notification-view-all {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    border-top: 1px solid #edf1f6;
+    color: #2864ed;
+    font-size: 9px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-notification-view-all:hover {
+    background: #f5f8fd;
+    color: #1e55cf;
+}
+
+html:not(.light-theme) .admin-chat-notification-empty strong {
+    color: #edf4ff;
+}
+
+html:not(.light-theme) .admin-chat-notification-empty small {
+    color: #8298b6;
+}
+
+html:not(.light-theme) .admin-chat-notification-empty > span {
+    background: rgba(75,140,255,.10);
+}
+
+html:not(.light-theme) .admin-notification-view-all {
+    border-top-color: rgba(255,255,255,.07);
+    color: #78a9ff;
+}
+
+html:not(.light-theme) .admin-notification-view-all:hover {
+    background: rgba(255,255,255,.05);
+    color: #9bc0ff;
+}
+
+
+/* =====================================================
+   PREMIUM ADMIN SIDEBAR ACTIVE STATE
+   Shared by every Admin navigation item.
+===================================================== */
+
+.sidebar-nav .sidebar-link {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid transparent;
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        transform .18s ease,
+        box-shadow .18s ease;
+}
+
+.sidebar-nav .sidebar-link::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 7px;
+    bottom: 7px;
+    width: 3px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, #79a8ff 0%, #3164f4 100%);
+    opacity: 0;
+    transform: scaleY(.45);
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: -1;
+}
+
+.sidebar-nav .sidebar-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 18% 50%, rgba(74,137,255,.18), transparent 48%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+    z-index: -1;
+}
+
+.sidebar-nav .sidebar-link:hover {
+    background: rgba(255,255,255,.045);
+    border-color: rgba(255,255,255,.055);
+    color: #edf4ff;
+    transform: translateX(2px);
+}
+
+.sidebar-nav .sidebar-link:hover .nav-icon {
+    color: #8eb5ff;
+}
+
+.sidebar-nav .sidebar-link.active {
+    background: linear-gradient(90deg, rgba(55,105,222,.30), rgba(55,105,222,.12));
+    border-color: rgba(107,155,255,.22);
+    color: #ffffff;
+    box-shadow:
+        inset 0 0 22px rgba(44,103,235,.08),
+        0 7px 18px rgba(0,0,0,.10);
+    transform: translateX(2px);
+}
+
+.sidebar-nav .sidebar-link.active::before {
+    opacity: 1;
+    transform: scaleY(1);
+}
+
+.sidebar-nav .sidebar-link.active::after {
+    opacity: 1;
+}
+
+.sidebar-nav .sidebar-link.active .nav-icon {
+    color: #8eb5ff;
+    filter: drop-shadow(0 0 7px rgba(96,154,255,.35));
+}
+
+.sidebar-nav .sidebar-link.active > span:last-child {
+    font-weight: 700;
+    letter-spacing: .05px;
+}
+
+.sidebar-nav .sidebar-link:focus-visible {
+    outline: 0;
+    border-color: rgba(126,169,255,.55);
+    box-shadow: 0 0 0 3px rgba(49,100,244,.18);
+}

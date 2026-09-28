@@ -292,6 +292,7 @@ body {
 .task-header-actions {
     display: flex;
     gap: 10px;
+    margin-right: 18px;
 }
 
 .back-project-btn,

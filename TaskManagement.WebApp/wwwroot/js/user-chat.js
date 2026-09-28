@@ -1,5 +1,17 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // There must be exactly one global User Chat drawer.
+    // Remove accidental duplicate partials before binding any events.
+    const duplicateDrawers = document.querySelectorAll('#taskChatDrawer');
+    duplicateDrawers.forEach(function (element, index) {
+        if (index > 0) element.remove();
+    });
+
+    const duplicateOverlays = document.querySelectorAll('#taskChatOverlay');
+    duplicateOverlays.forEach(function (element, index) {
+        if (index > 0) element.remove();
+    });
+
     const overlay = document.getElementById('taskChatOverlay');
     const drawer = document.getElementById('taskChatDrawer');
     const userChatList = document.getElementById('userChatList');
@@ -12,12 +24,28 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatTaskTitle = document.getElementById('chatTaskTitle');
     const chatTaskStatus = document.getElementById('chatTaskStatus');
     const globalBadge = document.getElementById('globalChatBadge');
+    const taskPicker = document.getElementById('taskChatTaskPicker');
+    const taskList = document.getElementById('taskChatTaskList');
+    const selectedTaskBox = document.getElementById('taskChatSelectedTask');
+    const selectedTaskTitle = document.getElementById('taskChatSelectedTaskTitle');
+    const clearSelectedTaskButton = document.getElementById('clearTaskChatTask');
+
+    // The drawer/overlay are global fixed UI. Keep them directly under <body>
+    // so notification/modal containers can never clip, hide, or reposition them.
+    if (overlay && overlay.parentElement !== document.body) {
+        document.body.appendChild(overlay);
+    }
+    if (drawer && drawer.parentElement !== document.body) {
+        document.body.appendChild(drawer);
+    }
 
     let connection = null;
     let isConnected = false;
     let activeChatSessionId = null;
     let activeChatTaskId = null;
     let renderedMessageIds = new Set();
+    let selectedNewTask = null;
+    let taskPickerRequestId = 0;
 
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
@@ -123,10 +151,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>`;
 
-                item.addEventListener('click', function () {
-                    openConversation(s.chatSessionId, s.taskId, s.taskTitle, s.taskStatus).catch(() => { });
-                });
-
                 userChatList.appendChild(item);
             });
 
@@ -166,7 +190,61 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const bubble = document.createElement('div');
         bubble.className = 'task-chat-bubble';
-        bubble.innerHTML = escapeHtml(m.message || '');
+
+        const messageText = String(m.message || '');
+
+        const normalized = messageText
+            .replace(/&#xA;|&#xa;|&#10;/gi, '\n')
+            .replace(/\s+(?=(Task Title|Scenario|Status|Priority|Start Date|Expected End Date|Amount)\s*:)/gi, '\n')
+            .replace(/^\s*(New chat started for Task #\d+)\s*/i, '$1\n')
+            .trim();
+
+        const lines = normalized.split(/\n+/).map(line => line.trim()).filter(Boolean);
+        const isInitialTaskMessage =
+            lines.length > 0 &&
+            /^New chat started for Task #\d+/i.test(lines[0]);
+
+        if (isInitialTaskMessage) {
+            bubble.classList.add('task-chat-initial-message');
+
+            const headingEl = document.createElement('div');
+            headingEl.className = 'task-chat-initial-title';
+            headingEl.textContent = lines.shift();
+            bubble.appendChild(headingEl);
+
+            const detailBox = document.createElement('div');
+            detailBox.className = 'task-chat-initial-details';
+
+            lines.forEach(line => {
+                const row = document.createElement('div');
+                row.className = 'task-chat-initial-row';
+
+                const separator = line.indexOf(':');
+
+                if (separator > 0) {
+                    const label = document.createElement('span');
+                    label.className = 'task-chat-initial-label';
+                    label.textContent = line.slice(0, separator).trim();
+
+                    const value = document.createElement('span');
+                    value.className = 'task-chat-initial-value';
+                    value.textContent = line.slice(separator + 1).trim();
+
+                    row.appendChild(label);
+                    row.appendChild(value);
+                } else {
+                    row.textContent = line;
+                }
+
+                detailBox.appendChild(row);
+            });
+
+            if (detailBox.children.length) {
+                bubble.appendChild(detailBox);
+            }
+        } else {
+            bubble.innerHTML = escapeHtml(messageText);
+        }
 
         const time = document.createElement('div');
         time.className = 'task-chat-time';
@@ -247,7 +325,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function markChatRead(chatSessionId) {
         try {
-            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || document.querySelector('#userChatAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || '';
 
             const res = await fetch('/User/MyTasks/MarkChatRead', {
                 method: 'POST',
@@ -370,6 +450,90 @@ document.addEventListener('DOMContentLoaded', function () {
         catch (err) { }
     }
 
+    function closeTaskPicker() {
+        if (taskPicker) taskPicker.hidden = true;
+        if (taskList) taskList.innerHTML = '';
+    }
+
+    function setSelectedNewTask(task) {
+        selectedNewTask = task || null;
+
+        if (selectedTaskBox && selectedTaskTitle) {
+            if (selectedNewTask) {
+                selectedTaskTitle.textContent = selectedNewTask.title || 'Task';
+                selectedTaskBox.hidden = false;
+            } else {
+                selectedTaskTitle.textContent = '';
+                selectedTaskBox.hidden = true;
+            }
+        }
+
+        if (startChatButton) {
+            startChatButton.disabled = !selectedNewTask;
+            startChatButton.innerHTML = '<span>✦</span> Start Chat';
+        }
+    }
+
+    async function loadAvailableChatTasks(search) {
+        if (!taskList || !taskPicker) return;
+
+        const requestId = ++taskPickerRequestId;
+        const query = String(search || '').trim();
+
+        taskList.innerHTML = '<div class="task-chat-task-empty">Searching tasks...</div>';
+        taskPicker.hidden = false;
+
+        try {
+            const res = await fetch('/User/MyTasks/GetAvailableChatTasks?search=' + encodeURIComponent(query));
+            const json = await res.json();
+
+            if (requestId !== taskPickerRequestId) return;
+
+            if (!json || !json.success) {
+                taskList.innerHTML = '<div class="task-chat-task-empty">Unable to load tasks.</div>';
+                return;
+            }
+
+            const tasks = json.data || [];
+
+            if (!tasks.length) {
+                taskList.innerHTML = '<div class="task-chat-task-empty">No tasks available for a new chat.</div>';
+                return;
+            }
+
+            taskList.innerHTML = '';
+
+            tasks.forEach(task => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'task-chat-task-option';
+                button.dataset.taskId = task.taskId;
+                button.innerHTML =
+                    '<span class="task-chat-task-option-title">' + escapeHtml(task.title || 'Task') + '</span>' +
+                    '<span class="task-chat-task-option-meta">TASK-' + escapeHtml(task.taskId) +
+                    ' · ' + escapeHtml(task.status || 'Pending') + '</span>';
+
+                button.addEventListener('click', function () {
+                    setSelectedNewTask(task);
+                    closeTaskPicker();
+
+                    if (input) {
+                        input.value = '';
+                        input.placeholder = 'Type your message...';
+                        input.focus();
+                    }
+                });
+
+                taskList.appendChild(button);
+            });
+        }
+        catch (err) {
+            if (requestId !== taskPickerRequestId) return;
+            console.error('loadAvailableChatTasks failed', err);
+            taskList.innerHTML = '<div class="task-chat-task-empty">Unable to load tasks.</div>';
+        }
+    }
+
     async function startChatForTask(taskId) {
         if (!taskId) return;
 
@@ -381,7 +545,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            const token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || document.querySelector('#userChatAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+    || '';
 
             const res = await fetch('/User/MyTasks/StartChat', {
                 method: 'POST',
@@ -394,6 +560,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!json || !json.success) throw new Error(json?.message || 'Unable to start chat.');
 
             activeChatSessionId = json.chatSessionId;
+
+            // The task is now an active conversation; remove the new-chat picker state.
+            selectedNewTask = null;
+            if (selectedTaskBox) selectedTaskBox.hidden = true;
+            if (selectedTaskTitle) selectedTaskTitle.textContent = '';
+            closeTaskPicker();
 
             if (startChatButton) startChatButton.style.display = 'none';
 
@@ -457,18 +629,62 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (input) {
         input.addEventListener('input', function () {
-            if (sendButton) sendButton.disabled = !input.value.trim();
+            const value = input.value;
+            const atIndex = value.lastIndexOf('@');
+
+            // In a new-chat state, typing @ opens the eligible task picker.
+            if (!activeChatSessionId && atIndex >= 0 && !selectedNewTask) {
+                const query = value.slice(atIndex + 1);
+
+                if (!query.includes(' ')) {
+                    loadAvailableChatTasks(query).catch(() => { });
+                } else {
+                    closeTaskPicker();
+                }
+            } else if (!activeChatSessionId) {
+                closeTaskPicker();
+            }
+
+            if (sendButton) sendButton.disabled = !activeChatSessionId || !value.trim();
         });
+
         input.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeTaskPicker();
+                return;
+            }
+
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+
+                if (!activeChatSessionId && selectedNewTask && startChatButton && !startChatButton.disabled) {
+                    startChatButton.click();
+                    return;
+                }
+
                 if (sendButton && !sendButton.disabled) sendButton.click();
             }
         });
     }
 
+    if (clearSelectedTaskButton) {
+        clearSelectedTaskButton.addEventListener('click', function () {
+            setSelectedNewTask(null);
+            if (input) {
+                input.value = '@';
+                input.placeholder = 'Type @ to choose a task...';
+                input.focus();
+                loadAvailableChatTasks('').catch(() => { });
+            }
+        });
+    }
+
     if (sendButton) sendButton.addEventListener('click', sendMessage);
-    if (startChatButton) startChatButton.addEventListener('click', function () { startChatForTask(activeChatTaskId).catch(() => { }); });
+    if (startChatButton) startChatButton.addEventListener('click', function () {
+        const taskId = activeChatTaskId || selectedNewTask?.taskId;
+        if (!taskId) return;
+        startChatForTask(taskId).catch(() => { });
+    });
 
     // Expose a simple API for other scripts (like my-tasks.js)
     window.UserChat = window.UserChat || {};
@@ -490,36 +706,84 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.body.style.overflow = 'hidden';
             }
 
+            // Switching from another task must immediately clear the previous
+            // conversation from the main pane. The selected task owns the pane.
+            const previousSessionId = activeChatSessionId;
             activeChatTaskId = taskId;
+            activeChatSessionId = null;
 
-            // Check for existing active session for this task
+            if (previousSessionId && isConnected && connection) {
+                connection.invoke('LeaveChat', Number(previousSessionId)).catch(() => { });
+            }
+
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '';
+            }
+
+            if (composer) {
+                composer.style.display = 'none';
+            }
+
+            if (input) {
+                input.value = '';
+            }
+
+            if (sendButton) {
+                sendButton.disabled = true;
+            }
+
+            if (startChatButton) {
+                startChatButton.style.display = '';
+                startChatButton.disabled = true;
+                startChatButton.innerHTML = '<span>✦</span> Checking chat...';
+
+                if (messagesContainer) {
+                    messagesContainer.appendChild(startChatButton);
+                }
+            }
+
+            // Check for an existing active session for THIS task only.
             (async function () {
                 try {
                     const res = await fetch(`/User/MyTasks/CheckActiveSession?taskId=${encodeURIComponent(taskId)}`);
                     const json = await res.json();
 
+                    // Ignore a stale response if the user already selected another task.
+                    if (activeChatTaskId !== taskId) return;
+
                     if (json && json.success && json.exists && json.chatSessionId) {
                         activeChatSessionId = json.chatSessionId;
-                        // load conversation
+                        if (startChatButton) startChatButton.style.display = 'none';
+
                         await openConversation(activeChatSessionId, taskId, title, status);
                         return;
                     }
 
-                    // No existing session; show start button
+                    // No active session for this task: show a clean Start Chat state.
                     activeChatSessionId = null;
 
-                    if (messagesContainer && startChatButton && !messagesContainer.contains(startChatButton)) {
-                        messagesContainer.appendChild(startChatButton);
+                    if (messagesContainer) {
+                        messagesContainer.innerHTML = '';
                     }
 
                     if (startChatButton) {
                         startChatButton.style.display = '';
                         startChatButton.disabled = false;
                         startChatButton.innerHTML = '<span>✦</span> Start Chat';
+
+                        if (messagesContainer) {
+                            messagesContainer.appendChild(startChatButton);
+                        }
                     }
                 }
                 catch (err) {
+                    if (activeChatTaskId !== taskId) return;
+
                     console.error('CheckActiveSession failed:', err);
+
+                    if (messagesContainer) {
+                        messagesContainer.innerHTML = '<div class="task-chat-empty text-center text-muted p-3">Unable to check this task chat.</div>';
+                    }
                 }
             })();
 
@@ -531,14 +795,39 @@ document.addEventListener('DOMContentLoaded', function () {
     // Start connection
     initConnection();
 
-    // Topbar chat button opens the global user chat drawer
+    // Topbar chat button opens the global user chat drawer.
+    // A new global chat must choose a task explicitly via @ before it can start.
     try {
         const topbarChat = document.getElementById('chatButton');
         if (topbarChat) {
             topbarChat.addEventListener('click', async function () {
                 try {
-                    // load latest conversations and open drawer
+                    activeChatSessionId = null;
+                    activeChatTaskId = null;
+                    setSelectedNewTask(null);
+                    closeTaskPicker();
+
+                    if (chatTaskTitle) chatTaskTitle.textContent = 'Select a task';
+                    if (chatTaskStatus) chatTaskStatus.textContent = 'New chat';
+
+                    if (messagesContainer) {
+                        messagesContainer.innerHTML = '<div class="task-chat-empty"><div class="task-chat-empty-icon">💬</div><h4>Start a new task chat</h4><p>Type <strong>@</strong> in the message box and choose one of your tasks.</p></div>';
+                    }
+
+                    if (composer) composer.style.display = '';
+                    if (input) {
+                        input.value = '';
+                        input.placeholder = 'Type @ to choose a task...';
+                    }
+                    if (sendButton) sendButton.disabled = true;
+                    if (startChatButton) {
+                        startChatButton.style.display = '';
+                        startChatButton.disabled = true;
+                        startChatButton.innerHTML = '<span>✦</span> Start Chat';
+                    }
+
                     await loadChats();
+
                     if (drawer && overlay) {
                         drawer.classList.add('active');
                         overlay.classList.add('active');

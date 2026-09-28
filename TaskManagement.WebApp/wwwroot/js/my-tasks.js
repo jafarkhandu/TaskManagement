@@ -164,19 +164,83 @@
     }
 
 
-    // Use delegated handler for View Details so it continues to work after DOM changes
-    document.body.addEventListener('click', function (ev) {
-        const btn = ev.target.closest('.view-task-btn');
-        if (!btn) return;
+    // Capture-phase task action handler
+    // Use event delegation instead of relying only on the initial button NodeList.
+    // This keeps View Details and Chat with Admin working even if the task board
+    // is refreshed or its card DOM is replaced.
+    document.addEventListener('click', function (event) {
+        const viewButton = event.target.closest('.view-task-btn');
+        if (viewButton) {
+            event.preventDefault();
+            event.stopPropagation();
 
-        const card = btn.closest('.task-card');
-        if (!card) return;
+            const card = viewButton.closest('.task-card');
+            const taskModal = document.getElementById('taskModal');
 
-        openTaskModal(card);
+            if (!card || !taskModal) return;
+
+            const setText = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            };
+
+            setText('modalTaskId', 'TASK-' + (card.dataset.taskId || ''));
+            setText('modalTitle', card.dataset.title || 'Task');
+            setText('modalScenario', card.dataset.scenario || 'No description available.');
+            setText('modalStatus', card.dataset.status || 'Pending');
+            setText('modalPriority', card.dataset.priority || 'Low');
+            setText('modalStartDate', card.dataset.startDate || '—');
+            setText('modalEndDate', card.dataset.endDate || '—');
+            setText('modalAmount', card.dataset.amount ? '₹ ' + card.dataset.amount : '₹ 0.00');
+
+            taskModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        const chatButton = event.target.closest('.task-chat-btn');
+        if (chatButton) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const taskCard = chatButton.closest('.task-card');
+            if (!taskCard) return;
+
+            const status = (taskCard.dataset.status || '').toLowerCase();
+            if (status === 'completed') return;
+
+            if (window.UserChat && typeof window.UserChat.openForTask === 'function') {
+                window.UserChat.openForTask({
+                    taskId: taskCard.dataset.taskId,
+                    title: taskCard.dataset.title,
+                    status: taskCard.dataset.status,
+                    taskCard: taskCard
+                });
+            } else {
+                console.error('UserChat is not available. Check _UserChat partial and user-chat.js.');
+            }
+        }
+    }, true);
+
+    // View Details belongs to the task card itself.
+    // Bind directly to every button so the existing modal behavior is isolated
+    // from global notification/chat click handlers.
+    document.querySelectorAll('.view-task-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const card = btn.closest('.task-card');
+            if (!card || !modal) return;
+
+            openTaskModal(card);
+        });
     });
 
 
     function closeTaskDetails() {
+
+        if (!modal) return;
 
         modal.classList.remove("show");
 
@@ -560,4 +624,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })();
 
     });
+});
+
 });

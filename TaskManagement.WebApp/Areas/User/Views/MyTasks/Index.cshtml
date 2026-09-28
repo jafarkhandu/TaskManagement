@@ -56,9 +56,6 @@
 
     @await Html.PartialAsync(
     "~/Areas/User/Views/Shared/_UserSidebar.cshtml")
-    @await Html.PartialAsync(
-    "~/Areas/User/Views/Shared/_UserModals.cshtml")
-
     <!-- ================= MAIN ================= -->
 
     <main class="main-content">
@@ -550,6 +547,9 @@
     </main>
 
 </div>
+
+@await Html.PartialAsync(
+    "~/Areas/User/Views/Shared/_UserModals.cshtml")
 
 
 <!-- ================= TASK DETAILS MODAL ================= -->

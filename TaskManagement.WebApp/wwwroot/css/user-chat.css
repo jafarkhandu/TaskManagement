@@ -1,0 +1,899 @@
+/* =========================================================
+   USER TASK CHAT - GLOBAL RIGHT DRAWER
+   Matches the existing TaskManager dark UI.
+========================================================= */
+
+:root {
+    --task-chat-bg: #0d111a;
+    --task-chat-panel: #111722;
+    --task-chat-panel-2: #151b28;
+    --task-chat-border: rgba(255, 255, 255, 0.075);
+    --task-chat-text: #f3f6ff;
+    --task-chat-muted: #8994a8;
+    --task-chat-soft: #667286;
+    --task-chat-accent: #6c63ff;
+    --task-chat-accent-2: #8b5cf6;
+}
+
+/* Background overlay */
+
+.task-chat-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 8, 14, 0.58);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .25s ease, visibility .25s ease;
+    z-index: 99998;
+}
+
+.task-chat-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Drawer */
+
+.task-chat-drawer {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    bottom: 14px;
+    width: min(760px, calc(100vw - 28px));
+    height: auto;
+    background: var(--task-chat-bg);
+    border: 1px solid var(--task-chat-border);
+    border-radius: 18px;
+    box-shadow: -18px 18px 60px rgba(0, 0, 0, .42);
+    overflow: hidden;
+    transform: translateX(calc(100% + 30px));
+    transition: transform .34s cubic-bezier(.22, 1, .36, 1);
+    z-index: 99999;
+}
+
+.task-chat-drawer.active {
+    transform: translateX(0);
+}
+
+.task-chat-container {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+}
+
+/* Conversation list */
+
+.task-chat-sidebar {
+    width: 245px;
+    min-width: 245px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #0a0e16;
+    border-right: 1px solid var(--task-chat-border);
+}
+
+.task-chat-sidebar-header {
+    height: 92px;
+    min-height: 92px;
+    padding: 22px 18px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--task-chat-border);
+}
+
+.task-chat-sidebar-header strong {
+    display: block;
+    color: var(--task-chat-text);
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 750;
+}
+
+.task-chat-sidebar-header small {
+    display: block;
+    margin-top: 6px;
+    color: var(--task-chat-soft);
+    font-size: 11px;
+}
+
+.task-chat-conversations {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 9px;
+}
+
+.task-chat-conversations::-webkit-scrollbar,
+.task-chat-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.task-chat-conversations::-webkit-scrollbar-thumb,
+.task-chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, .12);
+    border-radius: 20px;
+}
+
+.task-chat-item {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin-bottom: 4px;
+    padding: 13px 12px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--task-chat-text);
+    cursor: pointer;
+    transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.task-chat-item:hover {
+    background: rgba(108, 99, 255, .07);
+    border-color: rgba(139, 92, 246, .12);
+}
+
+.task-chat-item.active {
+    background: linear-gradient(135deg, rgba(108, 99, 255, .18), rgba(139, 92, 246, .08));
+    border-color: rgba(108, 99, 255, .26);
+    box-shadow: inset 3px 0 0 var(--task-chat-accent);
+}
+
+.task-chat-item-title {
+    max-width: 145px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #eef2ff;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.task-chat-preview {
+    max-width: 150px;
+    margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--task-chat-soft) !important;
+    font-size: 10px;
+}
+
+.task-chat-time {
+    color: #69758a;
+    font-size: 8.5px;
+    white-space: nowrap;
+}
+
+.task-chat-item .text-end {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.chat-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--task-chat-accent);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, .3);
+}
+
+/* Main chat */
+
+.task-chat-main {
+    min-width: 0;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(circle at 85% 0%, rgba(108, 99, 255, .07), transparent 35%),
+        var(--task-chat-bg);
+}
+
+/* Header */
+
+.task-chat-header {
+    min-height: 92px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--task-chat-border);
+    background: rgba(255, 255, 255, .018);
+}
+
+.task-chat-admin {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-chat-avatar {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    background: linear-gradient(135deg, var(--task-chat-accent), var(--task-chat-accent-2));
+    box-shadow: 0 8px 22px rgba(108, 99, 255, .24);
+}
+
+.task-chat-title {
+    max-width: 330px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 750;
+}
+
+.task-chat-status {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--task-chat-muted);
+    font-size: 10px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #36d98a;
+    box-shadow: 0 0 10px rgba(54, 217, 138, .5);
+}
+
+.task-chat-close {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border: 0;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .055);
+    color: #aeb8c9;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.task-chat-close span {
+    display: block;
+    font-size: 25px;
+    line-height: 1;
+}
+
+.task-chat-close:hover {
+    background: rgba(255, 255, 255, .11);
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+/* Messages */
+
+.task-chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 20px;
+}
+
+.task-chat-message {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 15px;
+    animation: taskChatMessageIn .2s ease both;
+}
+
+.task-chat-message.me {
+    align-items: flex-end;
+}
+
+.task-chat-message.them {
+    align-items: flex-start;
+}
+
+.task-chat-bubble {
+    max-width: min(78%, 480px);
+    padding: 11px 14px;
+    border-radius: 15px;
+    color: #f7f9ff;
+    font-size: 12px;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.task-chat-message.me .task-chat-bubble {
+    border-bottom-right-radius: 5px;
+    background: linear-gradient(135deg, var(--task-chat-accent), #735eea);
+    box-shadow: 0 7px 20px rgba(108, 99, 255, .15);
+}
+
+.task-chat-message.them .task-chat-bubble {
+    border-bottom-left-radius: 5px;
+    background: #1a2230;
+    border: 1px solid rgba(255, 255, 255, .055);
+}
+
+.task-chat-message .task-chat-time {
+    margin-top: 5px;
+    padding: 0 3px;
+    color: #657187;
+    font-size: 8.5px;
+}
+
+/* Empty / task start state */
+
+.task-chat-empty {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 34px;
+}
+
+.task-chat-empty-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 23px;
+    background: linear-gradient(135deg, var(--task-chat-accent), var(--task-chat-accent-2));
+    box-shadow: 0 12px 30px rgba(108, 99, 255, .22);
+}
+
+.task-chat-empty h4 {
+    margin: 18px 0 7px;
+    color: #f5f7ff;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.task-chat-empty p {
+    max-width: 330px;
+    margin: 0;
+    color: var(--task-chat-muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.task-chat-list-empty {
+    min-height: 260px;
+    padding: 20px;
+}
+
+.task-chat-list-empty .task-chat-empty-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 17px;
+}
+
+.task-chat-list-empty p {
+    margin-top: 12px;
+}
+
+/* Start task button */
+
+.task-chat-start {
+    align-self: center;
+    margin: 0 20px 24px;
+    padding: 11px 17px;
+    border: 0;
+    border-radius: 11px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--task-chat-accent), var(--task-chat-accent-2));
+    box-shadow: 0 10px 25px rgba(108, 99, 255, .24);
+}
+
+.task-chat-start:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* Composer - intentionally no attachment or emoji buttons */
+
+.task-chat-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    padding: 13px 14px;
+    border-top: 1px solid var(--task-chat-border);
+    background: rgba(255, 255, 255, .018);
+}
+
+.task-chat-composer textarea {
+    flex: 1;
+    min-height: 44px;
+    max-height: 120px;
+    resize: none;
+    border: 1px solid rgba(255, 255, 255, .085);
+    outline: none;
+    border-radius: 13px;
+    padding: 12px 14px;
+    background: #151b27;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.45;
+    transition: border-color .18s ease, background .18s ease;
+}
+
+.task-chat-composer textarea::placeholder {
+    color: #6d788d;
+}
+
+.task-chat-composer textarea:focus {
+    border-color: rgba(108, 99, 255, .5);
+    background: #171e2c;
+}
+
+.task-chat-send {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border: 0;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--task-chat-accent), var(--task-chat-accent-2));
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+.task-chat-send:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+.task-chat-send:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 9px 22px rgba(108, 99, 255, .3);
+}
+
+/* Responsive */
+
+@media (max-width: 760px) {
+    .task-chat-drawer {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        border-radius: 0;
+        border-left: 0;
+    }
+
+    .task-chat-sidebar {
+        width: 34%;
+        min-width: 135px;
+    }
+
+    .task-chat-item {
+        padding: 11px 9px;
+    }
+
+    .task-chat-item-title {
+        max-width: 105px;
+    }
+
+    .task-chat-preview {
+        max-width: 105px;
+    }
+
+    .task-chat-header {
+        padding: 16px 14px;
+    }
+
+    .task-chat-messages {
+        padding: 18px 12px;
+    }
+
+    .task-chat-bubble {
+        max-width: 86%;
+    }
+}
+
+@media (max-width: 520px) {
+    .task-chat-sidebar {
+        width: 37%;
+        min-width: 125px;
+    }
+
+    .task-chat-sidebar-header {
+        padding: 18px 12px;
+    }
+
+    .task-chat-sidebar-header strong {
+        font-size: 14px;
+    }
+
+    .task-chat-item-title {
+        max-width: 90px;
+    }
+
+    .task-chat-preview {
+        max-width: 88px;
+    }
+
+    .task-chat-time {
+        display: none !important;
+    }
+}
+
+@keyframes taskChatMessageIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Task picker for starting a new global chat */
+.task-chat-composer {
+    position: relative;
+}
+
+.task-chat-task-picker {
+    position: absolute;
+    left: 14px;
+    right: 65px;
+    bottom: calc(100% + 8px);
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 7px;
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    border-radius: 13px;
+    background: #111722;
+    box-shadow: 0 18px 45px rgba(0,0,0,.38);
+    z-index: 20;
+}
+
+.task-chat-task-picker[hidden],
+.task-chat-selected-task[hidden] {
+    display: none !important;
+}
+
+.task-chat-task-picker-header {
+    padding: 6px 8px 8px;
+    color: #7f8ba0;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+.task-chat-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.task-chat-task-option {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: #e9effc;
+    text-align: left;
+    cursor: pointer;
+}
+
+.task-chat-task-option:hover,
+.task-chat-task-option:focus {
+    background: rgba(108,99,255,.12);
+    border-color: rgba(139,92,246,.18);
+    outline: none;
+}
+
+.task-chat-task-option-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.task-chat-task-option-meta {
+    display: block;
+    margin-top: 3px;
+    color: #7f8ba0;
+    font-size: 9px;
+}
+
+.task-chat-task-empty {
+    padding: 14px 10px;
+    color: #7f8ba0;
+    font-size: 10px;
+    text-align: center;
+}
+
+.task-chat-selected-task {
+    position: absolute;
+    left: 14px;
+    right: 65px;
+    bottom: 62px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px;
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 9px;
+    background: rgba(108,99,255,.10);
+    color: #dfe7fa;
+    font-size: 10px;
+}
+
+.task-chat-selected-task-label {
+    color: #8f96a8;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+#taskChatSelectedTaskTitle {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+#clearTaskChatTask {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: rgba(255,255,255,.06);
+    color: #aeb4c2;
+    cursor: pointer;
+}
+
+/* Composer */
+/* Initial task message: keep the first task context in the same visual chat sequence. */
+.task-chat-initial-message {
+    min-width: min(100%, 280px);
+}
+
+.task-chat-initial-title,
+.initial-task-title {
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.task-chat-initial-details,
+.initial-task-details {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid rgba(255,255,255,.10);
+}
+
+.task-chat-initial-row,
+.initial-task-row {
+    display: flex;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.task-chat-initial-label,
+.initial-task-label {
+    flex: 0 0 92px;
+    color: rgba(255,255,255,.52);
+    font-weight: 650;
+}
+
+.task-chat-initial-value,
+.initial-task-value {
+    min-width: 0;
+    color: rgba(255,255,255,.88);
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   LIGHT THEME — USER CHAT
+   Keep the light mode soft, readable and slightly tinted.
+========================================================= */
+
+html.light-theme .task-chat-overlay {
+    background: rgba(30, 45, 70, .30);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+}
+
+html.light-theme .task-chat-drawer {
+    background: rgba(248, 251, 255, .96);
+    border-color: rgba(135, 160, 195, .28);
+    box-shadow: -18px 18px 60px rgba(45, 70, 105, .20);
+}
+
+html.light-theme .task-chat-sidebar {
+    background: rgba(235, 241, 249, .98);
+    border-right-color: rgba(125, 150, 185, .20);
+}
+
+html.light-theme .task-chat-sidebar-header {
+    border-bottom-color: rgba(125, 150, 185, .16);
+}
+
+html.light-theme .task-chat-sidebar-header strong {
+    color: #24344d;
+}
+
+html.light-theme .task-chat-sidebar-header small,
+html.light-theme .task-chat-preview,
+html.light-theme .task-chat-time {
+    color: #74849b !important;
+}
+
+html.light-theme .task-chat-item {
+    color: #263750;
+}
+
+html.light-theme .task-chat-item:hover {
+    background: rgba(79, 128, 235, .08);
+    border-color: rgba(79, 128, 235, .14);
+}
+
+html.light-theme .task-chat-item.active {
+    background: linear-gradient(135deg, rgba(91, 125, 230, .14), rgba(139, 92, 246, .07));
+    border-color: rgba(91, 125, 230, .22);
+    box-shadow: inset 3px 0 0 #667eea;
+}
+
+html.light-theme .task-chat-item-title {
+    color: #25364f;
+}
+
+html.light-theme .task-chat-main {
+    background:
+        radial-gradient(circle at 85% 0%, rgba(108, 99, 255, .08), transparent 35%),
+        #f6f9fd;
+}
+
+html.light-theme .task-chat-header {
+    background: rgba(255, 255, 255, .72);
+    border-bottom-color: rgba(125, 150, 185, .16);
+}
+
+html.light-theme .task-chat-title {
+    color: #24344d;
+}
+
+html.light-theme .task-chat-status {
+    color: #74849b;
+}
+
+html.light-theme .task-chat-close {
+    background: rgba(100, 130, 170, .09);
+    color: #66758c;
+}
+
+html.light-theme .task-chat-close:hover {
+    background: rgba(100, 130, 170, .16);
+    color: #263750;
+}
+
+html.light-theme .task-chat-message.them .task-chat-bubble {
+    background: #e8eef6;
+    border-color: rgba(105, 130, 165, .16);
+    color: #263750;
+}
+
+html.light-theme .task-chat-message .task-chat-time {
+    color: #8190a5;
+}
+
+html.light-theme .task-chat-empty h4 {
+    color: #25364e;
+}
+
+html.light-theme .task-chat-empty p {
+    color: #74849b;
+}
+
+html.light-theme .task-chat-composer {
+    background: rgba(255, 255, 255, .82);
+    border-top-color: rgba(125, 150, 185, .18);
+}
+
+html.light-theme .task-chat-composer textarea {
+    background: #edf2f8;
+    border-color: rgba(105, 130, 165, .20);
+    color: #263750;
+}
+
+html.light-theme .task-chat-composer textarea::placeholder {
+    color: #8795a9;
+}
+
+html.light-theme .task-chat-composer textarea:focus {
+    background: #f7faff;
+    border-color: rgba(108, 99, 255, .40);
+}
+
+html.light-theme .task-chat-task-picker {
+    background: #f8fbff;
+    border-color: rgba(105, 130, 165, .20);
+    box-shadow: 0 18px 45px rgba(45, 70, 105, .18);
+}
+
+html.light-theme .task-chat-task-picker-header {
+    color: #71829a;
+}
+
+html.light-theme .task-chat-task-option {
+    color: #263750;
+}
+
+html.light-theme .task-chat-task-option:hover,
+html.light-theme .task-chat-task-option:focus {
+    background: rgba(108, 99, 255, .08);
+    border-color: rgba(108, 99, 255, .16);
+}
+
+html.light-theme .task-chat-task-option-meta,
+html.light-theme .task-chat-task-empty {
+    color: #7889a0;
+}
+
+html.light-theme .task-chat-selected-task {
+    background: rgba(108, 99, 255, .08);
+    border-color: rgba(108, 99, 255, .16);
+    color: #33445e;
+}
+
+html.light-theme .task-chat-selected-task-label {
+    color: #7889a0;
+}
+
+html.light-theme #clearTaskChatTask {
+    background: rgba(100, 130, 170, .10);
+    color: #66758c;
+}
+
+html.light-theme .task-chat-conversations::-webkit-scrollbar-thumb,
+html.light-theme .task-chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(85, 115, 155, .28);
+}

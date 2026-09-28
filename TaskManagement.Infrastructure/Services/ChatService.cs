@@ -108,6 +108,30 @@ namespace TaskManagement.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
+            // Create the first user message with the complete task context.
+            // This is what gives the Admin Chat the task-specific details immediately
+            // when a user starts a brand-new chat from a task card.
+            var initialMessage = new ChatMessage
+            {
+                ChatSessionId = session.Id,
+                SenderId = userId,
+                Message =
+                    $"New chat started for Task #{task.Id}\n\n" +
+                    $"Task Title: {task.Title}\n" +
+                    $"Scenario: {task.Scenario}\n" +
+                    $"Status: {task.Status}\n" +
+                    $"Priority: {task.Priority}\n" +
+                    $"Start Date: {task.StartDate:dd MMM yyyy}\n" +
+                    $"Expected End Date: {task.ExpectedEndDate:dd MMM yyyy}\n" +
+                    $"Amount: ₹ {task.Amount:0.00}\n\n" +
+                    "I would like to discuss this task with Admin.",
+                SentAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            _context.ChatMessages.Add(initialMessage);
+            await _context.SaveChangesAsync();
+
             return (true, string.Empty, session.Id, true);
         }
 
@@ -287,6 +311,40 @@ namespace TaskManagement.Infrastructure.Services
             return sessions.OrderByDescending(x => x.LatestMessageAt ?? DateTime.MinValue).ToList();
         }
 
+        public async Task<IEnumerable<UserAvailableChatTaskDto>> GetAvailableChatTasksAsync(
+            string userId,
+            string? search = null)
+        {
+            var query =
+                from t in _context.TaskItems.AsNoTracking()
+                where t.AssignedToUserId == userId
+                      && t.Status != "Completed"
+                      && !_context.ChatSessions.Any(s =>
+                          s.TaskId == t.Id &&
+                          s.UserId == userId)
+                select new UserAvailableChatTaskDto
+                {
+                    TaskId = t.Id,
+                    Title = t.Title,
+                    Status = t.Status,
+                    Scenario = t.Scenario
+                };
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(t =>
+                    t.Title.Contains(term) ||
+                    (t.Scenario != null && t.Scenario.Contains(term)));
+            }
+
+            return await query
+                .OrderBy(t => t.Title)
+                .ThenByDescending(t => t.TaskId)
+                .Take(20)
+                .ToListAsync();
+        }
+
         public async Task<(bool Success, string Error)> MarkMessagesAsReadAsync(int chatSessionId, string userId)
         {
             var session = await _context.ChatSessions
@@ -335,6 +393,54 @@ namespace TaskManagement.Infrastructure.Services
 
             if (task == 0)
                 return null;
+
+            // Backfill the task-context message for an older blank session.
+            // This keeps previously created sessions consistent with new chats.
+            var hasMessages = await _context.ChatMessages
+                .AsNoTracking()
+                .AnyAsync(x => x.ChatSessionId == session.Id);
+
+            if (!hasMessages)
+            {
+                var taskDetails = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == session.TaskId)
+                    .Select(t => new
+                    {
+                        t.Id,
+                        t.Title,
+                        t.Scenario,
+                        t.Status,
+                        t.Priority,
+                        t.StartDate,
+                        t.ExpectedEndDate,
+                        t.Amount
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (taskDetails != null)
+                {
+                    _context.ChatMessages.Add(new ChatMessage
+                    {
+                        ChatSessionId = session.Id,
+                        SenderId = userId,
+                        Message =
+                            $"New chat started for Task #{taskDetails.Id}\n\n" +
+                            $"Task Title: {taskDetails.Title}\n" +
+                            $"Scenario: {taskDetails.Scenario}\n" +
+                            $"Status: {taskDetails.Status}\n" +
+                            $"Priority: {taskDetails.Priority}\n" +
+                            $"Start Date: {taskDetails.StartDate:dd MMM yyyy}\n" +
+                            $"Expected End Date: {taskDetails.ExpectedEndDate:dd MMM yyyy}\n" +
+                            $"Amount: ₹ {taskDetails.Amount:0.00}\n\n" +
+                            "I would like to discuss this task with Admin.",
+                        SentAt = DateTime.UtcNow,
+                        IsRead = false
+                    });
+
+                    await _context.SaveChangesAsync();
+                }
+            }
 
             return session.Id;
         }
