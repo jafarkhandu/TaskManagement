@@ -156,10 +156,12 @@
                                         </span>
 
                                         <span class="student-header-right">
-                                            <span class="student-unread"
-                                                  style="@(userUnread > 0 ? "" : "display:none;")">
-                                                @userUnread
-                                            </span>
+                                            @if (userUnread > 0)
+                                            {
+                                                <span class="student-unread">
+                                                    @userUnread
+                                                </span>
+                                            }
                                             <span class="student-chevron">⌄</span>
                                         </span>
                                     </button>
