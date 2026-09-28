@@ -607,3 +607,124 @@ body {
         margin-bottom: 25px;
     }
 }
+
+
+/* Forgot password flow */
+.forgot-password-link {
+    border: 0;
+    background: transparent;
+    color: #3158e8;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
+}
+
+.forgot-password-link:hover {
+    color: #2448c9;
+    text-decoration: underline;
+}
+
+.forgot-password-panel {
+    animation: forgotPanelIn .22s ease-out;
+}
+
+.forgot-panel-header {
+    margin-bottom: 22px;
+}
+
+.forgot-back-button {
+    border: 0;
+    background: transparent;
+    color: #3158e8;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.forgot-panel-header h3 {
+    margin: 14px 0 7px;
+    font-size: 28px;
+    font-weight: 750;
+    color: #17213c;
+}
+
+.forgot-panel-header p {
+    margin: 0;
+    color: #6d7892;
+    line-height: 1.55;
+    font-size: 14px;
+}
+
+.forgot-form-icon {
+    margin: 0;
+}
+
+.otp-input-group {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+.otp-input {
+    width: 100%;
+    height: 54px;
+    border: 1px solid #dce3f1;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #17213c;
+    outline: none;
+    transition: .18s ease;
+}
+
+.otp-input:focus {
+    border-color: #3158e8;
+    box-shadow: 0 0 0 3px rgba(49, 88, 232, .12);
+}
+
+.otp-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #7b8499;
+}
+
+.forgot-resend-button {
+    border: 0;
+    background: transparent;
+    color: #3158e8;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.forgot-resend-button:disabled {
+    color: #aab1c1;
+    cursor: not-allowed;
+}
+
+@keyframes forgotPanelIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 520px) {
+    .otp-input-group {
+        gap: 5px;
+    }
+
+    .otp-input {
+        height: 48px;
+        font-size: 19px;
+    }
+
+    .forgot-panel-header h3 {
+        font-size: 24px;
+    }
+}
