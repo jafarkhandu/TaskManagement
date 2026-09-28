@@ -18,7 +18,9 @@
 
     function prepareMessages(root = document) {
         root.querySelectorAll?.(".alert:not(.tm-auto-message)").forEach(element => {
-            if (element.classList.contains("field-error")) return;
+            if (element.classList.contains("field-error") ||
+                element.classList.contains("d-none")) return;
+
             element.classList.add("tm-auto-message");
             dismissElement(element);
         });
