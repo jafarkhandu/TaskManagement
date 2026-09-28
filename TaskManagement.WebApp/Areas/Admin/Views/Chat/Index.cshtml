@@ -59,8 +59,10 @@
                             <div>
                                 <h2>Chats</h2>
 
-                                <span class="admin-chat-count">
-                                    @(Model?.Count() ?? 0)
+                                <span id="adminChatUnreadCount"
+                                      class="admin-chat-count"
+                                      aria-label="Unread chat messages">
+                                    @(Model?.Sum(x => x.UnreadCount) ?? 0)
                                 </span>
                             </div>
 
