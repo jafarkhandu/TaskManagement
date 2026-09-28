@@ -20,6 +20,9 @@ namespace TaskManagement.Application.Interfaces
         Task<(bool Success, string Error)> DeleteAsync(int id);
         Task<List<UserLookupDto>> GetAssignableUsersAsync();
 
+        // Re-assign a rejected task to a new User and create a fresh assignment request.
+        Task<(bool Success, string Error, int NotificationId)> ReassignAsync(int taskId, string newUserId);
+
         // Change the status of a task on behalf of a user.
         // Returns Success, Error message, TaskId, ProjectId, OldStatus, NewStatus
         Task<(bool Success, string Error, int TaskId, int ProjectId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus);
