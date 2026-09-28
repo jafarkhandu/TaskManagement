@@ -51,6 +51,66 @@ document.addEventListener('DOMContentLoaded', function () {
                 .build();
 
 
+            connection.on('ChatDeleted', function (payload) {
+
+                const chatSessionId =
+                    String(
+                        payload?.chatSessionId ??
+                        payload?.ChatSessionId ??
+                        ''
+                    );
+
+                if (!chatSessionId || !adminChatList) {
+                    return;
+                }
+
+                const item =
+                    adminChatList.querySelector(
+                        `[data-chat-session-id="${chatSessionId}"]`
+                    );
+
+                if (!item) {
+                    return;
+                }
+
+                const deletingCurrent =
+                    currentChatSessionId &&
+                    String(currentChatSessionId) === chatSessionId;
+
+                if (deletingCurrent) {
+                    closeDrawer();
+                }
+
+                const group =
+                    item.closest('.admin-chat-student-group');
+
+                item.remove();
+
+                if (group) {
+                    const remaining =
+                        group.querySelectorAll('.admin-chat-item');
+
+                    if (remaining.length === 0) {
+                        group.remove();
+                    }
+                    else {
+                        const countElement =
+                            group.querySelector(
+                                '.student-header-content small'
+                            );
+
+                        if (countElement) {
+                            countElement.textContent =
+                                `${remaining.length} ${remaining.length === 1 ? 'conversation' : 'conversations'}`;
+                        }
+                    }
+                }
+
+                updateUnreadSummary();
+                applyChatFilters();
+            });
+
+
             connection.on('ReceiveMessage', async function (payload) {
 
                 try {
