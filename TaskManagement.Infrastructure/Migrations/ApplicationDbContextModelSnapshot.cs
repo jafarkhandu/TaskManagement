@@ -248,6 +248,9 @@ namespace TaskManagement.Infrastructure.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDelivered")
+                        .HasColumnType("bit");
+
                     b.Property<int>("TaskAssignmentId")
                         .HasColumnType("int");
 
@@ -273,6 +276,8 @@ namespace TaskManagement.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("UserId", "IsRead");
+
+                    b.HasIndex("UserId", "IsDelivered");
 
                     b.ToTable("Notifications");
                 });
