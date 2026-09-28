@@ -62,6 +62,46 @@
 
         </button>
 
+        <!-- ADMIN NOTIFICATION PANEL -->
+        <div class="admin-notification-panel" id="adminNotificationPanel" aria-hidden="true">
+            <div class="admin-notification-panel-header">
+                <div>
+                    <strong>Notifications</strong>
+                    <small>Admin quick updates</small>
+                </div>
+                <button type="button" id="closeAdminNotifications" aria-label="Close notifications">×</button>
+            </div>
+
+            <div class="admin-notification-list">
+                <a href="@Url.Action("Index", "Dashboard", new { area = "Admin" })" class="admin-notification-item">
+                    <span class="admin-notification-item-icon">▦</span>
+                    <span>
+                        <strong>Dashboard summary</strong>
+                        <small>Review projects, tasks and progress.</small>
+                    </span>
+                    <span class="admin-notification-arrow">›</span>
+                </a>
+
+                <a href="@Url.Action("Index", "Calendar", new { area = "Admin" })" class="admin-notification-item">
+                    <span class="admin-notification-item-icon calendar">◷</span>
+                    <span>
+                        <strong>Upcoming deadlines</strong>
+                        <small>Open the admin calendar to review dates.</small>
+                    </span>
+                    <span class="admin-notification-arrow">›</span>
+                </a>
+
+                <a href="@Url.Action("Index", "Projects", new { area = "Admin" })" class="admin-notification-item">
+                    <span class="admin-notification-item-icon project">▱</span>
+                    <span>
+                        <strong>Project activity</strong>
+                        <small>Open projects and review current work.</small>
+                    </span>
+                    <span class="admin-notification-arrow">›</span>
+                </a>
+            </div>
+        </div>
+
 
         <!-- PROFILE -->
 
