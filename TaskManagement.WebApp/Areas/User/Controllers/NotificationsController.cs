@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -220,6 +220,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Unable to accept the task."
                 });
             }
+        }
 
         // Reject task assignment
         [HttpPost]
@@ -285,6 +286,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Unable to reject the task."
                 });
             }
+        }
 
         // POST: /User/Notifications/Delete
         [HttpPost]
