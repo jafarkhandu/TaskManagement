@@ -25,6 +25,9 @@ namespace TaskManagement.Application.DTOs
         // Latest assignment request state. This is separate from the actual task workflow status.
         public string AssignmentStatus { get; set; } = string.Empty;
 
+        // Repository submitted by the user when the task was completed.
+        public string? CompletionRepositoryUrl { get; set; }
+
         [Required]
         public string Priority { get; set; } = "Low";
 
