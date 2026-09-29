@@ -573,7 +573,7 @@
                         String(payload?.type || "")
                             .toLowerCase();
 
-                    if (type.includes("chat") && !isAdminChatPage) {
+                    if (type.includes("chat")) {
                         setAdminChatSidebarDot(true);
                     }
 
@@ -593,7 +593,7 @@
                             String(notification?.type || "")
                                 .toLowerCase();
 
-                        if (type.includes("chat") && !isAdminChatPage) {
+                        if (type.includes("chat")) {
                             setAdminChatSidebarDot(true);
                         }
 
@@ -624,18 +624,12 @@
             .toLowerCase()
             .startsWith("/admin/chat");
 
-    if (!isAdminChatPage) {
-        refreshAdminChatSidebarDot();
+    refreshAdminChatSidebarDot();
 
-        window.setInterval(
-            refreshAdminChatSidebarDot,
-            30000
-        );
-    }
-    else {
-        setAdminChatSidebarDot(false);
-        markAllAdminChatNotificationsRead();
-    }
+    window.setInterval(
+        refreshAdminChatSidebarDot,
+        30000
+    );
 
     startAdminRealtimeNotifications();
 
