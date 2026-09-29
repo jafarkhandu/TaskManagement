@@ -216,7 +216,6 @@
                                                     }
                                                     else
                                                     {
-                                                    @{
                                                         var displayName =
                                                             string.IsNullOrWhiteSpace(user.FullName)
                                                                 ? user.Email ?? "U"
@@ -234,7 +233,7 @@
                                                             ).ToUpper();
                                                     }
 
-                                                    @initials
+                                                    <text>@initials</text>
                                                     }
                                                 </div>
 
