@@ -691,6 +691,46 @@
         );
 
 
+        // =====================================================
+        // USER CHAT TOAST - SIGNALR
+        // Kept completely separate from the bell notification toast.
+        // =====================================================
+
+        notificationConnection.on(
+            "UserChatMessageReceived",
+            (payload) => {
+                if (!payload || !payload.notificationId)
+                    return;
+
+                if (
+                    window.UserChat &&
+                    typeof window.UserChat.showChatIslandToast === "function"
+                ) {
+                    window.UserChat.showChatIslandToast(payload);
+                }
+            }
+        );
+
+        notificationConnection.on(
+            "MissedChatNotificationsReceived",
+            (notifications) => {
+                if (!Array.isArray(notifications) || notifications.length === 0)
+                    return;
+
+                notifications.forEach((notification, index) => {
+                    setTimeout(() => {
+                        if (
+                            window.UserChat &&
+                            typeof window.UserChat.showChatIslandToast === "function"
+                        ) {
+                            window.UserChat.showChatIslandToast(notification);
+                        }
+                    }, index * 180);
+                });
+            }
+        );
+
+
         notificationConnection.on(
             "TaskAssignmentReceived",
             async (payload) => {
