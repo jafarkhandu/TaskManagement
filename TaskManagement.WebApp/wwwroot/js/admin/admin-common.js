@@ -348,4 +348,308 @@
     window.setInterval(loadAdminChatNotifications, 30000);
 
 
+
+    /* =====================================================
+       ADMIN REAL-TIME NOTIFICATIONS
+       Shared by every Admin page.
+    ===================================================== */
+
+    const adminChatSidebarDot =
+        document.getElementById("adminChatSidebarDot");
+
+    const adminChatSidebarLink =
+        document.getElementById("adminChatSidebarLink");
+
+    function setAdminChatSidebarDot(show) {
+        if (adminChatSidebarDot) {
+            adminChatSidebarDot.hidden = !show;
+        }
+    }
+
+    async function refreshAdminChatSidebarDot() {
+        try {
+            const response = await fetch(
+                "/Admin/Chat",
+                {
+                    credentials: "same-origin",
+                    cache: "no-store"
+                }
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const html = await response.text();
+            const parsed = new DOMParser().parseFromString(html, "text/html");
+
+            const hasUnreadChat = Array.from(
+                parsed.querySelectorAll(".admin-chat-item")
+            ).some(item =>
+                (parseInt(item.dataset.unread || "0", 10) || 0) > 0
+            );
+
+            setAdminChatSidebarDot(hasUnreadChat);
+        }
+        catch (error) {
+            console.warn(
+                "Admin chat sidebar notification check failed:",
+                error
+            );
+        }
+    }
+
+    async function markAllAdminChatNotificationsRead() {
+        const token =
+            document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value || "";
+
+        try {
+            await fetch(
+                "/Admin/Chat/MarkAllChatNotificationsRead",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "RequestVerificationToken": token,
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: token
+                        ? new URLSearchParams({
+                            "__RequestVerificationToken": token
+                        })
+                        : undefined
+                }
+            );
+        }
+        catch (error) {
+            console.warn(
+                "Unable to clear admin chat notifications:",
+                error
+            );
+        }
+    }
+
+    adminChatSidebarLink?.addEventListener("click", function () {
+        setAdminChatSidebarDot(false);
+    });
+
+    function ensureAdminSignalR() {
+        if (window.signalR) {
+            return Promise.resolve();
+        }
+
+        if (window.__adminSignalRLoading) {
+            return window.__adminSignalRLoading;
+        }
+
+        window.__adminSignalRLoading = new Promise(function (resolve, reject) {
+            const script = document.createElement("script");
+
+            script.src =
+                "https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js";
+            script.async = true;
+
+            script.onload = resolve;
+            script.onerror = reject;
+
+            document.head.appendChild(script);
+        });
+
+        return window.__adminSignalRLoading;
+    }
+
+    function showAdminRealtimeToast(payload) {
+        const type = String(payload?.type || "").toLowerCase();
+
+        const isRejected =
+            type.includes("rejected") ||
+            String(payload?.title || "").toLowerCase().includes("rejected");
+
+        const isApproved =
+            type.includes("accepted") ||
+            type.includes("approved") ||
+            String(payload?.title || "").toLowerCase().includes("approved");
+
+        const isChat =
+            type.includes("chat") ||
+            String(payload?.title || "").toLowerCase().includes("chat");
+
+        const toast = document.createElement("div");
+        toast.className =
+            "admin-realtime-toast" +
+            (isRejected ? " is-rejected" : "") +
+            (isApproved ? " is-approved" : "") +
+            (isChat ? " is-chat" : "");
+
+        const icon = isRejected
+            ? "×"
+            : isApproved
+                ? "✓"
+                : isChat
+                    ? "✉"
+                    : "•";
+
+        const title =
+            payload?.title ||
+            (isChat ? "New Chat Message" : "New Notification");
+
+        const message =
+            payload?.message ||
+            (isChat
+                ? "A user sent a new message."
+                : "You have a new administrator notification.");
+
+        toast.innerHTML = `
+            <div class="admin-realtime-toast-glow"></div>
+            <div class="admin-realtime-toast-icon" aria-hidden="true">
+                ${icon}
+            </div>
+            <div class="admin-realtime-toast-content">
+                <strong>${escapeChatNotificationText(title)}</strong>
+                <span>${escapeChatNotificationText(message)}</span>
+            </div>
+            <button type="button"
+                    class="admin-realtime-toast-close"
+                    aria-label="Close notification">×</button>
+            <div class="admin-realtime-toast-progress"></div>
+        `;
+
+        document.body.appendChild(toast);
+
+        const close =
+            toast.querySelector(".admin-realtime-toast-close");
+
+        let timer = window.setTimeout(removeToast, 5200);
+
+        function removeToast() {
+            window.clearTimeout(timer);
+            toast.classList.add("is-leaving");
+
+            window.setTimeout(function () {
+                toast.remove();
+            }, 360);
+        }
+
+        close?.addEventListener("click", removeToast);
+
+        if (payload?.notificationId && window.__adminNotificationConnection) {
+            window.__adminNotificationConnection
+                .invoke(
+                    "AcknowledgeNotification",
+                    Number(payload.notificationId)
+                )
+                .catch(function () {
+                    // Delivery is already persisted server-side.
+                });
+        }
+    }
+
+    async function startAdminRealtimeNotifications() {
+        try {
+            await ensureAdminSignalR();
+
+            if (!window.signalR) {
+                return;
+            }
+
+            if (window.__adminNotificationConnection) {
+                return;
+            }
+
+            const connection =
+                new signalR.HubConnectionBuilder()
+                    .withUrl("/notificationHub")
+                    .withAutomaticReconnect()
+                    .build();
+
+            window.__adminNotificationConnection = connection;
+
+            connection.on(
+                "AdminLiveNotification",
+                function (payload) {
+                    setAdminChatSidebarDot(
+                        String(payload?.type || "")
+                            .toLowerCase()
+                            .includes("chat")
+                        || false
+                        ? true
+                        : document.getElementById("adminChatSidebarDot")?.hidden === false
+                    );
+
+                    if (
+                        String(payload?.type || "")
+                            .toLowerCase()
+                            .includes("chat")
+                    ) {
+                        setAdminChatSidebarDot(true);
+                    }
+
+                    showAdminRealtimeToast(payload);
+                }
+            );
+
+            connection.on(
+                "AdminMissedNotificationsReceived",
+                function (notifications) {
+                    if (!Array.isArray(notifications)) {
+                        return;
+                    }
+
+                    notifications.forEach(function (notification, index) {
+                        const type =
+                            String(notification?.type || "")
+                                .toLowerCase();
+
+                        if (type.includes("chat")) {
+                            setAdminChatSidebarDot(true);
+                        }
+
+                        window.setTimeout(function () {
+                            showAdminRealtimeToast(notification);
+                        }, index * 450);
+                    });
+                }
+            );
+
+            connection.onreconnected(function () {
+                refreshAdminChatSidebarDot();
+            });
+
+            await connection.start();
+
+        }
+        catch (error) {
+            console.warn(
+                "Admin real-time notification connection failed:",
+                error
+            );
+        }
+    }
+
+    refreshAdminChatSidebarDot();
+    window.setInterval(
+        refreshAdminChatSidebarDot,
+        30000
+    );
+
+    if (
+        String(document.body?.className || "")
+            .toLowerCase()
+            .includes("admin")
+    ) {
+        startAdminRealtimeNotifications();
+    }
+
+    if (
+        window.location.pathname
+            .toLowerCase()
+            .startsWith("/admin/chat")
+    ) {
+        setAdminChatSidebarDot(false);
+        markAllAdminChatNotificationsRead();
+    }
+
+
 });
