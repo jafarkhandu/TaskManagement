@@ -56,6 +56,11 @@ namespace TaskManagement.Infrastructure.Services
                         .OrderByDescending(a => a.Id)
                         .Select(a => a.Status)
                         .FirstOrDefault() ?? string.Empty,
+                    CompletionRepositoryUrl = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.CompletionRepositoryUrl)
+                        .FirstOrDefault(),
                     Priority = t.Priority,
                     Status = t.Status,
                     StartDate = t.StartDate,
