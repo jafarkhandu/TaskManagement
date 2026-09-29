@@ -13,5 +13,8 @@
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? RespondedAt { get; set; }
+
+        // Repository submitted by the assigned user when the task is completed.
+        public string? CompletionRepositoryUrl { get; set; }
     }
 }
