@@ -33,7 +33,7 @@ namespace TaskManagement.WebApp.Hubs
 
         public async Task JoinChat(int chatSessionId)
         {
-            var user = await _userManager.GetUserAsync(Context.User);
+            var user = await _userManager.GetUserAsync(Context.User!);
 
             if (user == null)
                 throw new HubException("Unauthorized.");
