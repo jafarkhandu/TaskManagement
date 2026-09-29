@@ -951,6 +951,42 @@ html:not(.light-theme) .admin-notification-view-all {
     background: linear-gradient(90deg, #72d8ae, #0f9f67);
 }
 
+.admin-realtime-toast.is-completed .admin-realtime-toast-icon {
+    background: linear-gradient(145deg, #ecfdf5, #d7f7e8);
+    color: #0f9f67;
+}
+
+.admin-realtime-toast.is-completed .admin-realtime-toast-progress {
+    background: linear-gradient(90deg, #72d8ae, #0f9f67);
+}
+
+.admin-realtime-toast-repository {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 4px;
+    padding: 6px 9px;
+    border: 1px solid rgba(40,100,237,.14);
+    border-radius: 9px;
+    background: rgba(239,246,255,.78);
+    color: #2864ed;
+    font-size: 9px;
+    font-weight: 800;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-realtime-toast-repository:hover {
+    background: rgba(225,237,255,.95);
+    color: #174db8;
+}
+
+
 .admin-realtime-toast.is-rejected .admin-realtime-toast-progress {
     background: linear-gradient(90deg, #ff9aa8, #e03d55);
 }
