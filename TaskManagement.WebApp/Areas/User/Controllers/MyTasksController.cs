@@ -85,30 +85,28 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangeStatus(int taskId, string newStatus)
+        public async Task<IActionResult> ChangeStatus(
+            int taskId,
+            string newStatus,
+            string? completionRepositoryUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
 
             if (user == null)
                 return Challenge();
 
-            var chatSessionIdsToDelete =
-                string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)
-                    ? await _context.ChatSessions
-                        .AsNoTracking()
-                        .Where(x => x.TaskId == taskId && x.IsActive)
-                        .Select(x => x.Id)
-                        .ToListAsync()
-                    : new List<int>();
-
-            var result = await _taskService.ChangeStatusAsync(taskId, user.Id, newStatus);
+            var result = await _taskService.ChangeStatusAsync(
+                taskId,
+                user.Id,
+                newStatus,
+                completionRepositoryUrl);
 
             if (!result.Success)
             {
                 return Json(new { success = false, message = result.Error });
             }
 
-            // Notify admin/project listeners about the status change
+            // Notify project listeners about the status change.
             try
             {
                 await _notificationHub.Clients.Group($"project-{result.ProjectId}")
@@ -123,23 +121,67 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             }
             catch
             {
-                // Notification failures should not block the primary operation
+                // The task update is already persisted.
             }
 
             if (string.Equals(result.NewStatus, "Completed", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var chatSessionId in chatSessionIdsToDelete)
+                var completionTask = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == result.TaskId)
+                    .Select(t => new { t.Id, t.Title })
+                    .FirstOrDefaultAsync();
+
+                var completedBy = user.FullName ?? user.UserName ?? "User";
+
+                // The notification row was created in the same database transaction
+                // as the completion, so delivery can safely happen after persistence.
+                if (result.NotificationId > 0)
                 {
-                    try
+                    var notification = await _context.Notifications
+                        .FirstOrDefaultAsync(n =>
+                            n.Id == result.NotificationId &&
+                            n.Type == "AdminTaskCompleted");
+
+                    if (notification != null && NotificationHub.IsUserOnline(notification.UserId))
                     {
-                        await _chatHub.Clients
-                            .Group($"chat-{chatSessionId}")
-                            .SendAsync("ChatDeleted", new { chatSessionId });
+                        try
+                        {
+                            await _notificationHub.Clients.User(notification.UserId)
+                                .SendAsync("AdminLiveNotification", new
+                                {
+                                    notificationId = notification.Id,
+                                    type = notification.Type,
+                                    title = notification.Title,
+                                    message = $"{completedBy} completed {completionTask?.Title ?? "a task"}.",
+                                    userName = completedBy,
+                                    taskId = result.TaskId,
+                                    taskTitle = completionTask?.Title ?? "Task",
+                                    completionRepositoryUrl = completionRepositoryUrl?.Trim(),
+                                    createdAt = notification.CreatedAt
+                                });
+
+                            notification.IsDelivered = true;
+                            await _context.SaveChangesAsync();
+                        }
+                        catch
+                        {
+                            // Keep IsDelivered=false so the admin receives it on reconnect.
+                        }
                     }
-                    catch
-                    {
-                        // Non-fatal: chat has already been deleted from the database.
-                    }
+                }
+
+                // Completed tasks no longer keep their task chat. The service already
+                // removed the database records; notify any connected chat clients too.
+                try
+                {
+                    await _chatHub.Clients
+                        .Group($"chat-task-{result.TaskId}")
+                        .SendAsync("ChatDeleted", new { taskId = result.TaskId });
+                }
+                catch
+                {
+                    // Non-fatal.
                 }
             }
 
@@ -149,8 +191,13 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 message = "Task status updated.",
                 taskId = result.TaskId,
                 projectId = result.ProjectId,
+                assignmentId = result.AssignmentId,
+                notificationId = result.NotificationId,
                 oldStatus = result.OldStatus,
-                newStatus = result.NewStatus
+                newStatus = result.NewStatus,
+                completionRepositoryUrl = result.NewStatus == "Completed"
+                    ? completionRepositoryUrl?.Trim()
+                    : null
             });
         }
 
