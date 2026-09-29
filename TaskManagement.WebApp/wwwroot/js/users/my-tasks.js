@@ -309,6 +309,47 @@
 
     /* ================= TASK COMPLETION SUBMISSION ================= */
 
+    function showStatusToast(message, success = true) {
+        try {
+            const id = 'status-toast-' + Date.now();
+            const el = document.createElement('div');
+
+            el.id = id;
+            el.style.position = 'fixed';
+            el.style.right = '20px';
+            el.style.top = '20px';
+            el.style.background = success ? '#2ecc71' : '#e74c3c';
+            el.style.color = '#fff';
+            el.style.padding = '10px 14px';
+            el.style.borderRadius = '6px';
+            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+            el.style.zIndex = '10000';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-8px)';
+            el.style.transition = 'opacity 250ms ease, transform 250ms ease';
+            el.textContent = message;
+
+            document.body.appendChild(el);
+
+            requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            });
+
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-8px)';
+
+                setTimeout(() => el.remove(), 300);
+            }, 3500);
+        }
+        catch {
+            // Toast must never break the task workflow.
+        }
+    }
+
+
+
     function isValidGitHubRepositoryUrl(value) {
         try {
             const url = new URL(String(value || '').trim());
