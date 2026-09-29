@@ -74,6 +74,33 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllRead()
+        {
+            var admin = await _userManager.GetUserAsync(User);
+
+            if (admin == null)
+                return Unauthorized();
+
+            var notifications = await _context.Notifications
+                .Where(n =>
+                    n.UserId == admin.Id &&
+                    n.Type.StartsWith("Admin") &&
+                    !n.IsRead)
+                .ToListAsync();
+
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+            }
+
+            if (notifications.Count > 0)
+                await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearAll()
         {
             var admin = await _userManager.GetUserAsync(User);
