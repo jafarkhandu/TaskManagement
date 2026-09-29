@@ -144,17 +144,21 @@ namespace TaskManagement.WebApp.Hubs
                                    on n.TaskAssignmentId equals a.Id
                                join t in _context.TaskItems
                                    on a.TaskId equals t.Id
+                               join s in _context.ChatSessions
+                                   on new
+                                   {
+                                       TaskId = a.TaskId,
+                                       UserId = a.UserId
+                                   }
+                                   equals new
+                                   {
+                                       TaskId = s.TaskId,
+                                       UserId = s.UserId
+                                   }
                                where n.UserId == userId
                                      && !n.IsDelivered
                                      && n.Type == "UserChatMessage"
-                               let chatSessionId = _context.ChatSessions
-                                   .Where(s =>
-                                       s.TaskId == a.TaskId &&
-                                       s.UserId == userId &&
-                                       s.IsActive)
-                                   .Select(s => (int?)s.Id)
-                                   .FirstOrDefault()
-                               where chatSessionId.HasValue
+                                     && s.IsActive
                                orderby n.CreatedAt
                                select new
                                {
@@ -162,7 +166,7 @@ namespace TaskManagement.WebApp.Hubs
                                    title = "New message from Admin",
                                    message = n.Title,
                                    senderName = "Admin",
-                                   chatSessionId = chatSessionId.Value,
+                                   chatSessionId = s.Id,
                                    taskId = t.Id,
                                    taskTitle = t.Title,
                                    createdAt = n.CreatedAt
