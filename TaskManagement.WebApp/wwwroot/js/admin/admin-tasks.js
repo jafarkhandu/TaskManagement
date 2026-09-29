@@ -2045,6 +2045,8 @@
         });
 
 
+        openTaskFromNotificationQuery();
+
         /* =====================================================
            DELETE
         ===================================================== */
@@ -2157,6 +2159,37 @@
             }
         );
 
+
+        /* =====================================================
+           OPEN TASK FROM ADMIN NOTIFICATION
+        ===================================================== */
+
+        function openTaskFromNotificationQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const taskId = Number(params.get('taskId') || 0);
+
+            if (!taskId) {
+                return;
+            }
+
+            const openDetails = () => {
+                const button =
+                    document.querySelector(
+                        `.task-details-btn[data-task-id="${taskId}"]`
+                    );
+
+                if (button) {
+                    button.click();
+                    return true;
+                }
+
+                return false;
+            };
+
+            if (!openDetails()) {
+                window.setTimeout(openDetails, 250);
+            }
+        }
 
         /* =====================================================
            DETAILS
