@@ -569,20 +569,11 @@
             connection.on(
                 "AdminLiveNotification",
                 function (payload) {
-                    setAdminChatSidebarDot(
+                    const type =
                         String(payload?.type || "")
-                            .toLowerCase()
-                            .includes("chat")
-                        || false
-                        ? true
-                        : document.getElementById("adminChatSidebarDot")?.hidden === false
-                    );
+                            .toLowerCase();
 
-                    if (
-                        String(payload?.type || "")
-                            .toLowerCase()
-                            .includes("chat")
-                    ) {
+                    if (type.includes("chat")) {
                         setAdminChatSidebarDot(true);
                     }
 
@@ -628,11 +619,23 @@
         }
     }
 
-    refreshAdminChatSidebarDot();
-    window.setInterval(
-        refreshAdminChatSidebarDot,
-        30000
-    );
+    const isAdminChatPage =
+        window.location.pathname
+            .toLowerCase()
+            .startsWith("/admin/chat");
+
+    if (!isAdminChatPage) {
+        refreshAdminChatSidebarDot();
+
+        window.setInterval(
+            refreshAdminChatSidebarDot,
+            30000
+        );
+    }
+    else {
+        setAdminChatSidebarDot(false);
+        markAllAdminChatNotificationsRead();
+    }
 
     if (
         String(document.body?.className || "")
@@ -640,15 +643,6 @@
             .includes("admin")
     ) {
         startAdminRealtimeNotifications();
-    }
-
-    if (
-        window.location.pathname
-            .toLowerCase()
-            .startsWith("/admin/chat")
-    ) {
-        setAdminChatSidebarDot(false);
-        markAllAdminChatNotificationsRead();
     }
 
 
