@@ -202,8 +202,8 @@
     const notificationDot =
         document.getElementById("adminNotificationDot");
 
-    const markAllNotificationsRead =
-        document.getElementById("markAllAdminNotificationsRead");
+    const clearAllNotificationsButton =
+        document.getElementById("clearAllAdminNotifications");
 
     function closeAdminNotifications() {
         notificationPanel?.classList.remove("show");
@@ -221,6 +221,7 @@
 
         if (value === "admintaskcompleted") return "✓";
         if (value === "adminassignmentresponse") return "↔";
+        if (value === "adminchatmessage") return "✉";
         return "•";
     }
 
@@ -229,6 +230,7 @@
 
         if (value === "admintaskcompleted") return " is-completed";
         if (value === "adminassignmentresponse") return " is-approved";
+        if (value === "adminchatmessage") return " is-chat";
         return "";
     }
 
@@ -327,18 +329,6 @@
 
             if (markReadAfterLoad && unreadTotal > 0) {
                 await markAllGlobalAdminNotificationsRead(false);
-
-                notifications.forEach(notification => {
-                    notification.isRead = true;
-                });
-
-                notificationSummary.textContent = "All notifications read";
-
-                if (notificationDot) {
-                    notificationDot.hidden = true;
-                }
-
-                notificationButton?.classList.remove("has-notification");
             }
         }
         catch (error) {
@@ -356,7 +346,103 @@
         }
     }
 
-    async function markAllGlobalAdminNotificationsRead(reload = true) {
+    async function clearAllGlobalAdminNotifications() {
+        if (!notificationList) return;
+
+        const cards = [
+            ...notificationList.querySelectorAll(".global-admin-notification")
+        ];
+
+        if (!cards.length) return;
+
+        if (clearAllNotificationsButton) {
+            clearAllNotificationsButton.disabled = true;
+        }
+
+        cards.forEach((card, index) => {
+            card.style.transition =
+                "transform .45s cubic-bezier(.16,1,.3,1), opacity .45s ease";
+            card.style.transitionDelay = \`${index} * 90ms\`;
+            card.style.transform = "translateX(120%)";
+            card.style.opacity = "0";
+        });
+
+        const animationTime = ((cards.length - 1) * 90) + 600;
+
+        try {
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )?.value || "";
+
+            const response = await fetch(
+                "/Admin/Notifications/ClearAll",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "RequestVerificationToken": token,
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
+                    body: token
+                        ? new URLSearchParams({
+                            "__RequestVerificationToken": token
+                        })
+                        : undefined
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message || "Unable to clear notifications."
+                );
+            }
+
+            window.setTimeout(() => {
+                notificationList.innerHTML = `
+                    <div class="admin-chat-notification-empty admin-notification-empty-state">
+                        <span>✓</span>
+                        <strong>You're all caught up</strong>
+                        <small>No new administrator notifications.</small>
+                    </div>
+                `;
+
+                notificationSummary.textContent = "No unread notifications";
+
+                if (notificationDot) {
+                    notificationDot.hidden = true;
+                }
+
+                notificationButton?.classList.remove("has-notification");
+
+                if (clearAllNotificationsButton) {
+                    clearAllNotificationsButton.disabled = false;
+                }
+            }, animationTime);
+        }
+        catch (error) {
+            cards.forEach(card => {
+                card.style.transition = "none";
+                card.style.transitionDelay = "0ms";
+                card.style.transform = "";
+                card.style.opacity = "";
+            });
+
+            if (clearAllNotificationsButton) {
+                clearAllNotificationsButton.disabled = false;
+            }
+
+            console.warn("Clear admin notifications failed:", error);
+        }
+    }
+
+    async function markAllGlobalAdminNotificationsRead() {
+        // Opening the panel should mark notifications as read,
+        // but READ is not the same as CLEAR. Cleared notifications
+        // are removed from the database by Clear All.
         const token =
             document.querySelector(
                 'input[name="__RequestVerificationToken"]'
@@ -384,16 +470,9 @@
             if (!response.ok) {
                 throw new Error("Unable to mark notifications as read.");
             }
-
-            if (reload) {
-                await loadAdminNotifications(false);
-            }
         }
         catch (error) {
-            console.warn(
-                "Unable to mark admin notifications as read:",
-                error
-            );
+            console.warn("Unable to mark admin notifications as read:", error);
         }
     }
 
@@ -418,9 +497,9 @@
         closeAdminNotifications();
     });
 
-    markAllNotificationsRead?.addEventListener("click", async event => {
+    clearAllNotificationsButton?.addEventListener("click", async event => {
         event.stopPropagation();
-        await markAllGlobalAdminNotificationsRead(true);
+        await clearAllGlobalAdminNotifications();
     });
 
     notificationPanel?.addEventListener("click", event => {
