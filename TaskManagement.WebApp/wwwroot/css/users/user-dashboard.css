@@ -3843,17 +3843,31 @@ body:has(.notifications-page) {
 
 
 /* CIIT Training Institute brand image */
-.sidebar-brand-image {
-    display: block;
-    width: 176px;
-    max-width: 100%;
-    height: auto;
-    object-fit: contain;
+.brand {
+    min-height: 102px;
+    overflow: visible;
 }
 
-@media (max-width: 900px) {
+.sidebar-brand-image {
+    display: block;
+    width: 195px;
+    max-width: 100%;
+    height: auto !important;
+    max-height: none !important;
+    flex: 0 0 auto;
+    object-fit: contain;
+    object-position: left center;
+}
+
+@media (max-width: 850px) {
+    .brand {
+        min-height: 58px;
+    }
+
     .sidebar-brand-image {
         width: 46px;
         max-width: 46px;
+        height: auto !important;
+        object-position: center;
     }
 }

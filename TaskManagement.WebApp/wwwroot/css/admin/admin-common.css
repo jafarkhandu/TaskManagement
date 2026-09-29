@@ -1189,19 +1189,37 @@ html:not(.light-theme) .admin-notification-view-all {
 
 
 /* CIIT Training Institute brand image */
+.sidebar-brand {
+    min-height: 105px;
+    overflow: visible;
+}
+
 .sidebar-brand-image {
     display: block;
-    width: 176px;
+    width: 210px;
     max-width: 100%;
-    height: auto;
+    height: auto !important;
+    max-height: none !important;
+    flex: 0 0 auto;
     object-fit: contain;
     object-position: left center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
     .sidebar-brand-image {
-        width: 46px;
-        max-width: 46px;
+        width: 190px;
+    }
+}
+
+@media (max-width: 900px) {
+    .sidebar-brand {
+        min-height: 62px;
+    }
+
+    .sidebar-brand-image {
+        width: 54px;
+        max-width: 54px;
+        height: auto !important;
         object-position: center;
     }
 }
