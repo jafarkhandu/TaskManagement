@@ -415,10 +415,20 @@
 
         cards.forEach((card, index) => {
             card.style.transition =
-                "transform .45s cubic-bezier(.16,1,.3,1), opacity .45s ease";
-            card.style.transitionDelay = `${index * 90}ms`;
-            card.style.transform = "translateX(120%)";
+                "transform .52s cubic-bezier(.16,1,.3,1), opacity .52s ease, max-height .52s ease, margin .52s ease, padding .52s ease";
+            card.style.transitionDelay = `${index * 110}ms`;
+            card.style.transform = "translate3d(120%, 0, 0) scale(.96)";
             card.style.opacity = "0";
+            card.style.maxHeight = `${card.offsetHeight}px`;
+            card.style.overflow = "hidden";
+
+            requestAnimationFrame(() => {
+                card.style.maxHeight = "0px";
+                card.style.marginTop = "0px";
+                card.style.marginBottom = "0px";
+                card.style.paddingTop = "0px";
+                card.style.paddingBottom = "0px";
+            });
         });
 
         const animationTime = ((cards.length - 1) * 90) + 600;
