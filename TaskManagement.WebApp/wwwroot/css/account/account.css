@@ -732,25 +732,27 @@ body {
 /* CIIT Training Institute brand image */
 .brand-logo-image {
     display: block;
-    width: 205px;
+    width: 255px;
     max-width: 100%;
-    height: auto;
+    height: auto !important;
+    max-height: none !important;
+    flex: 0 0 auto;
     object-fit: contain;
     object-position: left center;
 }
 
 .mobile-brand .brand-logo-image {
-    width: 180px;
+    width: 205px;
 }
 
 @media (max-width: 991.98px) {
     .brand-logo-image {
-        width: 175px;
+        width: 220px;
     }
 }
 
 @media (max-width: 400px) {
     .mobile-brand .brand-logo-image {
-        width: 160px;
+        width: 185px;
     }
 }
