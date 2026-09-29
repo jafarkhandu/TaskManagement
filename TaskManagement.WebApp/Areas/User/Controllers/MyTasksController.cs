@@ -85,7 +85,10 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangeStatus(int taskId, string newStatus)
+        public async Task<IActionResult> ChangeStatus(
+            int taskId,
+            string newStatus,
+            string? completionRepositoryUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
 
@@ -101,14 +104,18 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         .ToListAsync()
                     : new List<int>();
 
-            var result = await _taskService.ChangeStatusAsync(taskId, user.Id, newStatus);
+            var result = await _taskService.ChangeStatusAsync(
+                taskId,
+                user.Id,
+                newStatus,
+                completionRepositoryUrl);
 
             if (!result.Success)
             {
                 return Json(new { success = false, message = result.Error });
             }
 
-            // Notify admin/project listeners about the status change
+            // Notify project listeners about the status change.
             try
             {
                 await _notificationHub.Clients.Group($"project-{result.ProjectId}")
@@ -123,11 +130,59 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             }
             catch
             {
-                // Notification failures should not block the primary operation
+                // The task update is already persisted.
             }
 
             if (string.Equals(result.NewStatus, "Completed", StringComparison.OrdinalIgnoreCase))
             {
+                var completionTask = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == result.TaskId)
+                    .Select(t => new { t.Id, t.Title })
+                    .FirstOrDefaultAsync();
+
+                var completedBy = user.FullName ?? user.UserName ?? "User";
+
+                // The notification row was created in the same database transaction
+                // as the completion, so delivery can safely happen after persistence.
+                if (result.NotificationId > 0)
+                {
+                    var notification = await _context.Notifications
+                        .FirstOrDefaultAsync(n =>
+                            n.Id == result.NotificationId &&
+                            n.Type == "AdminTaskCompleted");
+
+                    if (notification != null && NotificationHub.IsUserOnline(notification.UserId))
+                    {
+                        try
+                        {
+                            await _notificationHub.Clients.User(notification.UserId)
+                                .SendAsync("AdminLiveNotification", new
+                                {
+                                    notificationId = notification.Id,
+                                    type = notification.Type,
+                                    title = notification.Title,
+                                    message = $"{completedBy} completed {completionTask?.Title ?? "a task"}.",
+                                    userName = completedBy,
+                                    taskId = result.TaskId,
+                                    taskTitle = completionTask?.Title ?? "Task",
+                                    completionRepositoryUrl = completionRepositoryUrl?.Trim(),
+                                    createdAt = notification.CreatedAt
+                                });
+
+                            notification.IsDelivered = true;
+                            await _context.SaveChangesAsync();
+                        }
+                        catch
+                        {
+                            // Keep IsDelivered=false so the admin receives it on reconnect.
+                        }
+                    }
+                }
+
+                // Completed tasks no longer keep their task chat. The service already
+                // removed the database records; notify connected chat clients using the
+                // session IDs captured before deletion.
                 foreach (var chatSessionId in chatSessionIdsToDelete)
                 {
                     try
@@ -138,7 +193,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     }
                     catch
                     {
-                        // Non-fatal: chat has already been deleted from the database.
+                        // Non-fatal.
                     }
                 }
             }
@@ -149,8 +204,13 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 message = "Task status updated.",
                 taskId = result.TaskId,
                 projectId = result.ProjectId,
+                assignmentId = result.AssignmentId,
+                notificationId = result.NotificationId,
                 oldStatus = result.OldStatus,
-                newStatus = result.NewStatus
+                newStatus = result.NewStatus,
+                completionRepositoryUrl = result.NewStatus == "Completed"
+                    ? completionRepositoryUrl?.Trim()
+                    : null
             });
         }
 
@@ -185,20 +245,79 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         .AsNoTracking()
                         .Where(t => t.Id == taskId)
                         .Select(t => new { t.Id, t.Title, t.Status, t.ProjectId })
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefaultAsync()
+                        ?? throw new InvalidOperationException("Task not found.");
 
                     var projectTitle = await _context.Projects
                         .AsNoTracking()
                         .Where(p => p.Id == task.ProjectId)
                         .Select(p => p.ProjectTitle)
+                        .FirstOrDefaultAsync() ?? string.Empty;
+
+                    var assignmentId = await _context.TaskAssignments
+                        .Where(a =>
+                            a.TaskId == task.Id &&
+                            a.UserId == user.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => (int?)a.Id)
                         .FirstOrDefaultAsync();
+
+                    if (assignmentId.HasValue)
+                    {
+                        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+
+                        foreach (var admin in admins)
+                        {
+                            var notification = new TaskManagement.Domain.Entities.Notification
+                            {
+                                UserId = admin.Id,
+                                TaskAssignmentId = assignmentId.Value,
+                                Type = "AdminChatMessage",
+                                Title = "New Chat Message",
+                                IsRead = false,
+                                IsDelivered = false,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _context.Notifications.Add(notification);
+                            await _context.SaveChangesAsync();
+
+                            if (NotificationHub.IsUserOnline(admin.Id))
+                            {
+                                try
+                                {
+                                    await _notificationHub.Clients.User(admin.Id)
+                                        .SendAsync("AdminLiveNotification", new
+                                        {
+                                            notificationId = notification.Id,
+                                            type = notification.Type,
+                                            title = notification.Title,
+                                            message = "A user started a new task chat.",
+                                            userName = user.FullName ?? user.UserName ?? string.Empty,
+                                            chatSessionId = result.ChatSessionId,
+                                            taskId = task.Id,
+                                            taskTitle = task.Title,
+                                            createdAt = notification.CreatedAt
+                                        });
+
+                                    notification.IsDelivered = true;
+                                    notification.IsRead = true;
+                                    await _context.SaveChangesAsync();
+                                }
+                                catch
+                                {
+                                    // Keep it pending for the next admin connection.
+                                }
+                            }
+                        }
+                    }
 
                     await _notificationHub.Clients.Group("admins")
                         .SendAsync("NewChatSession", new
                         {
                             ChatSessionId = result.ChatSessionId,
                             UserId = user.Id,
-                            UserFullName = user.FullName ?? user.UserName,
+                            UserFullName = user.FullName ?? user.UserName ?? string.Empty,
                             TaskId = task.Id,
                             TaskTitle = task.Title,
                             TaskStatus = task.Status,

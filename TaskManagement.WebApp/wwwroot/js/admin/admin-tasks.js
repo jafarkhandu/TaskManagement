@@ -2045,6 +2045,8 @@
         });
 
 
+        openTaskFromNotificationQuery();
+
         /* =====================================================
            DELETE
         ===================================================== */
@@ -2159,6 +2161,37 @@
 
 
         /* =====================================================
+           OPEN TASK FROM ADMIN NOTIFICATION
+        ===================================================== */
+
+        function openTaskFromNotificationQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const taskId = Number(params.get('taskId') || 0);
+
+            if (!taskId) {
+                return;
+            }
+
+            const openDetails = () => {
+                const button =
+                    document.querySelector(
+                        `.task-details-btn[data-task-id="${taskId}"]`
+                    );
+
+                if (button) {
+                    button.click();
+                    return true;
+                }
+
+                return false;
+            };
+
+            if (!openDetails()) {
+                window.setTimeout(openDetails, 250);
+            }
+        }
+
+        /* =====================================================
            DETAILS
         ===================================================== */
 
@@ -2265,6 +2298,43 @@
 
                             document.getElementById('detailTaskEnd').textContent =
                                 formatDate(task.expectedEndDate);
+
+                            const repositoryLink =
+                                document.getElementById('detailTaskRepository');
+
+                            const repositoryEmpty =
+                                document.getElementById('detailTaskRepositoryEmpty');
+
+                            const repositoryUrlElement =
+                                document.getElementById('detailTaskRepositoryUrl');
+
+                            const repositoryUrl =
+                                String(task.completionRepositoryUrl || '').trim();
+
+                            if (repositoryLink && repositoryEmpty) {
+                                if (repositoryUrl) {
+                                    repositoryLink.href = repositoryUrl;
+                                    repositoryLink.style.display = 'inline-flex';
+
+                                    if (repositoryUrlElement) {
+                                        repositoryUrlElement.textContent = repositoryUrl;
+                                        repositoryUrlElement.style.display = 'block';
+                                    }
+
+                                    repositoryEmpty.style.display = 'none';
+                                }
+                                else {
+                                    repositoryLink.removeAttribute('href');
+                                    repositoryLink.style.display = 'none';
+
+                                    if (repositoryUrlElement) {
+                                        repositoryUrlElement.textContent = '';
+                                        repositoryUrlElement.style.display = 'none';
+                                    }
+
+                                    repositoryEmpty.style.display = 'inline';
+                                }
+                            }
 
                             const allTasksModalElement =
                                 document.getElementById('allTasksModal');

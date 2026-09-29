@@ -180,7 +180,8 @@
 
 
     /* =====================================================
-       ADMIN CHAT NOTIFICATIONS
+       GLOBAL ADMIN NOTIFICATIONS
+       Chat messages are intentionally excluded from this panel.
     ===================================================== */
 
     const notificationButton =
@@ -193,17 +194,26 @@
         document.getElementById("closeAdminNotifications");
 
     const notificationList =
-        document.getElementById("adminChatNotificationList");
+        document.getElementById("adminNotificationList");
 
     const notificationSummary =
-        document.getElementById("adminChatNotificationSummary");
+        document.getElementById("adminNotificationSummary");
 
     const notificationDot =
         document.getElementById("adminNotificationDot");
 
+    const clearAllNotificationsButton =
+        document.getElementById("clearAllAdminNotifications");
+
     function closeAdminNotifications() {
         notificationPanel?.classList.remove("show");
         notificationPanel?.setAttribute("aria-hidden", "true");
+    }
+
+    function escapeNotificationText(value) {
+        const div = document.createElement("div");
+        div.textContent = value ?? "";
+        return div.innerHTML;
     }
 
     function escapeChatNotificationText(value) {
@@ -212,39 +222,66 @@
         return div.innerHTML;
     }
 
-    async function loadAdminChatNotifications() {
-        if (!notificationList)
-            return;
+    function setAdminNotificationDot(show) {
+        if (notificationDot) {
+            notificationDot.hidden = !show;
+        }
+
+        notificationButton?.classList.toggle(
+            "has-notification",
+            !!show
+        );
+    }
+
+    function notificationIcon(type) {
+        const value = String(type || "").toLowerCase();
+
+        if (value === "admintaskcompleted") return "✓";
+        if (value === "adminassignmentresponse") return "↔";
+        if (value === "adminchatmessage") return "✉";
+        return "•";
+    }
+
+    function notificationClass(type) {
+        const value = String(type || "").toLowerCase();
+
+        if (value === "admintaskcompleted") return " is-completed";
+        if (value === "adminassignmentresponse") return " is-approved";
+        if (value === "adminchatmessage") return " is-chat";
+        return "";
+    }
+
+    function notificationMessage(notification) {
+        if (notification?.message) {
+            return notification.message;
+        }
+
+        return "You have a new administrator notification.";
+    }
+
+    async function loadAdminNotifications(markReadAfterLoad = false) {
+        if (!notificationList) return;
 
         try {
             const response = await fetch(
-                "/Admin/Chat",
+                "/Admin/Notifications/Pending",
                 {
                     credentials: "same-origin",
                     cache: "no-store"
                 }
             );
 
-            if (!response.ok)
-                throw new Error("Unable to load admin chats.");
+            if (!response.ok) {
+                throw new Error("Unable to load notifications.");
+            }
 
-            const html = await response.text();
-            const documentHtml =
-                new DOMParser().parseFromString(html, "text/html");
+            const json = await response.json();
+            const notifications = Array.isArray(json?.notifications)
+                ? json.notifications
+                : [];
 
-            const chats =
-                Array.from(
-                    documentHtml.querySelectorAll(".admin-chat-item")
-                ).map(item => ({
-                    id: item.dataset.chatSessionId,
-                    user: item.querySelector(".admin-chat-username")?.textContent.trim() || "User",
-                    message: item.querySelector(".admin-chat-preview")?.textContent.trim() || "New chat message",
-                    time: item.querySelector(".admin-chat-time")?.textContent.trim() || "",
-                    unread: parseInt(item.dataset.unread || "0", 10) || 0
-                })).filter(chat => chat.unread > 0);
-
-            const unreadTotal =
-                chats.reduce((total, chat) => total + chat.unread, 0);
+            const unread = notifications.filter(n => !n.isRead);
+            const unreadTotal = unread.length;
 
             if (notificationDot) {
                 notificationDot.hidden = unreadTotal === 0;
@@ -257,44 +294,249 @@
 
             notificationSummary.textContent =
                 unreadTotal > 0
-                    ? unreadTotal + (unreadTotal === 1 ? " unread message" : " unread messages")
-                    : "No unread chat messages";
+                    ? unreadTotal + (unreadTotal === 1
+                        ? " unread notification"
+                        : " unread notifications")
+                    : "No unread notifications";
 
-            if (!chats.length) {
+            if (!notifications.length) {
                 notificationList.innerHTML = `
                     <div class="admin-chat-notification-empty">
                         <span>✓</span>
-                        <strong>No unread chats</strong>
-                        <small>New messages from students will appear here.</small>
+                        <strong>No notifications</strong>
+                        <small>Approved, rejected and completed task updates will appear here.</small>
                     </div>
                 `;
                 return;
             }
 
-            notificationList.innerHTML = chats.map(chat => `
-                <a class="admin-notification-item admin-chat-notification-item"
-                   href="/Admin/Chat#chat-${encodeURIComponent(chat.id)}">
-                    <span class="admin-notification-item-icon">💬</span>
-                    <span>
-                        <strong>${escapeChatNotificationText(chat.user)}</strong>
-                        <small>${escapeChatNotificationText(chat.message)}</small>
-                    </span>
-                    <span class="admin-chat-notification-count">${chat.unread}</span>
-                </a>
-            `).join("");
+            notificationList.innerHTML = notifications.map(notification => {
+                const type = String(notification.type || "");
+                const repositoryUrl =
+                    typeof notification.completionRepositoryUrl === "string"
+                        ? notification.completionRepositoryUrl.trim()
+                        : "";
 
-        } catch (error) {
-            console.warn("Admin chat notifications could not be loaded:", error);
+                const repositoryAction = repositoryUrl
+                    ? `
+                        <a class="admin-notification-repository"
+                           href="${escapeNotificationText(repositoryUrl)}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            🔗 Repository
+                        </a>
+                      `
+                    : "";
 
-            notificationSummary.textContent = "Chat notifications unavailable";
+                const notificationId =
+                    Number(notification.notificationId) || 0;
+
+                const taskId =
+                    Number(notification.taskId) || 0;
+
+                const projectId =
+                    Number(notification.projectId) || 0;
+
+                const chatSessionId =
+                    Number(notification.chatSessionId) || 0;
+
+                let destination = "";
+
+                if (type.toLowerCase() === "adminchatmessage" && chatSessionId) {
+                    destination =
+                        "/Admin/Chat#chat-" +
+                        encodeURIComponent(chatSessionId);
+                }
+                else if (taskId) {
+                    destination =
+                        "/Admin/Tasks/Project/" +
+                        encodeURIComponent(projectId) +
+                        "?taskId=" +
+                        encodeURIComponent(taskId);
+                }
+
+                return `
+                    <div class="admin-notification-item global-admin-notification${notificationClass(type)}"
+                         data-notification-id="${notificationId}"
+                         data-destination="${escapeNotificationText(destination)}"
+                         role="${destination ? "button" : "article"}"
+                         tabindex="${destination ? "0" : "-1"}">
+                        <span class="admin-notification-item-icon">
+                            ${notificationIcon(type)}
+                        </span>
+                        <span class="admin-notification-item-content">
+                            <strong>${escapeNotificationText(notification.title || "Notification")}</strong>
+                            <small>${escapeNotificationText(notificationMessage(notification))}</small>
+                            ${repositoryAction}
+                        </span>
+                        <span class="admin-notification-arrow">›</span>
+                    </div>
+                `;
+            }).join("");
+
+            if (markReadAfterLoad && unreadTotal > 0) {
+                await markAllGlobalAdminNotificationsRead(false);
+                notificationSummary.textContent = "No unread notifications";
+
+                if (notificationDot) {
+                    notificationDot.hidden = true;
+                }
+
+                notificationButton?.classList.remove("has-notification");
+            }
+        }
+        catch (error) {
+            console.warn("Admin notifications could not be loaded:", error);
+
+            notificationSummary.textContent = "Notifications unavailable";
 
             notificationList.innerHTML = `
                 <div class="admin-chat-notification-empty">
                     <span>!</span>
-                    <strong>Could not load chats</strong>
-                    <small>Open Chat to check your conversations.</small>
+                    <strong>Could not load notifications</strong>
+                    <small>Please try again.</small>
                 </div>
             `;
+        }
+    }
+
+    async function clearAllGlobalAdminNotifications() {
+        if (!notificationList) return;
+
+        const cards = [
+            ...notificationList.querySelectorAll(".global-admin-notification")
+        ];
+
+        if (!cards.length) return;
+
+        if (clearAllNotificationsButton) {
+            clearAllNotificationsButton.disabled = true;
+        }
+
+        cards.forEach((card, index) => {
+            card.style.transition =
+                "transform .52s cubic-bezier(.16,1,.3,1), opacity .52s ease, max-height .52s ease, margin .52s ease, padding .52s ease";
+            card.style.transitionDelay = `${index * 110}ms`;
+            card.style.transform = "translate3d(120%, 0, 0) scale(.96)";
+            card.style.opacity = "0";
+            card.style.maxHeight = `${card.offsetHeight}px`;
+            card.style.overflow = "hidden";
+
+            requestAnimationFrame(() => {
+                card.style.maxHeight = "0px";
+                card.style.marginTop = "0px";
+                card.style.marginBottom = "0px";
+                card.style.paddingTop = "0px";
+                card.style.paddingBottom = "0px";
+            });
+        });
+
+        const animationTime = ((cards.length - 1) * 90) + 600;
+
+        try {
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )?.value || "";
+
+            const response = await fetch(
+                "/Admin/Notifications/ClearAll",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "RequestVerificationToken": token,
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
+                    body: token
+                        ? new URLSearchParams({
+                            "__RequestVerificationToken": token
+                        })
+                        : undefined
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message || "Unable to clear notifications."
+                );
+            }
+
+            window.setTimeout(() => {
+                notificationList.innerHTML = `
+                    <div class="admin-chat-notification-empty admin-notification-empty-state">
+                        <span>✓</span>
+                        <strong>You're all caught up</strong>
+                        <small>No new administrator notifications.</small>
+                    </div>
+                `;
+
+                notificationSummary.textContent = "No unread notifications";
+
+                if (notificationDot) {
+                    notificationDot.hidden = true;
+                }
+
+                notificationButton?.classList.remove("has-notification");
+
+                if (clearAllNotificationsButton) {
+                    clearAllNotificationsButton.disabled = false;
+                }
+            }, animationTime);
+        }
+        catch (error) {
+            cards.forEach(card => {
+                card.style.transition = "none";
+                card.style.transitionDelay = "0ms";
+                card.style.transform = "";
+                card.style.opacity = "";
+            });
+
+            if (clearAllNotificationsButton) {
+                clearAllNotificationsButton.disabled = false;
+            }
+
+            console.warn("Clear admin notifications failed:", error);
+        }
+    }
+
+    async function markAllGlobalAdminNotificationsRead() {
+        // Opening the panel should mark notifications as read,
+        // but READ is not the same as CLEAR. Cleared notifications
+        // are removed from the database by Clear All.
+        const token =
+            document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value || "";
+
+        try {
+            const response = await fetch(
+                "/Admin/Notifications/MarkAllRead",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "RequestVerificationToken": token,
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
+                    body: token
+                        ? new URLSearchParams({
+                            "__RequestVerificationToken": token
+                        })
+                        : undefined
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to mark notifications as read.");
+            }
+        }
+        catch (error) {
+            console.warn("Unable to mark admin notifications as read:", error);
         }
     }
 
@@ -310,13 +552,53 @@
         );
 
         if (isOpen) {
-            await loadAdminChatNotifications();
+            await loadAdminNotifications(true);
         }
     });
 
     closeNotifications?.addEventListener("click", event => {
         event.stopPropagation();
         closeAdminNotifications();
+    });
+
+    clearAllNotificationsButton?.addEventListener("click", async event => {
+        event.stopPropagation();
+        await clearAllGlobalAdminNotifications();
+    });
+
+    function openAdminNotificationDestination(item) {
+        const destination =
+            item?.dataset?.destination || "";
+
+        if (!destination) return;
+
+        closeAdminNotifications();
+        window.location.href = destination;
+    }
+
+    notificationList?.addEventListener("click", event => {
+        const item =
+            event.target.closest(".global-admin-notification");
+
+        if (!item) return;
+
+        if (event.target.closest("a, button")) {
+            return;
+        }
+
+        openAdminNotificationDestination(item);
+    });
+
+    notificationList?.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+
+        const item =
+            event.target.closest(".global-admin-notification");
+
+        if (!item) return;
+
+        event.preventDefault();
+        openAdminNotificationDestination(item);
     });
 
     notificationPanel?.addEventListener("click", event => {
@@ -342,10 +624,320 @@
         }
     });
 
-    /* Refresh the badge periodically using the existing Admin Chat page.
-       No new backend endpoint is required. */
-    loadAdminChatNotifications();
-    window.setInterval(loadAdminChatNotifications, 30000);
+    loadAdminNotifications();
+    window.setInterval(
+        () => loadAdminNotifications(false),
+        30000
+    );
+
+
+    /* =====================================================
+       ADMIN REAL-TIME NOTIFICATIONS
+       Shared by every Admin page.
+    ===================================================== */
+
+    const adminChatSidebarDot =
+        document.getElementById("adminChatSidebarDot");
+
+    const adminChatSidebarLink =
+        document.getElementById("adminChatSidebarLink");
+
+    function setAdminChatSidebarDot(show) {
+        if (adminChatSidebarDot) {
+            adminChatSidebarDot.hidden = !show;
+        }
+    }
+
+    async function refreshAdminChatSidebarDot() {
+        try {
+            const response = await fetch(
+                "/Admin/Chat",
+                {
+                    credentials: "same-origin",
+                    cache: "no-store"
+                }
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const html = await response.text();
+            const parsed = new DOMParser().parseFromString(html, "text/html");
+
+            const hasUnreadChat = Array.from(
+                parsed.querySelectorAll(".admin-chat-item")
+            ).some(item =>
+                (parseInt(item.dataset.unread || "0", 10) || 0) > 0
+            );
+
+            setAdminChatSidebarDot(hasUnreadChat);
+        }
+        catch (error) {
+            console.warn(
+                "Admin chat sidebar notification check failed:",
+                error
+            );
+        }
+    }
+
+    async function markAllAdminChatNotificationsRead() {
+        const token =
+            document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value || "";
+
+        try {
+            await fetch(
+                "/Admin/Chat/MarkAllChatNotificationsRead",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "RequestVerificationToken": token,
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: token
+                        ? new URLSearchParams({
+                            "__RequestVerificationToken": token
+                        })
+                        : undefined
+                }
+            );
+        }
+        catch (error) {
+            console.warn(
+                "Unable to clear admin chat notifications:",
+                error
+            );
+        }
+    }
+
+    function ensureAdminSignalR() {
+        if (window.signalR) {
+            return Promise.resolve();
+        }
+
+        if (window.__adminSignalRLoading) {
+            return window.__adminSignalRLoading;
+        }
+
+        window.__adminSignalRLoading = new Promise(function (resolve, reject) {
+            const script = document.createElement("script");
+
+            script.src =
+                "https://cdn.jsdelivr.net/npm/@microsoft/signalr@10.0.0/dist/browser/signalr.min.js";
+            script.async = true;
+
+            script.onload = resolve;
+            script.onerror = reject;
+
+            document.head.appendChild(script);
+        });
+
+        return window.__adminSignalRLoading;
+    }
+
+    function showAdminRealtimeToast(payload) {
+        const type = String(payload?.type || "").toLowerCase();
+
+        const isRejected =
+            type.includes("rejected") ||
+            String(payload?.title || "").toLowerCase().includes("rejected");
+
+        const isApproved =
+            type.includes("accepted") ||
+            type.includes("approved") ||
+            String(payload?.title || "").toLowerCase().includes("approved");
+
+        const isChat =
+            type.includes("chat") ||
+            String(payload?.title || "").toLowerCase().includes("chat");
+
+        const isCompleted =
+            type === "admintaskcompleted" ||
+            String(payload?.title || "").toLowerCase().includes("task completed");
+
+        const toast = document.createElement("div");
+        toast.className =
+            "admin-realtime-toast" +
+            (isRejected ? " is-rejected" : "") +
+            (isApproved ? " is-approved" : "") +
+            (isChat ? " is-chat" : "") +
+            (isCompleted ? " is-completed" : "");
+
+        const icon = isRejected
+            ? "×"
+            : isApproved || isCompleted
+                ? "✓"
+                : isChat
+                    ? "✉"
+                    : "•";
+
+        const title =
+            payload?.title ||
+            (isChat ? "New Chat Message" : "New Notification");
+
+        const message =
+            payload?.message ||
+            (isCompleted
+                ? "A user completed a task."
+                : isChat
+                    ? "A user sent a new message."
+                    : "You have a new administrator notification.");
+
+        const repositoryUrl =
+            typeof payload?.completionRepositoryUrl === "string"
+                ? payload.completionRepositoryUrl.trim()
+                : "";
+
+        toast.innerHTML = `
+            <div class="admin-realtime-toast-glow"></div>
+            <div class="admin-realtime-toast-icon" aria-hidden="true">
+                ${icon}
+            </div>
+            <div class="admin-realtime-toast-content">
+                <strong>${escapeChatNotificationText(title)}</strong>
+                <span>${escapeChatNotificationText(message)}</span>
+                ${repositoryUrl
+                    ? `<a class="admin-realtime-toast-repository"
+                           href="${escapeChatNotificationText(repositoryUrl)}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                           🔗 Open Git Repository
+                       </a>`
+                    : ""}
+            </div>
+            <button type="button"
+                    class="admin-realtime-toast-close"
+                    aria-label="Close notification">×</button>
+            <div class="admin-realtime-toast-progress"></div>
+        `;
+
+        document.body.appendChild(toast);
+
+        const close =
+            toast.querySelector(".admin-realtime-toast-close");
+
+        let timer = window.setTimeout(removeToast, 5200);
+
+        function removeToast() {
+            window.clearTimeout(timer);
+            toast.classList.add("is-leaving");
+
+            window.setTimeout(function () {
+                toast.remove();
+            }, 360);
+        }
+
+        close?.addEventListener("click", removeToast);
+
+        if (payload?.notificationId && window.__adminNotificationConnection) {
+            window.__adminNotificationConnection
+                .invoke(
+                    "AcknowledgeNotification",
+                    Number(payload.notificationId)
+                )
+                .catch(function () {
+                    // Delivery is already persisted server-side.
+                });
+        }
+    }
+
+    async function startAdminRealtimeNotifications() {
+        try {
+            await ensureAdminSignalR();
+
+            if (!window.signalR) {
+                return;
+            }
+
+            if (window.__adminNotificationConnection) {
+                return;
+            }
+
+            const connection =
+                new signalR.HubConnectionBuilder()
+                    .withUrl("/notificationHub")
+                    .withAutomaticReconnect()
+                    .build();
+
+            window.__adminNotificationConnection = connection;
+
+            connection.on(
+                "AdminLiveNotification",
+                function (payload) {
+                    // Every live admin notification gets the bell red dot,
+                    // including chat, completed, approved and rejected events.
+                    setAdminNotificationDot(true);
+
+                    const type =
+                        String(payload?.type || "")
+                            .toLowerCase();
+
+                    if (type.includes("chat")) {
+                        setAdminChatSidebarDot(true);
+                    }
+
+                    showAdminRealtimeToast(payload);
+                }
+            );
+
+            connection.on(
+                "AdminMissedNotificationsReceived",
+                function (notifications) {
+                    if (!Array.isArray(notifications)) {
+                        return;
+                    }
+
+                    if (notifications.length > 0) {
+                        setAdminNotificationDot(true);
+                    }
+
+                    notifications.forEach(function (notification, index) {
+                        const type =
+                            String(notification?.type || "")
+                                .toLowerCase();
+
+                        if (type.includes("chat")) {
+                            setAdminChatSidebarDot(true);
+                        }
+
+                        window.setTimeout(function () {
+                            showAdminRealtimeToast(notification);
+                        }, index * 450);
+                    });
+                }
+            );
+
+            connection.onreconnected(function () {
+                refreshAdminChatSidebarDot();
+            });
+
+            await connection.start();
+
+        }
+        catch (error) {
+            console.warn(
+                "Admin real-time notification connection failed:",
+                error
+            );
+        }
+    }
+
+    const isAdminChatPage =
+        window.location.pathname
+            .toLowerCase()
+            .startsWith("/admin/chat");
+
+    refreshAdminChatSidebarDot();
+
+    window.setInterval(
+        refreshAdminChatSidebarDot,
+        30000
+    );
+
+    startAdminRealtimeNotifications();
 
 
 });

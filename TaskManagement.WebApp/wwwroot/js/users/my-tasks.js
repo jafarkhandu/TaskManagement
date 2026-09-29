@@ -20,7 +20,18 @@
     const modalPriority = document.getElementById("modalPriority")
     const modalStartDate = document.getElementById("modalStartDate");
     const modalEndDate = document.getElementById("modalEndDate");
-    const modalAmount = document.getElementById("modalAmount");        ;
+    const modalAmount = document.getElementById("modalAmount");
+
+    const completionModal = document.getElementById('taskCompletionModal');
+    const completionTaskTitle = document.getElementById('completionTaskTitle');
+    const completionRepositoryUrl = document.getElementById('completionRepositoryUrl');
+    const completionRepositoryError = document.getElementById('completionRepositoryError');
+    const submitCompletion = document.getElementById('submitCompletion');
+    const closeCompletionModalButton = document.getElementById('closeCompletionModal');
+    const cancelCompletion = document.getElementById('cancelCompletion');
+
+    let pendingCompletion = null;
+
 
     function applyFilters() {
 
@@ -296,7 +307,282 @@
         }
     );
 
+    /* ================= TASK COMPLETION SUBMISSION ================= */
+
+    function showStatusToast(message, success = true) {
+        try {
+            const id = 'status-toast-' + Date.now();
+            const el = document.createElement('div');
+
+            el.id = id;
+            el.style.position = 'fixed';
+            el.style.right = '20px';
+            el.style.top = '20px';
+            el.style.background = success ? '#2ecc71' : '#e74c3c';
+            el.style.color = '#fff';
+            el.style.padding = '10px 14px';
+            el.style.borderRadius = '6px';
+            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+            el.style.zIndex = '10000';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-8px)';
+            el.style.transition = 'opacity 250ms ease, transform 250ms ease';
+            el.textContent = message;
+
+            document.body.appendChild(el);
+
+            requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            });
+
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-8px)';
+
+                setTimeout(() => el.remove(), 300);
+            }, 3500);
+        }
+        catch {
+            // Toast must never break the task workflow.
+        }
+    }
+
+
+
+    function isValidGitHubRepositoryUrl(value) {
+        try {
+            const url = new URL(String(value || '').trim());
+
+            if (url.protocol !== 'https:') {
+                return false;
+            }
+
+            const host = url.hostname.toLowerCase();
+
+            if (host !== 'github.com' && host !== 'www.github.com') {
+                return false;
+            }
+
+            const segments = url.pathname
+                .split('/')
+                .filter(Boolean);
+
+            return segments.length >= 2;
+        }
+        catch {
+            return false;
+        }
+    }
+
+    function openCompletionModal(card, oldStatus) {
+        if (!completionModal || !card) return;
+
+        pendingCompletion = {
+            card,
+            taskId: card.dataset.taskId,
+            oldStatus: oldStatus || card.dataset.status || 'In Progress'
+        };
+
+        if (completionTaskTitle) {
+            completionTaskTitle.textContent = card.dataset.title || 'Task';
+        }
+
+        if (completionRepositoryUrl) {
+            completionRepositoryUrl.value = '';
+        }
+
+        if (completionRepositoryError) {
+            completionRepositoryError.textContent = '';
+        }
+
+        if (submitCompletion) {
+            submitCompletion.disabled = false;
+            submitCompletion.innerHTML = '<span class="completion-submit-icon">✓</span><span>Submit &amp; Complete</span>';
+        }
+
+        completionModal.classList.add('show');
+        completionModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        window.setTimeout(() => completionRepositoryUrl?.focus(), 120);
+    }
+
+    function closeCompletionSubmissionModal() {
+        if (!completionModal) return;
+
+        completionModal.classList.remove('show');
+        completionModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        pendingCompletion = null;
+    }
+
+    async function submitTaskCompletion() {
+        if (!pendingCompletion || !pendingCompletion.card) return;
+
+        const repositoryUrl = (completionRepositoryUrl?.value || '').trim();
+
+        if (!isValidGitHubRepositoryUrl(repositoryUrl)) {
+            if (completionRepositoryError) {
+                completionRepositoryError.textContent =
+                    'Enter a valid GitHub repository URL, for example https://github.com/username/repository';
+            }
+
+            completionRepositoryUrl?.focus();
+            return;
+        }
+
+        const pending = pendingCompletion;
+        const card = pending.card;
+        const taskId = pending.taskId;
+        const oldStatus = pending.oldStatus;
+        const targetList = document.getElementById('completedList');
+
+        if (!targetList) {
+            if (completionRepositoryError) {
+                completionRepositoryError.textContent = 'Unable to open the Completed column.';
+            }
+            return;
+        }
+
+        if (submitCompletion) {
+            submitCompletion.disabled = true;
+            submitCompletion.innerHTML = '<span class="completion-submit-icon">◌</span><span>Submitting...</span>';
+        }
+
+        if (completionRepositoryError) {
+            completionRepositoryError.textContent = '';
+        }
+
+        const token =
+            document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+
+        try {
+            const body = new URLSearchParams({
+                taskId: taskId,
+                newStatus: 'Completed',
+                completionRepositoryUrl: repositoryUrl,
+                __RequestVerificationToken: token
+            });
+
+            const response = await fetch('/User/MyTasks/ChangeStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'RequestVerificationToken': token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body
+            });
+
+            const json = await response.json();
+
+            if (!response.ok || !json?.success) {
+                throw new Error(json?.message || 'Unable to complete the task.');
+            }
+
+            card.dataset.status = 'Completed';
+            card.draggable = false;
+
+            const chatButton = card.querySelector('.task-chat-btn');
+            if (chatButton) {
+                chatButton.remove();
+            }
+
+            targetList.querySelector('.empty-column')?.remove();
+
+            if (targetList.firstElementChild) {
+                targetList.insertBefore(card, targetList.firstElementChild);
+            }
+            else {
+                targetList.appendChild(card);
+            }
+
+            const map = {
+                'Pending': 'todoCount',
+                'In Progress': 'progressCount',
+                'On Hold': 'holdCount',
+                'Completed': 'completedCount'
+            };
+
+            const oldCount = document.getElementById(map[oldStatus]);
+            const completedCount = document.getElementById(map.Completed);
+
+            if (oldCount) {
+                oldCount.textContent = Math.max(
+                    0,
+                    parseInt(oldCount.textContent || '0', 10) - 1
+                );
+            }
+
+            if (completedCount) {
+                completedCount.textContent =
+                    parseInt(completedCount.textContent || '0', 10) + 1;
+            }
+
+            try {
+                const idx = cards.findIndex(item => item === card);
+
+                if (idx !== -1) {
+                    cards.splice(idx, 1);
+                }
+
+                cards.push(card);
+            }
+            catch {
+                // Keep the visible board authoritative.
+            }
+
+            closeCompletionSubmissionModal();
+            showStatusToast('Task completed and GitHub repository submitted.');
+        }
+        catch (error) {
+            console.error('Task completion error:', error);
+
+            if (completionRepositoryError) {
+                completionRepositoryError.textContent =
+                    error.message || 'Unable to complete the task. Please try again.';
+            }
+
+            if (submitCompletion) {
+                submitCompletion.disabled = false;
+                submitCompletion.innerHTML = '<span class="completion-submit-icon">✓</span><span>Submit &amp; Complete</span>';
+            }
+        }
+    }
+
+    closeCompletionModalButton?.addEventListener(
+        'click',
+        closeCompletionSubmissionModal
+    );
+
+    cancelCompletion?.addEventListener(
+        'click',
+        closeCompletionSubmissionModal
+    );
+
+    completionModal?.querySelector('[data-close-completion="true"]')?.addEventListener(
+        'click',
+        closeCompletionSubmissionModal
+    );
+
+    submitCompletion?.addEventListener(
+        'click',
+        submitTaskCompletion
+    );
+
+    completionRepositoryUrl?.addEventListener(
+        'keydown',
+        function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitTaskCompletion();
+            }
+        }
+    );
+
     /* ================= DRAG & DROP STATUS WORKFLOW ================= */
+
 
     (function initDragAndDrop() {
 
@@ -434,6 +720,13 @@
 
                 const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
                 if (!card) return;
+
+                // Completion is gated by the repository submission modal.
+                // Do not move the card or call the backend until the user submits a valid URL.
+                if (newStatus === 'Completed') {
+                    openCompletionModal(card, oldStatus);
+                    return;
+                }
 
                 const originalList = card.closest('.task-list');
                 const originalIndex = originalList ? Array.from(originalList.children).indexOf(card) : -1;

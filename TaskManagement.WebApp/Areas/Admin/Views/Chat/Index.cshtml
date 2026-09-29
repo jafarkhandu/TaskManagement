@@ -132,7 +132,7 @@
                         }
                         else
                         {
-                            foreach (var group in Model
+                            foreach (var group in (Model ?? Enumerable.Empty<TaskManagement.Application.DTOs.AdminChatSessionDto>())
                                 .GroupBy(x => new { x.UserId, x.UserFullName })
                                 .OrderBy(g => g.Key.UserFullName))
                             {

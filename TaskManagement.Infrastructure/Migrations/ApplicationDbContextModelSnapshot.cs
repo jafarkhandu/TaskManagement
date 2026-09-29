@@ -331,6 +331,10 @@ namespace TaskManagement.Infrastructure.Migrations
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CompletionRepositoryUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)

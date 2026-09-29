@@ -455,46 +455,141 @@ document.addEventListener('DOMContentLoaded', function () {
             const currentGlobal = parseInt(globalBadge?.textContent || '0', 10) || 0;
             updateGlobalBadge(currentGlobal + 1);
 
-            // show in-app toast when drawer is closed
-            if (!drawer.classList.contains('active')) {
-                showToast(message, chatId);
-            }
-
         }
         catch (err) {
             console.error('handleIncomingMessage error', err);
         }
     }
 
-    function showToast(message, chatId) {
-        try {
-            const id = 'chat-toast-' + Date.now();
-            const el = document.createElement('div');
-            el.id = id;
-            el.className = 'chat-toast';
-            el.textContent = message;
-            el.style.position = 'fixed';
-            el.style.bottom = '20px';
-            el.style.right = '20px';
-            el.style.background = '#2d3748';
-            el.style.color = '#fff';
-            el.style.padding = '10px 14px';
-            el.style.borderRadius = '6px';
-            el.style.cursor = 'pointer';
-            el.style.zIndex = '9999';
+    // =========================================================
+    // PREMIUM CHAT DYNAMIC-ISLAND TOAST
+    // The bell notification system intentionally does not use this.
+    // =========================================================
+    const activeChatToastIds = new Set();
 
-            el.addEventListener('click', function () {
-                // open conversation
-                openConversation(chatId).catch(() => { });
-                el.remove();
-            });
+    function showChatIslandToast(payload) {
+        if (!payload) return;
 
-            document.body.appendChild(el);
+        const notificationId =
+            Number(payload.notificationId ?? payload.NotificationId ?? 0);
 
-            setTimeout(function () { el.remove(); }, 10000);
+        const chatSessionId =
+            Number(payload.chatSessionId ?? payload.ChatSessionId ?? 0);
+
+        if (!notificationId || !chatSessionId) return;
+
+        if (
+            drawer?.classList.contains('active') &&
+            activeChatSessionId &&
+            Number(activeChatSessionId) === chatSessionId
+        ) {
+            return;
         }
-        catch (err) { }
+
+        if (activeChatToastIds.has(notificationId)) return;
+
+        const existing = document.querySelector(
+            '[data-chat-island-notification="' + notificationId + '"]'
+        );
+
+        if (existing) return;
+
+        activeChatToastIds.add(notificationId);
+
+        const toast = document.createElement('button');
+        toast.type = 'button';
+        toast.className = 'user-chat-island-toast';
+        toast.dataset.chatIslandNotification = String(notificationId);
+        toast.setAttribute('aria-label', 'Open new chat message');
+
+        const senderName =
+            String(payload.senderName || 'Admin');
+
+        const taskTitle =
+            String(payload.taskTitle || 'Task conversation');
+
+        const message =
+            String(payload.message || 'New message');
+
+        toast.innerHTML = `
+            <span class="user-chat-island-orb" aria-hidden="true">
+                <span class="user-chat-island-orb-ring"></span>
+                <span class="user-chat-island-orb-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6.5 5.25h11A3.25 3.25 0 0 1 20.75 8.5v5.25A3.25 3.25 0 0 1 17.5 17H11l-4.75 3v-3.18A3.25 3.25 0 0 1 3.25 13.75V8.5A3.25 3.25 0 0 1 6.5 5.25Z"></path>
+                        <path d="M8 9.5h8M8 12.5h5"></path>
+                    </svg>
+                </span>
+            </span>
+
+            <span class="user-chat-island-content">
+                <span class="user-chat-island-topline">
+                    <strong>${escapeHtml(senderName)}</strong>
+                    <small>CHAT</small>
+                </span>
+                <span class="user-chat-island-task">${escapeHtml(taskTitle)}</span>
+                <span class="user-chat-island-message">${escapeHtml(message)}</span>
+            </span>
+
+            <span class="user-chat-island-arrow" aria-hidden="true">›</span>
+            <span class="user-chat-island-progress" aria-hidden="true"></span>
+        `;
+
+        const removeToast = () => {
+            if (!toast.isConnected) return;
+            toast.classList.add('is-closing');
+            setTimeout(() => toast.remove(), 430);
+        };
+
+        toast.addEventListener('click', async () => {
+            removeToast();
+
+            try {
+                await openConversation(
+                    chatSessionId,
+                    Number(payload.taskId || 0),
+                    taskTitle,
+                    'Admin'
+                );
+            }
+            catch (error) {
+                console.error('Opening chat from toast failed:', error);
+            }
+        });
+
+        // Start the island from the actual chat button, then expand
+        // into the centered Dynamic-Island position.
+        const chatButton = document.getElementById('chatButton');
+
+        if (chatButton) {
+            const rect = chatButton.getBoundingClientRect();
+            const originX =
+                (rect.left + rect.width / 2) -
+                (window.innerWidth / 2);
+
+            const originY =
+                Math.max(4, rect.top - 12);
+
+            toast.style.setProperty(
+                '--chat-origin-x',
+                originX + 'px'
+            );
+
+            toast.style.setProperty(
+                '--chat-origin-y',
+                originY + 'px'
+            );
+        }
+
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => toast.classList.add('is-visible'));
+        });
+
+        window.setTimeout(removeToast, 5600);
     }
+
 
     function closeTaskPicker() {
         if (taskPicker) taskPicker.hidden = true;
@@ -855,6 +950,24 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (err) {
             console.error('UserChat.openForTask error', err);
         }
+    };
+
+    window.UserChat.showChatIslandToast = showChatIslandToast;
+
+    window.UserChat.openForChatSession = async function (payload) {
+        if (!payload) return;
+
+        const chatSessionId =
+            Number(payload.chatSessionId ?? payload.ChatSessionId ?? 0);
+
+        if (!chatSessionId) return;
+
+        await openConversation(
+            chatSessionId,
+            Number(payload.taskId || 0),
+            payload.taskTitle || 'Task conversation',
+            'Admin'
+        );
     };
 
     // Start connection

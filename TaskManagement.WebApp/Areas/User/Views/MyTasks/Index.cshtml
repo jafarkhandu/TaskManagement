@@ -552,6 +552,78 @@
     "~/Areas/User/Views/Shared/_UserModals.cshtml")
 
 
+<!-- ================= TASK COMPLETION MODAL ================= -->
+
+<div class="task-completion-modal" id="taskCompletionModal" aria-hidden="true">
+    <div class="task-completion-backdrop" data-close-completion="true"></div>
+
+    <div class="task-completion-box" role="dialog" aria-modal="true" aria-labelledby="completionModalTitle">
+        <button type="button"
+                class="completion-close"
+                id="closeCompletionModal"
+                aria-label="Close">
+            ×
+        </button>
+
+        <div class="completion-icon">
+            ✓
+        </div>
+
+        <span class="completion-eyebrow">TASK COMPLETION</span>
+
+        <h2 id="completionModalTitle">Submit your work</h2>
+
+        <p class="completion-description">
+            Before this task can be marked as completed, submit the GitHub repository containing your work.
+        </p>
+
+        <div class="completion-task-chip">
+            <span>✓</span>
+            <div>
+                <small>Completing</small>
+                <strong id="completionTaskTitle">Task</strong>
+            </div>
+        </div>
+
+        <label class="completion-label" for="completionRepositoryUrl">
+            GitHub Repository URL
+        </label>
+
+        <div class="completion-input-wrap">
+            <span class="completion-link-icon">↗</span>
+            <input type="url"
+                   id="completionRepositoryUrl"
+                   placeholder="https://github.com/username/repository"
+                   autocomplete="url"
+                   spellcheck="false" />
+        </div>
+
+        <small class="completion-hint">
+            Use the HTTPS URL of your GitHub repository.
+        </small>
+
+        <div class="completion-error"
+             id="completionRepositoryError"
+             role="alert"
+             aria-live="polite"></div>
+
+        <div class="completion-actions">
+            <button type="button"
+                    class="completion-cancel-btn"
+                    id="cancelCompletion">
+                Cancel
+            </button>
+
+            <button type="button"
+                    class="completion-submit-btn"
+                    id="submitCompletion">
+                <span class="completion-submit-icon">✓</span>
+                <span>Submit &amp; Complete</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ================= TASK DETAILS MODAL ================= -->
 
 <div class="task-modal" id="taskModal">

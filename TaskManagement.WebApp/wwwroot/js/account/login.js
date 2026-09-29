@@ -159,25 +159,14 @@
 
             /*
              * SUCCESS
+             *
+             * Successful login now redirects directly without
+             * displaying the green "Login successful." message.
              */
 
-            showSuccess(
-                result.message ||
-                "Login successful."
-            );
-
-
-            /*
-             * REDIRECT
-             */
-
-            setTimeout(() => {
-
-                window.location.href =
-                    result.redirectUrl ||
-                    "/Home/Index";
-
-            }, 600);
+            window.location.href =
+                result.redirectUrl ||
+                "/Home/Index";
 
 
         }
@@ -299,27 +288,6 @@
 
         loginMessage.className =
             "alert alert-danger account-alert";
-
-        loginMessage.textContent =
-            message;
-
-        loginMessage.classList.remove(
-            "d-none"
-        );
-
-    }
-
-
-    /*
-     * ========================================
-     * SUCCESS
-     * ========================================
-     */
-
-    function showSuccess(message) {
-
-        loginMessage.className =
-            "alert alert-success account-alert";
 
         loginMessage.textContent =
             message;
