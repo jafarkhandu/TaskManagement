@@ -24,7 +24,7 @@ namespace TaskManagement.Application.Interfaces
         Task<(bool Success, string Error, int NotificationId)> ReassignAsync(int taskId, string newUserId);
 
         // Change the status of a task on behalf of a user.
-        // Returns Success, Error message, TaskId, ProjectId, OldStatus, NewStatus
-        Task<(bool Success, string Error, int TaskId, int ProjectId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus);
+        // A repository URL is mandatory when moving a task to Completed.
+        Task<(bool Success, string Error, int TaskId, int ProjectId, int AssignmentId, int NotificationId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus, string? completionRepositoryUrl = null);
     }
 }
