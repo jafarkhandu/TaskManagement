@@ -3499,3 +3499,17 @@ body:has(.notifications-page) {
         cursor: pointer !important;
     }
 
+
+/* Profile photo in the shared user topbar */
+.user-avatar.has-photo {
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 0 0 3px rgba(79,140,255,.08);
+}
+.user-avatar.has-photo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}

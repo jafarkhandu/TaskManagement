@@ -9,7 +9,7 @@
     <!-- COMMON USER SIDEBAR -->
     @await Html.PartialAsync(
         "~/Areas/User/Views/Shared/_UserSidebar.cshtml")
-        f
+
     <main class="main-content">
 
         <!-- COMMON USER TOPBAR -->
@@ -33,7 +33,7 @@
                 <section class="task-details-header">
 
                     <a href="/User/Notifications" class="task-back-link">
-                        <span class="back-arrow">←</spa
+                        <span class="back-arrow">←</span>
                         <span>Back to Notifications</span>
                     </a>
 
@@ -145,8 +145,6 @@
                                     </div>
                                 </div>
 
-                               
-
                                 <div class="info-tile">
                                     <div class="info-icon">👤</div>
                                     <div>
@@ -242,11 +240,11 @@
 
 
 <link rel="stylesheet"
-      href="~/css/user-dashboard.css"
+      href="~/css/users/user-dashboard.css"
       asp-append-version="true" />
 
 <link rel="stylesheet"
-      href="~/css/notification-details.css"
+      href="~/css/users/notification-details.css"
       asp-append-version="true" />
 
 <link rel="stylesheet"
@@ -260,9 +258,9 @@
     };
 </script>
 
-<script src="~/js/notification-details.js"
+<script src="~/js/users/notification-details.js"
         asp-append-version="true"></script>
 
-<script src="~/js/user-dashboard.js"
+<script src="~/js/users/user-dashboard.js"
         asp-append-version="true"></script>
 

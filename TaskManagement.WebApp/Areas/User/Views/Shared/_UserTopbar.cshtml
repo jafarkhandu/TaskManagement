@@ -1,4 +1,9 @@
-﻿@{
+﻿@using TaskManagement.Infrastructure.Identity
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
     var userName =
         ViewData["UserName"]?.ToString()
         ?? User.Identity?.Name
@@ -8,6 +13,8 @@
         string.IsNullOrWhiteSpace(userName)
             ? "U"
             : userName.Substring(0, 1).ToUpper();
+
+    var profilePhoto = currentUser?.ProfilePictureUrl;
 }
 
 <header class="topbar">
@@ -78,8 +85,15 @@
                 class="user-button"
                 data-modal="profileModal">
 
-            <span class="user-avatar">
-                @firstLetter
+            <span class="user-avatar @(string.IsNullOrWhiteSpace(profilePhoto) ? "" : "has-photo")">
+                @if (!string.IsNullOrWhiteSpace(profilePhoto))
+                {
+                    <img src="@profilePhoto" alt="Profile picture" />
+                }
+                else
+                {
+                    @firstLetter
+                }
             </span>
 
             <span class="user-info">

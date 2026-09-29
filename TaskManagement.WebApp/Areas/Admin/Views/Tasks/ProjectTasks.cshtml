@@ -21,14 +21,14 @@
           href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
     <link rel="stylesheet"
-          href="~/css/admin-dashboard.css"
+          href="~/css/admin/admin-dashboard.css"
           asp-append-version="true" />
 
     <link rel="stylesheet"
-          href="~/css/admin-tasks.css"
+          href="~/css/admin/admin-tasks.css"
           asp-append-version="true" />
     <link rel="stylesheet"
-          href="~/css/admin-common.css"
+          href="~/css/admin/admin-common.css"
           asp-append-version="true" />
 
 </head>
@@ -532,11 +532,19 @@
 
                                 <label>Assigned To</label>
 
-                                <select name="AssignedToUserId"
-                                        id="addAssignedTo"
-                                        class="form-control"
-                                        required>
-                                </select>
+                                <div class="user-autocomplete" data-user-autocomplete>
+                                    <input type="text"
+                                           id="addAssignedToSearch"
+                                           class="form-control user-autocomplete-input"
+                                           placeholder="Select User"
+                                           autocomplete="off"
+                                           required />
+                                    <input type="hidden"
+                                           name="AssignedToUserId"
+                                           id="addAssignedTo" />
+                                    <div id="addAssignedToOptions"
+                                         class="user-autocomplete-options"></div>
+                                </div>
 
                             </div>
 
@@ -882,11 +890,18 @@
 
                     <div class="form-field mt-3">
                         <label>Select User</label>
-                        <select id="reassignUserId"
-                                class="form-control"
-                                required>
-                            <option value="">Loading users...</option>
-                        </select>
+                        <div class="user-autocomplete" data-user-autocomplete>
+                            <input type="text"
+                                   id="reassignUserSearch"
+                                   class="form-control user-autocomplete-input"
+                                   placeholder="Select User"
+                                   autocomplete="off"
+                                   required />
+                            <input type="hidden"
+                                   id="reassignUserId" />
+                            <div id="reassignUserOptions"
+                                 class="user-autocomplete-options"></div>
+                        </div>
                     </div>
 
                     <div id="reassignTaskError"
@@ -1095,10 +1110,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
 
-    <script src="~/js/admin-tasks.js"
+    <script src="~/js/admin/admin-tasks.js"
             asp-append-version="true">
     </script>
-    <script src="~/js/admin-common.js"
+    <script src="~/js/admin/admin-common.js"
         asp-append-version="true"></script>
 
 </body>

@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.AspNetCore.Identity;
 
 namespace TaskManagement.Infrastructure.Identity
@@ -10,5 +7,7 @@ namespace TaskManagement.Infrastructure.Identity
         public string? FullName { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        public string? ProfilePictureUrl { get; set; }
     }
 }

@@ -67,11 +67,172 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 CompletionRate = totalTasks == 0
                     ? 0
                     : Math.Round(completedTasks * 100m / totalTasks, 1),
-                MonthlyPerformance = BuildMonthlyPerformance(tasks)
+                MonthlyPerformance = BuildMonthlyPerformance(tasks),
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                ProfileCompletionPercentage = CalculateProfileCompletion(user),
+                IsProfileComplete = IsProfileComplete(user)
             };
 
             return View(model);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(
+            string fullName,
+            string email,
+            string phoneNumber)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return Unauthorized(new { success = false, message = "User session expired." });
+
+            fullName = fullName?.Trim() ?? string.Empty;
+            email = email?.Trim() ?? string.Empty;
+            phoneNumber = phoneNumber?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(fullName))
+                return BadRequest(new { success = false, message = "Full Name is required." });
+
+            if (string.IsNullOrWhiteSpace(email) ||
+                !new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email))
+                return BadRequest(new { success = false, message = "Please enter a valid email address." });
+
+            if (!string.IsNullOrWhiteSpace(phoneNumber) &&
+                (!phoneNumber.All(char.IsDigit) || phoneNumber.Length < 10 || phoneNumber.Length > 15))
+                return BadRequest(new { success = false, message = "Please enter a valid phone number." });
+
+            var existingEmail = await _userManager.FindByEmailAsync(email);
+            if (existingEmail != null && existingEmail.Id != user.Id)
+                return BadRequest(new { success = false, message = "This email address is already registered." });
+
+            var existingUsername = await _userManager.FindByNameAsync(fullName);
+            if (existingUsername != null && existingUsername.Id != user.Id)
+                return BadRequest(new { success = false, message = "This Full Name is already registered." });
+
+            user.FullName = fullName;
+            user.UserName = fullName;
+            user.PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber;
+
+            var emailResult = await _userManager.SetEmailAsync(user, email);
+            if (!emailResult.Succeeded)
+                return BadRequest(new { success = false, message = string.Join(" ", emailResult.Errors.Select(x => x.Description)) });
+
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+                return BadRequest(new { success = false, message = string.Join(" ", updateResult.Errors.Select(x => x.Description)) });
+
+            return Json(new
+            {
+                success = true,
+                message = "Profile details updated successfully.",
+                fullName = user.FullName,
+                email = user.Email,
+                phoneNumber = user.PhoneNumber,
+                profileCompletionPercentage = CalculateProfileCompletion(user),
+                isProfileComplete = IsProfileComplete(user)
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile? file)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized(new { success = false, message = "User session expired." });
+
+            if (file == null || file.Length == 0)
+                return BadRequest(new { success = false, message = "Please select or capture a photo." });
+
+            const long maxBytes = 5 * 1024 * 1024;
+            if (file.Length > maxBytes)
+                return BadRequest(new { success = false, message = "Profile photo must be 5 MB or smaller." });
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowed.Contains(extension))
+                return BadRequest(new { success = false, message = "Only JPG, JPEG, PNG and WEBP images are allowed." });
+
+            var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
+            Directory.CreateDirectory(uploads);
+
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            {
+                var oldPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    user.ProfilePictureUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+                if (System.IO.File.Exists(oldPath))
+                    System.IO.File.Delete(oldPath);
+            }
+
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var physicalPath = Path.Combine(uploads, fileName);
+
+            await using (var stream = new FileStream(physicalPath, FileMode.CreateNew))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            user.ProfilePictureUrl = $"/uploads/profiles/{fileName}";
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                System.IO.File.Delete(physicalPath);
+                return BadRequest(new { success = false, message = string.Join(" ", result.Errors.Select(x => x.Description)) });
+            }
+
+            return Json(new { success = true, message = "Profile photo updated successfully.", profilePictureUrl = user.ProfilePictureUrl });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveProfilePicture()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized(new { success = false, message = "User session expired." });
+
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            {
+                var path = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    user.ProfilePictureUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+                if (System.IO.File.Exists(path))
+                    System.IO.File.Delete(path);
+            }
+
+            user.ProfilePictureUrl = null;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return BadRequest(new { success = false, message = "Unable to remove the profile photo." });
+
+            return Json(new { success = true, message = "Profile photo removed successfully." });
+        }
+
+        private static int CalculateProfileCompletion(ApplicationUser user)
+        {
+            var filled = new[]
+            {
+                !string.IsNullOrWhiteSpace(user.FullName),
+                !string.IsNullOrWhiteSpace(user.Email),
+                !string.IsNullOrWhiteSpace(user.PhoneNumber)
+            }.Count(x => x);
+
+            return (int)Math.Round(filled * 100m / 3m);
+        }
+
+        private static bool IsProfileComplete(ApplicationUser user) =>
+            !string.IsNullOrWhiteSpace(user.FullName) &&
+            !string.IsNullOrWhiteSpace(user.Email) &&
+            !string.IsNullOrWhiteSpace(user.PhoneNumber);
 
         [HttpPost]
         [ValidateAntiForgeryToken]

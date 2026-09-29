@@ -25,15 +25,15 @@
           href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
     <link rel="stylesheet"
-          href="~/css/admin-dashboard.css"
+          href="~/css/admin/admin-dashboard.css"
           asp-append-version="true" />
 
     <link rel="stylesheet"
-          href="~/css/admin-users.css"
+          href="~/css/admin/admin-users.css"
           asp-append-version="true" />
 
     <link rel="stylesheet"
-      href="~/css/admin-common.css"
+      href="~/css/admin/admin-common.css"
       asp-append-version="true" />
 
 </head>
@@ -208,9 +208,14 @@
                                             <div class="user-info-cell">
 
 
-                                                <div class="user-avatar">
+                                                <div class="user-avatar @(string.IsNullOrWhiteSpace(user.ProfilePictureUrl) ? "" : "has-photo")">
 
-                                                    @{
+                                                    @if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                                                    {
+                                                        <img src="@user.ProfilePictureUrl" alt="@user.FullName" />
+                                                    }
+                                                    else
+                                                    {
                                                         var displayName =
                                                             string.IsNullOrWhiteSpace(user.FullName)
                                                                 ? user.Email ?? "U"
@@ -226,10 +231,9 @@
                                                                     .Take(2)
                                                                     .Select(x => x[0])
                                                             ).ToUpper();
+
+                                                        <text>@initials</text>
                                                     }
-
-                                                    @initials
-
                                                 </div>
 
 
@@ -467,9 +471,9 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="~/js/admin-users.js"
+    <script src="~/js/admin/admin-users.js"
             asp-append-version="true"></script>
-    <script src="~/js/admin-common.js"
+    <script src="~/js/admin/admin-common.js"
         asp-append-version="true"></script>
 </body>
 
