@@ -10,3 +10,4 @@ namespace TaskManagement.Infrastructure.Identity
 
         public string? ProfilePictureUrl { get; set; }
     }
+}
