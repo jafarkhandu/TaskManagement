@@ -216,6 +216,23 @@
         return div.innerHTML;
     }
 
+    function escapeChatNotificationText(value) {
+        const div = document.createElement("div");
+        div.textContent = value ?? "";
+        return div.innerHTML;
+    }
+
+    function setAdminNotificationDot(show) {
+        if (notificationDot) {
+            notificationDot.hidden = !show;
+        }
+
+        notificationButton?.classList.toggle(
+            "has-notification",
+            !!show
+        );
+    }
+
     function notificationIcon(type) {
         const value = String(type || "").toLowerCase();
 
@@ -775,6 +792,10 @@
             connection.on(
                 "AdminLiveNotification",
                 function (payload) {
+                    // Every live admin notification gets the bell red dot,
+                    // including chat, completed, approved and rejected events.
+                    setAdminNotificationDot(true);
+
                     const type =
                         String(payload?.type || "")
                             .toLowerCase();
@@ -792,6 +813,10 @@
                 function (notifications) {
                     if (!Array.isArray(notifications)) {
                         return;
+                    }
+
+                    if (notifications.length > 0) {
+                        setAdminNotificationDot(true);
                     }
 
                     notifications.forEach(function (notification, index) {
