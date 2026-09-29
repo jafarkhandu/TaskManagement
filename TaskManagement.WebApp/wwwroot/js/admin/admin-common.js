@@ -431,10 +431,6 @@
         }
     }
 
-    adminChatSidebarLink?.addEventListener("click", function () {
-        setAdminChatSidebarDot(false);
-    });
-
     function ensureAdminSignalR() {
         if (window.signalR) {
             return Promise.resolve();
