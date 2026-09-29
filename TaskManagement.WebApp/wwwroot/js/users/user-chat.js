@@ -557,6 +557,30 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // Start the island from the actual chat button, then expand
+        // into the centered Dynamic-Island position.
+        const chatButton = document.getElementById('chatButton');
+
+        if (chatButton) {
+            const rect = chatButton.getBoundingClientRect();
+            const originX =
+                (rect.left + rect.width / 2) -
+                (window.innerWidth / 2);
+
+            const originY =
+                Math.max(4, rect.top - 12);
+
+            toast.style.setProperty(
+                '--chat-origin-x',
+                originX + 'px'
+            );
+
+            toast.style.setProperty(
+                '--chat-origin-y',
+                originY + 'px'
+            );
+        }
+
         document.body.appendChild(toast);
 
         requestAnimationFrame(() => {
