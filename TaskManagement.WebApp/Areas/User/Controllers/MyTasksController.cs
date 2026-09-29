@@ -185,7 +185,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         .AsNoTracking()
                         .Where(t => t.Id == taskId)
                         .Select(t => new { t.Id, t.Title, t.Status, t.ProjectId })
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefaultAsync()
+                        ?? throw new InvalidOperationException("Task not found.");
 
                     var projectTitle = await _context.Projects
                         .AsNoTracking()
@@ -232,7 +233,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                                             type = notification.Type,
                                             title = notification.Title,
                                             message = "A user started a new task chat.",
-                                            userName = user.FullName ?? user.UserName,
+                                            userName = user.FullName ?? user.UserName ?? string.Empty,
                                             chatSessionId = result.ChatSessionId,
                                             taskId = task.Id,
                                             taskTitle = task.Title,
@@ -256,7 +257,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         {
                             ChatSessionId = result.ChatSessionId,
                             UserId = user.Id,
-                            UserFullName = user.FullName ?? user.UserName,
+                            UserFullName = user.FullName ?? user.UserName ?? string.Empty,
                             TaskId = task.Id,
                             TaskTitle = task.Title,
                             TaskStatus = task.Status,
