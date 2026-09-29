@@ -447,6 +447,9 @@ namespace TaskManagement.Infrastructure.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
