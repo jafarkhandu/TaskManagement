@@ -637,13 +637,7 @@
         markAllAdminChatNotificationsRead();
     }
 
-    if (
-        String(document.body?.className || "")
-            .toLowerCase()
-            .includes("admin")
-    ) {
-        startAdminRealtimeNotifications();
-    }
+    startAdminRealtimeNotifications();
 
 
 });
