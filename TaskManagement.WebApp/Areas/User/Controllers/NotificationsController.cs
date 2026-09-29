@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Identity;
+using TaskManagement.WebApp.Hubs;
 
 namespace TaskManagement.WebApp.Areas.User.Controllers
 {
@@ -13,13 +15,16 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHubContext<NotificationHub> _notificationHub;
 
         public NotificationsController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IHubContext<NotificationHub> notificationHub)
         {
             _context = context;
             _userManager = userManager;
+            _notificationHub = notificationHub;
         }
 
         // GET: /User/Notifications
@@ -206,6 +211,11 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 // configured SQL retry execution strategy.
                 await _context.SaveChangesAsync();
 
+                await NotifyAdminsOfAssignmentResponseAsync(
+                    assignment,
+                    task,
+                    "Accepted");
+
                 return Json(new
                 {
                     success = true,
@@ -272,6 +282,11 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 // configured SQL retry execution strategy.
                 await _context.SaveChangesAsync();
 
+                await NotifyAdminsOfAssignmentResponseAsync(
+                    assignment,
+                    task,
+                    "Rejected");
+
                 return Json(new
                 {
                     success = true,
@@ -285,6 +300,62 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     success = false,
                     message = "Unable to reject the task."
                 });
+            }
+        }
+
+        private async Task NotifyAdminsOfAssignmentResponseAsync(
+            TaskManagement.Domain.Entities.TaskAssignment assignment,
+            TaskManagement.Domain.Entities.TaskItem task,
+            string response)
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+
+            foreach (var admin in admins)
+            {
+                var notification = new TaskManagement.Domain.Entities.Notification
+                {
+                    UserId = admin.Id,
+                    TaskAssignmentId = assignment.Id,
+                    Type = "AdminAssignmentResponse",
+                    Title = response == "Accepted"
+                        ? "Task Assignment Approved"
+                        : "Task Assignment Rejected",
+                    IsRead = false,
+                    IsDelivered = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync();
+
+                if (NotificationHub.IsUserOnline(admin.Id))
+                {
+                    try
+                    {
+                        await _notificationHub.Clients.User(admin.Id)
+                            .SendAsync("AdminLiveNotification", new
+                            {
+                                notificationId = notification.Id,
+                                type = notification.Type,
+                                title = notification.Title,
+                                message = response == "Accepted"
+                                    ? $"{task.Title} was approved by {User.Identity?.Name ?? "User"}."
+                                    : $"{task.Title} was rejected by {User.Identity?.Name ?? "User"}.",
+                                userName = User.Identity?.Name ?? "User",
+                                taskId = task.Id,
+                                taskTitle = task.Title,
+                                createdAt = notification.CreatedAt
+                            });
+
+                        notification.IsDelivered = true;
+                        notification.IsRead = true;
+                        await _context.SaveChangesAsync();
+                    }
+                    catch
+                    {
+                        // Keep it pending for the next admin connection.
+                    }
+                }
             }
         }
 
