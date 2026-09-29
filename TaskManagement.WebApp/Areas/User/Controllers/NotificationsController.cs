@@ -308,54 +308,61 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             TaskManagement.Domain.Entities.TaskItem task,
             string response)
         {
-            var admins = await _userManager.GetUsersInRoleAsync("Admin");
-
-            foreach (var admin in admins)
+            try
             {
-                var notification = new TaskManagement.Domain.Entities.Notification
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+
+                foreach (var admin in admins)
                 {
-                    UserId = admin.Id,
-                    TaskAssignmentId = assignment.Id,
-                    Type = "AdminAssignmentResponse",
-                    Title = response == "Accepted"
-                        ? "Task Assignment Approved"
-                        : "Task Assignment Rejected",
-                    IsRead = false,
-                    IsDelivered = false,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Notifications.Add(notification);
-                await _context.SaveChangesAsync();
-
-                if (NotificationHub.IsUserOnline(admin.Id))
-                {
-                    try
+                    var notification = new TaskManagement.Domain.Entities.Notification
                     {
-                        await _notificationHub.Clients.User(admin.Id)
-                            .SendAsync("AdminLiveNotification", new
-                            {
-                                notificationId = notification.Id,
-                                type = notification.Type,
-                                title = notification.Title,
-                                message = response == "Accepted"
-                                    ? $"{task.Title} was approved by {User.Identity?.Name ?? "User"}."
-                                    : $"{task.Title} was rejected by {User.Identity?.Name ?? "User"}.",
-                                userName = User.Identity?.Name ?? "User",
-                                taskId = task.Id,
-                                taskTitle = task.Title,
-                                createdAt = notification.CreatedAt
-                            });
+                        UserId = admin.Id,
+                        TaskAssignmentId = assignment.Id,
+                        Type = "AdminAssignmentResponse",
+                        Title = response == "Accepted"
+                            ? "Task Assignment Approved"
+                            : "Task Assignment Rejected",
+                        IsRead = false,
+                        IsDelivered = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                        notification.IsDelivered = true;
-                        notification.IsRead = true;
-                        await _context.SaveChangesAsync();
-                    }
-                    catch
+                    _context.Notifications.Add(notification);
+                    await _context.SaveChangesAsync();
+
+                    if (NotificationHub.IsUserOnline(admin.Id))
                     {
-                        // Keep it pending for the next admin connection.
+                        try
+                        {
+                            await _notificationHub.Clients.User(admin.Id)
+                                .SendAsync("AdminLiveNotification", new
+                                {
+                                    notificationId = notification.Id,
+                                    type = notification.Type,
+                                    title = notification.Title,
+                                    message = response == "Accepted"
+                                        ? $"{task.Title} was approved by {User.Identity?.Name ?? "User"}."
+                                        : $"{task.Title} was rejected by {User.Identity?.Name ?? "User"}.",
+                                    userName = User.Identity?.Name ?? "User",
+                                    taskId = task.Id,
+                                    taskTitle = task.Title,
+                                    createdAt = notification.CreatedAt
+                                });
+
+                            notification.IsDelivered = true;
+                            notification.IsRead = true;
+                            await _context.SaveChangesAsync();
+                        }
+                        catch
+                        {
+                            // Keep it pending for the next admin connection.
+                        }
                     }
                 }
+            }
+            catch
+            {
+                // Assignment response must not fail because notification delivery failed.
             }
         }
 
