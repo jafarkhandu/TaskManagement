@@ -192,7 +192,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         .AsNoTracking()
                         .Where(p => p.Id == task.ProjectId)
                         .Select(p => p.ProjectTitle)
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefaultAsync() ?? string.Empty;
 
                     var assignmentId = await _context.TaskAssignments
                         .Where(a =>
