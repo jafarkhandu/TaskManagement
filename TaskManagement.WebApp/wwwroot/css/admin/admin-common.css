@@ -735,6 +735,93 @@ html:not(.light-theme) .admin-notification-view-all:hover {
     color: #174db8;
 }
 
+.global-admin-notification.is-chat .admin-notification-item-icon {
+    color: #7c3aed;
+    background: rgba(124, 58, 237, .10);
+}
+
+.admin-notification-empty-state {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+
+#clearAllAdminNotifications {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid rgba(148, 163, 184, .14);
+    padding: 12px 16px;
+    background: rgba(248, 250, 255, .34);
+    color: #2864ed;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+}
+
+#clearAllAdminNotifications:hover {
+    background: rgba(239, 246, 255, .72);
+    color: #174db8;
+}
+
+#clearAllAdminNotifications:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.clear-admin-notification-icon {
+    display: inline-grid;
+    place-items: center;
+    margin-right: 5px;
+}
+
+.task-repository-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin-top: 2px;
+    padding: 9px 13px;
+    border: 1px solid rgba(40, 100, 237, .18);
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eef5ff, #e4edff);
+    color: #2864ed;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow:
+        0 7px 18px rgba(40, 100, 237, .10),
+        inset 0 1px 0 rgba(255,255,255,.9);
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.task-repository-button:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #e5efff, #dce8ff);
+    color: #174db8;
+    box-shadow:
+        0 10px 22px rgba(40, 100, 237, .15),
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.task-repository-button-icon {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.task-repository-url {
+    margin-top: 7px;
+    max-width: 100%;
+    color: #8190a7;
+    font-size: 10px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
 
 .admin-chat-notification-empty {
     background: rgba(248, 250, 255, .18);
