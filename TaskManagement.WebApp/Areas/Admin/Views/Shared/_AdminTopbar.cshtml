@@ -62,28 +62,30 @@
 
         </button>
 
-        <!-- ADMIN CHAT NOTIFICATIONS -->
+        <!-- GLOBAL ADMIN NOTIFICATIONS
+             Chat messages stay in the dedicated Chat UI and never appear here. -->
         <div class="admin-notification-panel" id="adminNotificationPanel" aria-hidden="true">
             <div class="admin-notification-panel-header">
                 <div>
-                    <strong>Chat Notifications</strong>
-                    <small id="adminChatNotificationSummary">Checking unread chats...</small>
+                    <strong>Notifications</strong>
+                    <small id="adminNotificationSummary">Checking notifications...</small>
                 </div>
-                <button type="button" id="closeAdminNotifications" aria-label="Close chat notifications">×</button>
+                <button type="button" id="closeAdminNotifications" aria-label="Close notifications">×</button>
             </div>
 
-            <div class="admin-notification-list" id="adminChatNotificationList">
+            <div class="admin-notification-list" id="adminNotificationList">
                 <div class="admin-chat-notification-empty">
-                    <span>💬</span>
-                    <strong>Loading chats...</strong>
+                    <span>✓</span>
+                    <strong>Loading notifications...</strong>
                 </div>
             </div>
 
-            <a class="admin-notification-view-all"
-               href="@Url.Action("Index", "Chat", new { area = "Admin" })">
-                Open Chat
-                <span>→</span>
-            </a>
+            <button type="button"
+                    class="admin-notification-view-all"
+                    id="markAllAdminNotificationsRead">
+                Mark all as read
+                <span>✓</span>
+            </button>
         </div>
 
 
