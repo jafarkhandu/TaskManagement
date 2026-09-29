@@ -362,7 +362,7 @@
         cards.forEach((card, index) => {
             card.style.transition =
                 "transform .45s cubic-bezier(.16,1,.3,1), opacity .45s ease";
-            card.style.transitionDelay = \`${index} * 90ms\`;
+            card.style.transitionDelay = `${index * 90}ms`;
             card.style.transform = "translateX(120%)";
             card.style.opacity = "0";
         });
