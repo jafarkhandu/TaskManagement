@@ -20,7 +20,9 @@
     const modalPriority = document.getElementById("modalPriority")
     const modalStartDate = document.getElementById("modalStartDate");
     const modalEndDate = document.getElementById("modalEndDate");
-    const modalAmount = document.getElementById("modalAmount");        ;\n\n    const completionModal = document.getElementById('taskCompletionModal');
+    const modalAmount = document.getElementById("modalAmount");
+
+    const completionModal = document.getElementById('taskCompletionModal');
     const completionTaskTitle = document.getElementById('completionTaskTitle');
     const completionRepositoryUrl = document.getElementById('completionRepositoryUrl');
     const completionRepositoryError = document.getElementById('completionRepositoryError');
