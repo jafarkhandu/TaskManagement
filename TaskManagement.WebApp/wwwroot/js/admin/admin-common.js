@@ -573,7 +573,7 @@
                         String(payload?.type || "")
                             .toLowerCase();
 
-                    if (type.includes("chat")) {
+                    if (type.includes("chat") && !isAdminChatPage) {
                         setAdminChatSidebarDot(true);
                     }
 
@@ -593,7 +593,7 @@
                             String(notification?.type || "")
                                 .toLowerCase();
 
-                        if (type.includes("chat")) {
+                        if (type.includes("chat") && !isAdminChatPage) {
                             setAdminChatSidebarDot(true);
                         }
 
