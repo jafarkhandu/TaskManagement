@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
        INITIAL AVATARS
     ========================================================= */
 
+    // A global admin notification can deep-link directly into this chat.
+    window.setTimeout(openChatFromNotificationHash, 450);
+
+
+
     document.querySelectorAll('.admin-chat-item').forEach(function (item) {
 
         const name =
@@ -843,6 +848,43 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+
+    /* =========================================================
+       OPEN CHAT FROM GLOBAL NOTIFICATION
+    ========================================================= */
+
+    function openChatFromNotificationHash() {
+        const hash = window.location.hash || '';
+
+        if (!hash.toLowerCase().startsWith('#chat-')) {
+            return;
+        }
+
+        const sessionId =
+            decodeURIComponent(hash.substring(6));
+
+        if (!sessionId) {
+            return;
+        }
+
+        const openFromHash = () => {
+            const item =
+                adminChatList?.querySelector(
+                    `.admin-chat-item[data-chat-session-id="${CSS.escape(String(sessionId))}"]`
+                );
+
+            if (!item) {
+                return false;
+            }
+
+            openChat(item);
+            return true;
+        };
+
+        if (!openFromHash()) {
+            window.setTimeout(openFromHash, 350);
+        }
+    }
 
     /* =========================================================
        OPEN CHAT
