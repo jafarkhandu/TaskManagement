@@ -6,6 +6,8 @@
     var userName = string.IsNullOrWhiteSpace(Model.FullName) ? "Student" : Model.FullName;
     var firstLetter = userName.Substring(0, 1).ToUpper();
     var statusText = Model.IsActive ? "Active" : "Inactive";
+    var profilePhoto = Model.ProfilePictureUrl;
+    var profileCompletion = Model.ProfileCompletionPercentage;
 }
 
 <!DOCTYPE html>
@@ -41,7 +43,20 @@
                 <div class="profile-glow profile-glow-two"></div>
 
                 <header class="profile-hero-card">
-                    <div class="profile-hero-avatar">@firstLetter</div>
+                    <div class="profile-avatar-wrap" id="profileAvatarWrap">
+                        <div class="profile-hero-avatar @(string.IsNullOrWhiteSpace(profilePhoto) ? "" : "has-photo")"
+                             id="profileHeroAvatar">
+                            @if (!string.IsNullOrWhiteSpace(profilePhoto))
+                            {
+                                <img src="@profilePhoto" alt="Profile picture" />
+                            }
+                            else
+                            {
+                                @firstLetter
+                            }
+                        </div>
+                        <button type="button" class="profile-avatar-edit" id="changeProfilePhotoButton" aria-label="Change profile picture">✎</button>
+                    </div>
 
                     <div class="profile-hero-copy">
                         <span class="profile-eyebrow">STUDENT PROFILE</span>
@@ -69,30 +84,51 @@
                                 <span>ACCOUNT</span>
                                 <h2>Personal Details</h2>
                             </div>
-                            <div class="profile-card-icon">♙</div>
+                            <button type="button" class="profile-edit-btn" id="editProfileButton">Edit</button>
                         </div>
 
-                        <div class="profile-details">
-                            <div class="profile-detail-row">
-                                <span>Full Name</span>
-                                <strong>@userName</strong>
+                        <div class="profile-completion">
+                            <div class="profile-completion-head">
+                                <span>Profile Completion</span>
+                                <strong id="profileCompletionValue">@profileCompletion%</strong>
                             </div>
-
-                            <div class="profile-detail-row">
-                                <span>Email</span>
-                                <strong>@Model.Email</strong>
+                            <div class="profile-completion-track">
+                                <div class="profile-completion-bar" id="profileCompletionBar" style="width:@profileCompletion%;"></div>
                             </div>
-
-                            <div class="profile-detail-row">
-                                <span>Phone</span>
-                                <strong>@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not added" : Model.PhoneNumber)</strong>
+                            <div id="profileCompletionMessage"
+                                 class="profile-completion-message @(Model.IsProfileComplete ? "complete" : "")">
+                                @if (!Model.IsProfileComplete)
+                                {
+                                    <span>To complete your profile, fill in all the fields.</span>
+                                }
                             </div>
+                        </div>
 
+                        <form id="profileDetailsForm" class="profile-details" autocomplete="off">
+                            <div class="profile-detail-row editable-profile-row">
+                                <label for="profileFullName">Full Name</label>
+                                <input id="profileFullName" name="fullName" value="@Model.FullName" disabled required />
+                            </div>
+                            <div class="profile-detail-row editable-profile-row">
+                                <label for="profileEmail">Email</label>
+                                <input id="profileEmail" name="email" type="email" value="@Model.Email" disabled required />
+                            </div>
+                            <div class="profile-detail-row editable-profile-row">
+                                <label for="profilePhone">Phone</label>
+                                <input id="profilePhone" name="phoneNumber" value="@Model.PhoneNumber" placeholder="Add phone number" disabled />
+                            </div>
                             <div class="profile-detail-row">
                                 <span>Account Status</span>
                                 <strong class="@(Model.IsActive ? "profile-active" : "profile-inactive")">@statusText</strong>
                             </div>
-                        </div>
+                            <div id="profileDetailsMessage" class="profile-form-message" aria-live="polite"></div>
+                            <div class="profile-edit-actions" id="profileEditActions" hidden>
+                                <button type="button" class="profile-secondary-btn" id="cancelProfileEdit">Cancel</button>
+                                <button type="submit" class="profile-primary-btn" id="saveProfileButton">Save Changes</button>
+                            </div>
+                        </form>
+                    </section>
+
                     </section>
 
                     <section class="profile-card security-card" id="passwordSection">
@@ -237,6 +273,40 @@
 
             </section>
         </main>
+    </div>
+
+    <div class="profile-photo-modal" id="profilePhotoModal" hidden>
+        <div class="profile-photo-dialog">
+            <button type="button" class="profile-photo-close" id="closeProfilePhotoModal">×</button>
+            <span class="profile-eyebrow">PROFILE PICTURE</span>
+            <h2>Update your profile photo</h2>
+            <p>Choose a professional photo from your device or take one with your camera.</p>
+
+            <div class="profile-photo-preview" id="profilePhotoPreview">
+                @if (!string.IsNullOrWhiteSpace(profilePhoto))
+                {
+                    <img src="@profilePhoto" alt="Current profile picture" />
+                }
+                else
+                {
+                    <span>@firstLetter</span>
+                }
+            </div>
+
+            <video id="profileCameraPreview" class="profile-camera-preview" autoplay playsinline hidden></video>
+            <canvas id="profileCameraCanvas" hidden></canvas>
+
+            <div class="profile-photo-actions">
+                <button type="button" class="profile-secondary-btn" id="uploadPhotoButton">Upload Photo</button>
+                <button type="button" class="profile-primary-btn" id="cameraPhotoButton">Take Photo</button>
+                <button type="button" class="profile-secondary-btn" id="capturePhotoButton" hidden>Capture</button>
+                <button type="button" class="profile-secondary-btn" id="retakePhotoButton" hidden>Retake</button>
+                <button type="button" class="profile-primary-btn" id="savePhotoButton" disabled>Save Photo</button>
+                <button type="button" class="profile-danger-btn" id="removePhotoButton" @(string.IsNullOrWhiteSpace(profilePhoto) ? "hidden" : "")>Remove Photo</button>
+            </div>
+            <input type="file" id="profilePhotoFile" accept="image/jpeg,image/png,image/webp" hidden />
+            <div id="profilePhotoMessage" class="profile-form-message" aria-live="polite"></div>
+        </div>
     </div>
 
     @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserModals.cshtml")
