@@ -1186,3 +1186,22 @@ html:not(.light-theme) .admin-notification-view-all {
         right: 10px;
     }
 }
+
+
+/* CIIT Training Institute brand image */
+.sidebar-brand-image {
+    display: block;
+    width: 176px;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: left center;
+}
+
+@media (max-width: 900px) {
+    .sidebar-brand-image {
+        width: 46px;
+        max-width: 46px;
+        object-position: center;
+    }
+}
