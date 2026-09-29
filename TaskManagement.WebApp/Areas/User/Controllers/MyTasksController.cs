@@ -95,6 +95,15 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (user == null)
                 return Challenge();
 
+            var chatSessionIdsToDelete =
+                string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)
+                    ? await _context.ChatSessions
+                        .AsNoTracking()
+                        .Where(x => x.TaskId == taskId && x.IsActive)
+                        .Select(x => x.Id)
+                        .ToListAsync()
+                    : new List<int>();
+
             var result = await _taskService.ChangeStatusAsync(
                 taskId,
                 user.Id,
@@ -172,16 +181,20 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 }
 
                 // Completed tasks no longer keep their task chat. The service already
-                // removed the database records; notify any connected chat clients too.
-                try
+                // removed the database records; notify connected chat clients using the
+                // session IDs captured before deletion.
+                foreach (var chatSessionId in chatSessionIdsToDelete)
                 {
-                    await _chatHub.Clients
-                        .Group($"chat-task-{result.TaskId}")
-                        .SendAsync("ChatDeleted", new { taskId = result.TaskId });
-                }
-                catch
-                {
-                    // Non-fatal.
+                    try
+                    {
+                        await _chatHub.Clients
+                            .Group($"chat-{chatSessionId}")
+                            .SendAsync("ChatDeleted", new { chatSessionId });
+                    }
+                    catch
+                    {
+                        // Non-fatal.
+                    }
                 }
             }
 
