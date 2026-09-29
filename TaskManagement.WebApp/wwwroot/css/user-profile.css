@@ -528,3 +528,49 @@
     .profile-card,
     .profile-hero-avatar { animation: none !important; }
 }
+
+
+/* =========================================
+   PROFILE PHOTO + EDITABLE ACCOUNT
+========================================= */
+.profile-avatar-wrap { position: relative; width: 78px; height: 78px; flex: 0 0 auto; }
+.profile-avatar-wrap .profile-hero-avatar { width: 78px; height: 78px; }
+.profile-hero-avatar.has-photo { padding: 0; overflow: hidden; }
+.profile-hero-avatar.has-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-avatar-edit { position: absolute; right: -3px; bottom: -3px; width: 29px; height: 29px; border: 2px solid #102342; border-radius: 50%; background: #4a7cff; color: #fff; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,.22); }
+.profile-card-heading { gap: 12px; }
+.profile-edit-btn { border: 1px solid rgba(93,132,255,.35); background: rgba(63,105,245,.1); color: #79a0ff; border-radius: 8px; padding: 7px 13px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.profile-edit-btn:hover { background: rgba(63,105,245,.2); }
+.profile-completion { margin: 0 0 18px; padding: 12px 14px; border-radius: 11px; background: rgba(255,255,255,.025); border: 1px solid rgba(132,159,202,.12); }
+.profile-completion-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:11px; color:#91a7c2; }
+.profile-completion-head strong { color:#79a0ff; font-size:13px; }
+.profile-completion-track { height:7px; background:#09182d; border-radius:99px; overflow:hidden; }
+.profile-completion-bar { height:100%; border-radius:99px; background:linear-gradient(90deg,#3f82ff,#7957ff); transition:width .35s ease; }
+.profile-completion-message { min-height:16px; margin-top:7px; color:#ff6874; font-size:10px; }
+.profile-completion-message.complete { color:#49d69b; }
+.editable-profile-row { align-items:center; }
+.editable-profile-row label { color:#7185a4; font-size:11px; min-width:82px; }
+.editable-profile-row input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#edf4ff; text-align:right; font-size:12px; font-weight:650; padding:7px 0; }
+.editable-profile-row input:disabled { opacity:1; cursor:default; }
+.editable-profile-row input:not(:disabled) { padding:8px 10px; border:1px solid rgba(91,127,190,.35); border-radius:7px; background:rgba(3,15,31,.55); }
+.profile-edit-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+.profile-edit-actions[hidden] { display:none; }
+.profile-danger-btn { border:1px solid rgba(255,89,105,.28); background:rgba(255,89,105,.08); color:#ff6c78; border-radius:8px; padding:9px 13px; font-size:11px; font-weight:700; cursor:pointer; }
+.profile-danger-btn:hover { background:rgba(255,89,105,.15); }
+
+/* =========================================
+   PROFESSIONAL PHOTO MODAL
+========================================= */
+.profile-photo-modal { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(2,10,24,.78); backdrop-filter:blur(9px); }
+.profile-photo-modal[hidden] { display:none; }
+.profile-photo-dialog { position:relative; width:min(460px,100%); padding:28px; border:1px solid rgba(113,151,220,.25); border-radius:20px; background:linear-gradient(145deg,#102744,#0a192e); box-shadow:0 25px 80px rgba(0,0,0,.42); }
+.profile-photo-dialog h2 { margin:5px 0 7px; color:#f3f7ff; font-size:22px; }
+.profile-photo-dialog > p { margin:0 0 18px; color:#91a7c2; font-size:12px; line-height:1.6; }
+.profile-photo-close { position:absolute; top:13px; right:15px; border:0; background:transparent; color:#9eb0ca; font-size:25px; cursor:pointer; }
+.profile-photo-preview { width:132px; height:132px; margin:4px auto 18px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#436fff,#754dff); color:#fff; font-size:42px; font-weight:800; border:4px solid rgba(255,255,255,.08); }
+.profile-photo-preview img { width:100%; height:100%; object-fit:cover; }
+.profile-camera-preview { width:100%; max-height:260px; object-fit:cover; border-radius:14px; margin-bottom:15px; background:#030b18; transform:scaleX(-1); }
+.profile-photo-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.profile-photo-actions .profile-danger-btn { grid-column:1/-1; }
+.profile-photo-actions button[hidden] { display:none; }
+@media (max-width:600px) { .profile-photo-dialog { padding:22px; } .profile-photo-actions { grid-template-columns:1fr; } .profile-photo-actions .profile-danger-btn { grid-column:auto; } }
