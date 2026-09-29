@@ -448,7 +448,7 @@
             const script = document.createElement("script");
 
             script.src =
-                "https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js";
+                "https://cdn.jsdelivr.net/npm/@microsoft/signalr@10.0.0/dist/browser/signalr.min.js";
             script.async = true;
 
             script.onload = resolve;
