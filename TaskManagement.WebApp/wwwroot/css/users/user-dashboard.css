@@ -641,7 +641,11 @@ button {
     -webkit-backdrop-filter: blur(28px) saturate(165%);
     opacity: 0;
     transform:
-        translate3d(-50%, -36px, 0)
+        translate3d(
+            calc(-50% + var(--chat-origin-x, 0px)),
+            var(--chat-origin-y, -36px),
+            0
+        )
         scale(.74, .28);
     transform-origin: 50% 0;
     filter: blur(4px);
@@ -685,7 +689,11 @@ button {
 .user-chat-island-toast.is-closing {
     opacity: 0;
     transform:
-        translate3d(-50%, -10px, 0)
+        translate3d(
+            calc(-50% + var(--chat-origin-x, 0px)),
+            var(--chat-origin-y, -10px),
+            0
+        )
         scale(.72, .30);
     filter: blur(4px);
     pointer-events: none;
