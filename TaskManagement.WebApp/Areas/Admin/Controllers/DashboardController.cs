@@ -57,7 +57,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
             var users = await _context.Users
                 .Where(u => userIds.Contains(u.Id))
-                .Select(u => new UserLookupDto { Id = u.Id, FullName = u.FullName ?? u.UserName })
+                .Select(u => new UserLookupDto { Id = u.Id, FullName = u.FullName ?? u.UserName ?? string.Empty })
                 .ToListAsync();
 
             foreach (var p in recentProjectsEntities)
