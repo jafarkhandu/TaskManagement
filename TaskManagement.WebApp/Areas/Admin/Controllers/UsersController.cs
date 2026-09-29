@@ -249,7 +249,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             }
 
             // Accept only User or Manager as selectable roles
-            var desiredRole = string.IsNullOrWhiteSpace(role) ? null : (role == "Manager" ? "Manager" : "User");
+            var desiredRole = string.IsNullOrWhiteSpace(role) ? string.Empty : (role == "Manager" ? "Manager" : "User");
 
             if (!string.IsNullOrWhiteSpace(desiredRole))
             {
