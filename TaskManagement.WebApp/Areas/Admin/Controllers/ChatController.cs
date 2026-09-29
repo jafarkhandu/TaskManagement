@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using TaskManagement.Infrastructure.Data;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Infrastructure.Identity;
@@ -16,15 +18,18 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         private readonly IChatService _chatService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<ChatHub> _chatHub;
+        private readonly ApplicationDbContext _context;
 
         public ChatController(
             IChatService chatService,
             UserManager<ApplicationUser> userManager,
-            IHubContext<ChatHub> chatHub)
+            IHubContext<ChatHub> chatHub,
+            ApplicationDbContext context)
         {
             _chatService = chatService;
             _userManager = userManager;
             _chatHub = chatHub;
+            _context = context;
         }
 
         [HttpGet]
@@ -51,6 +56,53 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
+
+            return Ok(new { success = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllChatNotificationsRead()
+        {
+            var admin = await _userManager.GetUserAsync(User);
+
+            if (admin == null)
+                return Unauthorized();
+
+            var unreadMessages = await _chatService.GetAdminChatSessionsAsync();
+
+            var sessions = await _context.ChatSessions
+                .Where(x => x.AdminId == admin.Id && x.IsActive)
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            if (sessions.Count > 0)
+            {
+                var messages = await _context.ChatMessages
+                    .Where(x =>
+                        sessions.Contains(x.ChatSessionId) &&
+                        x.SenderId != admin.Id &&
+                        !x.IsRead)
+                    .ToListAsync();
+
+                foreach (var message in messages)
+                    message.IsRead = true;
+            }
+
+            var notifications = await _context.Notifications
+                .Where(n =>
+                    n.UserId == admin.Id &&
+                    n.Type == "AdminChatMessage" &&
+                    (!n.IsRead || !n.IsDelivered))
+                .ToListAsync();
+
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+                notification.IsDelivered = true;
+            }
+
+            await _context.SaveChangesAsync();
 
             return Ok(new { success = true });
         }
