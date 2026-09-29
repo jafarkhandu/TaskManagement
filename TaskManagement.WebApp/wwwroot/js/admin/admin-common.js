@@ -472,16 +472,21 @@
             type.includes("chat") ||
             String(payload?.title || "").toLowerCase().includes("chat");
 
+        const isCompleted =
+            type === "admintaskcompleted" ||
+            String(payload?.title || "").toLowerCase().includes("task completed");
+
         const toast = document.createElement("div");
         toast.className =
             "admin-realtime-toast" +
             (isRejected ? " is-rejected" : "") +
             (isApproved ? " is-approved" : "") +
-            (isChat ? " is-chat" : "");
+            (isChat ? " is-chat" : "") +
+            (isCompleted ? " is-completed" : "");
 
         const icon = isRejected
             ? "×"
-            : isApproved
+            : isApproved || isCompleted
                 ? "✓"
                 : isChat
                     ? "✉"
@@ -493,9 +498,16 @@
 
         const message =
             payload?.message ||
-            (isChat
-                ? "A user sent a new message."
-                : "You have a new administrator notification.");
+            (isCompleted
+                ? "A user completed a task."
+                : isChat
+                    ? "A user sent a new message."
+                    : "You have a new administrator notification.");
+
+        const repositoryUrl =
+            typeof payload?.completionRepositoryUrl === "string"
+                ? payload.completionRepositoryUrl.trim()
+                : "";
 
         toast.innerHTML = `
             <div class="admin-realtime-toast-glow"></div>
@@ -505,6 +517,14 @@
             <div class="admin-realtime-toast-content">
                 <strong>${escapeChatNotificationText(title)}</strong>
                 <span>${escapeChatNotificationText(message)}</span>
+                ${repositoryUrl
+                    ? `<a class="admin-realtime-toast-repository"
+                           href="${escapeChatNotificationText(repositoryUrl)}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                           🔗 Open Git Repository
+                       </a>`
+                    : ""}
             </div>
             <button type="button"
                     class="admin-realtime-toast-close"
