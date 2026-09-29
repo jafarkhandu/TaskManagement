@@ -689,6 +689,53 @@ html:not(.light-theme) .admin-notification-view-all:hover {
     border-color: rgba(148, 163, 184, .10);
 }
 
+.global-admin-notification {
+    cursor: default;
+}
+
+.global-admin-notification.is-completed .admin-notification-item-icon {
+    color: #0f9f67;
+    background: rgba(15, 159, 103, .10);
+}
+
+.global-admin-notification.is-approved .admin-notification-item-icon {
+    color: #2864ed;
+    background: rgba(40, 100, 237, .10);
+}
+
+.admin-notification-item-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.admin-notification-item-content strong,
+.admin-notification-item-content small {
+    display: block;
+}
+
+.admin-notification-repository {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 5px;
+    padding: 5px 8px;
+    border: 1px solid rgba(40, 100, 237, .14);
+    border-radius: 8px;
+    background: rgba(239, 246, 255, .72);
+    color: #2864ed;
+    font-size: 9px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.admin-notification-repository:hover {
+    background: rgba(225, 237, 255, .95);
+    color: #174db8;
+}
+
+
 .admin-chat-notification-empty {
     background: rgba(248, 250, 255, .18);
 }
