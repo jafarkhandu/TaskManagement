@@ -193,6 +193,64 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         .Select(p => p.ProjectTitle)
                         .FirstOrDefaultAsync();
 
+                    var assignmentId = await _context.TaskAssignments
+                        .Where(a =>
+                            a.TaskId == task.Id &&
+                            a.UserId == user.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => (int?)a.Id)
+                        .FirstOrDefaultAsync();
+
+                    if (assignmentId.HasValue)
+                    {
+                        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+
+                        foreach (var admin in admins)
+                        {
+                            var notification = new TaskManagement.Domain.Entities.Notification
+                            {
+                                UserId = admin.Id,
+                                TaskAssignmentId = assignmentId.Value,
+                                Type = "AdminChatMessage",
+                                Title = "New Chat Message",
+                                IsRead = false,
+                                IsDelivered = false,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _context.Notifications.Add(notification);
+                            await _context.SaveChangesAsync();
+
+                            if (NotificationHub.IsUserOnline(admin.Id))
+                            {
+                                try
+                                {
+                                    await _notificationHub.Clients.User(admin.Id)
+                                        .SendAsync("AdminLiveNotification", new
+                                        {
+                                            notificationId = notification.Id,
+                                            type = notification.Type,
+                                            title = notification.Title,
+                                            message = "A user started a new task chat.",
+                                            userName = user.FullName ?? user.UserName,
+                                            chatSessionId = result.ChatSessionId,
+                                            taskId = task.Id,
+                                            taskTitle = task.Title,
+                                            createdAt = notification.CreatedAt
+                                        });
+
+                                    notification.IsDelivered = true;
+                                    notification.IsRead = true;
+                                    await _context.SaveChangesAsync();
+                                }
+                                catch
+                                {
+                                    // Keep it pending for the next admin connection.
+                                }
+                            }
+                        }
+                    }
+
                     await _notificationHub.Clients.Group("admins")
                         .SendAsync("NewChatSession", new
                         {
