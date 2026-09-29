@@ -135,6 +135,62 @@ namespace TaskManagement.WebApp.Hubs
 
                         await _context.SaveChangesAsync();
                     }
+
+                    // Chat messages use their own delivery channel so they never
+                    // appear as normal task-assignment notifications.
+                    var missedChatNotifications =
+                        await (from n in _context.Notifications
+                               join a in _context.TaskAssignments
+                                   on n.TaskAssignmentId equals a.Id
+                               join t in _context.TaskItems
+                                   on a.TaskId equals t.Id
+                               where n.UserId == userId
+                                     && !n.IsDelivered
+                                     && n.Type == "UserChatMessage"
+                               let chatSessionId = _context.ChatSessions
+                                   .Where(s =>
+                                       s.TaskId == a.TaskId &&
+                                       s.UserId == userId &&
+                                       s.IsActive)
+                                   .Select(s => (int?)s.Id)
+                                   .FirstOrDefault()
+                               where chatSessionId.HasValue
+                               orderby n.CreatedAt
+                               select new
+                               {
+                                   notificationId = n.Id,
+                                   title = "New message from Admin",
+                                   message = n.Title,
+                                   senderName = "Admin",
+                                   chatSessionId = chatSessionId.Value,
+                                   taskId = t.Id,
+                                   taskTitle = t.Title,
+                                   createdAt = n.CreatedAt
+                               })
+                              .ToListAsync();
+
+                    if (missedChatNotifications.Count > 0)
+                    {
+                        await Clients.Caller.SendAsync(
+                            "MissedChatNotificationsReceived",
+                            missedChatNotifications);
+
+                        var chatIds = missedChatNotifications
+                            .Select(x => x.notificationId)
+                            .ToList();
+
+                        var chatNotifications = await _context.Notifications
+                            .Where(n => chatIds.Contains(n.Id))
+                            .ToListAsync();
+
+                        foreach (var notification in chatNotifications)
+                        {
+                            notification.IsDelivered = true;
+                        }
+
+                        await _context.SaveChangesAsync();
+                    }
+
                 }
             }
 
