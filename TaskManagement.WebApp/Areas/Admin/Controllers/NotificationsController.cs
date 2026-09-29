@@ -40,7 +40,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     on a.UserId equals u.Id
                 where n.UserId == admin.Id
                       && n.Type.StartsWith("Admin")
-                      && !n.Type.Contains("Chat")
                 orderby n.CreatedAt descending
                 select new
                 {
@@ -75,7 +74,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarkAllRead()
+        public async Task<IActionResult> ClearAll()
         {
             var admin = await _userManager.GetUserAsync(User);
 
@@ -85,18 +84,12 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             var notifications = await _context.Notifications
                 .Where(n =>
                     n.UserId == admin.Id &&
-                    n.Type.StartsWith("Admin") &&
-                    !n.Type.Contains("Chat") &&
-                    !n.IsRead)
+                    n.Type.StartsWith("Admin"))
                 .ToListAsync();
 
             if (notifications.Count > 0)
             {
-                foreach (var notification in notifications)
-                {
-                    notification.IsRead = true;
-                }
-
+                _context.Notifications.RemoveRange(notifications);
                 await _context.SaveChangesAsync();
             }
 
