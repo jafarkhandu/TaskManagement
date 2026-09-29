@@ -208,8 +208,14 @@
                                             <div class="user-info-cell">
 
 
-                                                <div class="user-avatar">
+                                                <div class="user-avatar @(string.IsNullOrWhiteSpace(user.ProfilePictureUrl) ? "" : "has-photo")">
 
+                                                    @if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                                                    {
+                                                        <img src="@user.ProfilePictureUrl" alt="@user.FullName" />
+                                                    }
+                                                    else
+                                                    {
                                                     @{
                                                         var displayName =
                                                             string.IsNullOrWhiteSpace(user.FullName)
@@ -229,7 +235,7 @@
                                                     }
 
                                                     @initials
-
+                                                    }
                                                 </div>
 
 
