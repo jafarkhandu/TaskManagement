@@ -82,9 +82,41 @@ builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
+// Ensure the notification delivery column exists in the same database
+// used by the running application. This is intentionally idempotent so
+// it also repairs databases whose EF migration history is ahead of the
+// physical schema.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+
+    var db = services.GetRequiredService<ApplicationDbContext>();
+
+    await db.Database.MigrateAsync();
+
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.Notifications', N'U') IS NOT NULL
+           AND COL_LENGTH(N'dbo.Notifications', N'IsDelivered') IS NULL
+        BEGIN
+            ALTER TABLE [dbo].[Notifications]
+            ADD [IsDelivered] bit NOT NULL
+                CONSTRAINT [DF_Notifications_IsDelivered] DEFAULT (0);
+        END;
+
+        IF OBJECT_ID(N'dbo.Notifications', N'U') IS NOT NULL
+           AND COL_LENGTH(N'dbo.Notifications', N'IsDelivered') IS NOT NULL
+           AND NOT EXISTS
+           (
+               SELECT 1
+               FROM sys.indexes
+               WHERE name = N'IX_Notifications_UserId_IsDelivered'
+                 AND object_id = OBJECT_ID(N'dbo.Notifications')
+           )
+        BEGIN
+            CREATE INDEX [IX_Notifications_UserId_IsDelivered]
+            ON [dbo].[Notifications] ([UserId], [IsDelivered]);
+        END;
+        """);
 
     await IdentitySeeder.SeedAsync(
         services,

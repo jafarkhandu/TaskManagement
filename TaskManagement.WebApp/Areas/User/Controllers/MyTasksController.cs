@@ -18,6 +18,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITaskService _taskService;
         private readonly IHubContext<NotificationHub> _notificationHub;
+        private readonly IHubContext<ChatHub> _chatHub;
         private readonly IChatService _chatService;
 
         public MyTasksController(
@@ -25,12 +26,14 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             UserManager<ApplicationUser> userManager,
             ITaskService taskService,
             IHubContext<NotificationHub> notificationHub,
+            IHubContext<ChatHub> chatHub,
             IChatService chatService)
         {
             _context = context;
             _userManager = userManager;
             _taskService = taskService;
             _notificationHub = notificationHub;
+            _chatHub = chatHub;
             _chatService = chatService;
         }
 
@@ -89,6 +92,15 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (user == null)
                 return Challenge();
 
+            var chatSessionIdsToDelete =
+                string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)
+                    ? await _context.ChatSessions
+                        .AsNoTracking()
+                        .Where(x => x.TaskId == taskId && x.IsActive)
+                        .Select(x => x.Id)
+                        .ToListAsync()
+                    : new List<int>();
+
             var result = await _taskService.ChangeStatusAsync(taskId, user.Id, newStatus);
 
             if (!result.Success)
@@ -112,6 +124,23 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             catch
             {
                 // Notification failures should not block the primary operation
+            }
+
+            if (string.Equals(result.NewStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var chatSessionId in chatSessionIdsToDelete)
+                {
+                    try
+                    {
+                        await _chatHub.Clients
+                            .Group($"chat-{chatSessionId}")
+                            .SendAsync("ChatDeleted", new { chatSessionId });
+                    }
+                    catch
+                    {
+                        // Non-fatal: chat has already been deleted from the database.
+                    }
+                }
             }
 
             return Json(new

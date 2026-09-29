@@ -1685,3 +1685,36 @@ body {
         height: 500px;
     }
 }
+
+/* Rejected assignment / reassign */
+.task-card-status-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.task-assignment-rejected {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #fff1f2;
+    color: #dc2626;
+    border: 1px solid #fecdd3;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.task-reassign-btn {
+    color: #2b61c9;
+    border-color: #d9e5fb;
+    background: #f4f8ff;
+}
+
+.task-reassign-btn:hover {
+    color: #174ea6;
+    border-color: #b9cff3;
+    background: #eaf2ff;
+}

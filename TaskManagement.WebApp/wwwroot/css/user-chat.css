@@ -76,7 +76,103 @@
     flex-direction: column;
     background: #0a0e16;
     border-right: 1px solid var(--task-chat-border);
+    transition: width .3s cubic-bezier(.22,1,.36,1), min-width .3s cubic-bezier(.22,1,.36,1);
 }
+
+.task-chat-drawer.conversations-collapsed .task-chat-sidebar {
+    width: 58px;
+    min-width: 58px;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-sidebar-heading {
+    display: none;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-sidebar-header {
+    justify-content: center;
+    padding: 14px 8px;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-conversations {
+    padding: 8px 6px;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-item {
+    padding: 10px 7px;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-item > .d-flex {
+    justify-content: center;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-item > .d-flex > div:first-child,
+.task-chat-drawer.conversations-collapsed .task-chat-item .task-chat-time {
+    display: none;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-item .text-end {
+    display: flex;
+    align-items: center;
+}
+
+.task-chat-sidebar-header {
+    position: relative;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.task-chat-sidebar-heading {
+    min-width: 0;
+}
+
+.task-chat-sidebar-heading small {
+    display: block;
+    margin-top: 5px;
+    color: var(--task-chat-soft);
+    font-size: 9px;
+}
+
+.task-chat-sidebar-toggle {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 9px;
+    background: rgba(255,255,255,.045);
+    color: #b9c5d8;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    transition: transform .25s ease, background .2s ease, color .2s ease;
+}
+
+.task-chat-sidebar-toggle:hover {
+    background: rgba(108,99,255,.16);
+    color: #fff;
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-sidebar-toggle span {
+    transform: rotate(180deg);
+}
+
+.task-chat-drawer.conversations-collapsed .task-chat-sidebar-toggle {
+    transform: translateX(0);
+}
+
+@media (max-width: 760px) {
+    .task-chat-drawer.conversations-collapsed .task-chat-sidebar {
+        width: 52px;
+        min-width: 52px;
+    }
+
+    .task-chat-drawer.conversations-collapsed .task-chat-item-title,
+    .task-chat-drawer.conversations-collapsed .task-chat-preview {
+        display: none;
+    }
+}
+
 
 .task-chat-sidebar-header {
     height: 92px;

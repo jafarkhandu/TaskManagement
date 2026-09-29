@@ -1,3 +1,12 @@
+(function loadGlobalMessages() {
+    if (!document.querySelector('script[data-global-messages="true"]')) {
+        const script = document.createElement("script");
+        script.src = "/js/global-messages.js";
+        script.dataset.globalMessages = "true";
+        document.head.appendChild(script);
+    }
+})();
+
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
     const quotes = [
@@ -665,6 +674,24 @@
 
 
         notificationConnection.on(
+            "MissedNotificationsReceived",
+            (notifications) => {
+
+                if (!Array.isArray(notifications) || notifications.length === 0)
+                    return;
+
+                notifications.forEach((notification, index) => {
+
+                    setTimeout(() => {
+                        showLiveToast(notification);
+                    }, index * 180);
+                });
+
+            }
+        );
+
+
+        notificationConnection.on(
             "TaskAssignmentReceived",
             async (payload) => {
 
@@ -677,6 +704,21 @@
                     // Show a live toast for real-time delivery
                     if (payload && payload.notificationId) {
                         showLiveToast(payload);
+
+                        // The toast was received through the live SignalR
+                        // connection, so mark this notification as delivered.
+                        try {
+                            await notificationConnection.invoke(
+                                "AcknowledgeNotification",
+                                Number(payload.notificationId)
+                            );
+                        }
+                        catch (ackError) {
+                            console.error(
+                                "Notification delivery acknowledgement failed:",
+                                ackError
+                            );
+                        }
                     }
                 }
                 catch (err) {

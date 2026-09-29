@@ -100,6 +100,12 @@ namespace TaskManagement.Infrastructure.Data
                     x.IsRead
                 });
 
+                b.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.IsDelivered
+                });
+
                 b.HasOne<TaskAssignment>()
                     .WithMany()
                     .HasForeignKey(x => x.TaskAssignmentId)

@@ -1720,3 +1720,135 @@ html:not(.light-theme) .admin-dashboard .admin-notification-item:hover {
         width: min(340px, calc(100vw - 24px)) !important;
     }
 }
+
+/* =====================================================
+   ADMIN DASHBOARD — NOTIFICATION GLASS OVERRIDE
+   Final dashboard-specific override. Kept light to match
+   the existing Admin workspace and card system.
+===================================================== */
+
+.admin-dashboard .admin-notification-panel {
+    border: 1px solid rgba(148, 163, 184, .22) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, .90) !important;
+    box-shadow:
+        0 24px 60px rgba(31, 49, 82, .14),
+        0 8px 22px rgba(49, 100, 244, .06),
+        inset 0 1px 0 rgba(255, 255, 255, .95) !important;
+    backdrop-filter: blur(18px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+}
+
+.admin-dashboard .admin-notification-panel-header {
+    padding: 15px 16px 13px !important;
+    border-bottom: 1px solid rgba(232, 236, 243, .9) !important;
+    background: rgba(248, 250, 253, .72) !important;
+}
+
+.admin-dashboard .admin-notification-panel-header strong {
+    color: #1c2942 !important;
+}
+
+.admin-dashboard .admin-notification-panel-header small {
+    color: #8792a5 !important;
+}
+
+.admin-dashboard .admin-notification-panel-header button {
+    border: 1px solid #e1e6ef !important;
+    background: rgba(255, 255, 255, .82) !important;
+    color: #718097 !important;
+    box-shadow: 0 2px 7px rgba(31, 49, 82, .05) !important;
+}
+
+.admin-dashboard .admin-notification-panel-header button:hover {
+    border-color: #cbd8f5 !important;
+    background: #edf3ff !important;
+    color: #2864ed !important;
+}
+
+.admin-dashboard .admin-notification-list {
+    background: rgba(255, 255, 255, .38) !important;
+}
+
+.admin-dashboard .admin-notification-item {
+    border: 1px solid transparent !important;
+}
+
+.admin-dashboard .admin-notification-item:hover {
+    background: #f5f8fd !important;
+    border-color: #e8edf5 !important;
+}
+
+.admin-dashboard .admin-chat-notification-empty {
+    min-height: 120px !important;
+    background: rgba(248, 250, 253, .48) !important;
+}
+
+.admin-dashboard .admin-chat-notification-empty > span {
+    background: #edf3ff !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8) !important;
+}
+
+.admin-dashboard .admin-chat-notification-empty strong {
+    color: #25334c !important;
+}
+
+.admin-dashboard .admin-chat-notification-empty small {
+    color: #7e8ba1 !important;
+}
+
+.admin-dashboard .admin-notification-view-all {
+    border-top: 1px solid rgba(232, 236, 243, .9) !important;
+    background: rgba(248, 250, 253, .72) !important;
+    color: #2864ed !important;
+}
+
+.admin-dashboard .admin-notification-view-all:hover {
+    background: #f5f8fd !important;
+    color: #1e55cf !important;
+}
+
+/* Keep the dashboard notification light regardless of the
+   legacy dark-theme selector used elsewhere in the app. */
+html:not(.light-theme) .admin-dashboard .admin-notification-panel {
+    border-color: rgba(148, 163, 184, .22) !important;
+    background: rgba(255, 255, 255, .90) !important;
+    box-shadow:
+        0 24px 60px rgba(31, 49, 82, .14),
+        0 8px 22px rgba(49, 100, 244, .06),
+        inset 0 1px 0 rgba(255, 255, 255, .95) !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header {
+    border-bottom-color: rgba(232, 236, 243, .9) !important;
+    background: rgba(248, 250, 253, .72) !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header strong,
+html:not(.light-theme) .admin-dashboard .admin-notification-item strong,
+html:not(.light-theme) .admin-dashboard .admin-chat-notification-empty strong {
+    color: #25334c !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header small,
+html:not(.light-theme) .admin-dashboard .admin-notification-item small,
+html:not(.light-theme) .admin-dashboard .admin-chat-notification-empty small {
+    color: #7e8ba1 !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-panel-header button {
+    border-color: #e1e6ef !important;
+    background: rgba(255, 255, 255, .82) !important;
+    color: #718097 !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-item:hover,
+html:not(.light-theme) .admin-dashboard .admin-notification-view-all:hover {
+    background: #f5f8fd !important;
+}
+
+html:not(.light-theme) .admin-dashboard .admin-notification-view-all {
+    border-top-color: rgba(232, 236, 243, .9) !important;
+    color: #2864ed !important;
+}
+

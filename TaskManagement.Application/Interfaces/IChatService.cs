@@ -45,5 +45,11 @@
 
         // Mark admin->user messages as read for a given chat session.
         Task<(bool Success, string Error)> MarkMessagesAsReadAsync(int chatSessionId, string userId);
+
+        // Mark user -> admin messages as read when an admin opens the chat.
+        Task<(bool Success, string Error)> MarkAdminMessagesAsReadAsync(int chatSessionId, string adminId);
+
+        // Deletes one admin-managed task chat. Task and assignment data are preserved.
+        Task<(bool Success, string Error)> DeleteChatAsync(int chatSessionId, string adminId);
     }
 }

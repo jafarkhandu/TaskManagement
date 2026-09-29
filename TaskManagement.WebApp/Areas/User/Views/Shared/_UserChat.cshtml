@@ -12,9 +12,20 @@
 
 		<div class="task-chat-sidebar">
 			<div class="task-chat-sidebar-header">
+			<div class="task-chat-sidebar-heading">
 				<strong>Conversations</strong>
-				<small class="text-muted">Recent</small>
+				<small>Recent</small>
 			</div>
+
+			<button type="button"
+					id="toggleTaskChatConversations"
+					class="task-chat-sidebar-toggle"
+					aria-label="Hide recent conversations"
+					aria-expanded="true"
+					title="Hide recent conversations">
+				<span aria-hidden="true">‹</span>
+			</button>
+		</div>
 
 			<div id="userChatList" class="task-chat-conversations">
 				<div class="task-chat-empty text-center text-muted p-3">No active conversations.</div>
