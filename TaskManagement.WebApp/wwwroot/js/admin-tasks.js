@@ -1448,103 +1448,147 @@
                 'addAssignedTo'
             );
 
+        const addAssignedToSearch =
+            document.getElementById(
+                'addAssignedToSearch'
+            );
 
-        async function loadMembers(select) {
+        const addAssignedToOptions =
+            document.getElementById(
+                'addAssignedToOptions'
+            );
 
-            if (!select) {
-                return;
-            }
+        let assignableUsers = [];
 
-
-            select.innerHTML =
-                '<option value="">Loading users...</option>';
-
-
+        async function fetchAssignableUsers() {
             try {
-
-                const response =
-                    await fetch(
-                        '/Admin/Tasks/Users?_=' +
-                        Date.now(),
-                        {
-                            headers: {
-                                'X-Requested-With':
-                                    'XMLHttpRequest',
-                                'Accept':
-                                    'application/json'
-                            },
-                            cache: 'no-store'
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                const users =
-                    Array.isArray(data?.users)
-                        ? data.users
-                        : [];
-
-
-                select.innerHTML =
-                    '<option value="">Select User</option>';
-
-
-                users.forEach(
-                    function (user) {
-
-                        const option =
-                            document.createElement(
-                                'option'
-                            );
-
-
-                        option.value =
-                            user.id ||
-                            user.userId ||
-                            '';
-
-
-                        option.textContent =
-                            user.fullName ||
-                            user.email ||
-                            'User';
-
-
-                        select.appendChild(
-                            option
-                        );
-
+                const response = await fetch(
+                    '/Admin/Tasks/Users?_=' + Date.now(),
+                    {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        cache: 'no-store'
                     }
                 );
 
+                const data = await response.json();
+
+                return Array.isArray(data?.users)
+                    ? data.users
+                    : [];
             }
             catch (error) {
-
-                console.error(
-                    'User loading error:',
-                    error
-                );
-
-                select.innerHTML =
-                    '<option value="">Unable to load users</option>';
-
+                console.error('User loading error:', error);
+                return [];
             }
         }
 
+        function getUserId(user) {
+            return user.id || user.userId || '';
+        }
+
+        function getUserName(user) {
+            return user.fullName || user.email || 'User';
+        }
+
+        function renderUserOptions(input, hidden, container, users) {
+            if (!input || !hidden || !container) return;
+
+            const search = input.value.trim().toLowerCase();
+
+            const filtered = users.filter(function (user) {
+                return getUserName(user).toLowerCase().includes(search);
+            });
+
+            container.innerHTML = '';
+
+            if (!filtered.length) {
+                const empty = document.createElement('div');
+                empty.className = 'user-autocomplete-empty';
+                empty.textContent = 'No users found';
+                container.appendChild(empty);
+                container.classList.add('show');
+                return;
+            }
+
+            filtered.forEach(function (user) {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'user-autocomplete-option';
+                option.textContent = getUserName(user);
+                option.dataset.userId = getUserId(user);
+
+                option.addEventListener('mousedown', function (event) {
+                    event.preventDefault();
+                });
+
+                option.addEventListener('click', function () {
+                    hidden.value = option.dataset.userId || '';
+                    input.value = option.textContent;
+                    container.classList.remove('show');
+                });
+
+                container.appendChild(option);
+            });
+
+            container.classList.add('show');
+        }
+
+        function setupUserAutocomplete(input, hidden, container) {
+            if (!input || !hidden || !container) return;
+
+            input.addEventListener('input', function () {
+                hidden.value = '';
+                renderUserOptions(
+                    input,
+                    hidden,
+                    container,
+                    assignableUsers
+                );
+            });
+
+            input.addEventListener('focus', function () {
+                renderUserOptions(
+                    input,
+                    hidden,
+                    container,
+                    assignableUsers
+                );
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () {
+                    container.classList.remove('show');
+                }, 150);
+            });
+        }
+
+        setupUserAutocomplete(
+            addAssignedToSearch,
+            addAssignedTo,
+            addAssignedToOptions
+        );
 
         document.getElementById(
             'addTaskModal'
         )?.addEventListener(
             'shown.bs.modal',
-            function () {
+            async function () {
+                assignableUsers = await fetchAssignableUsers();
 
-                loadMembers(
-                    addAssignedTo
-                );
+                if (addAssignedToSearch) {
+                    addAssignedToSearch.value = '';
+                }
 
+                if (addAssignedTo) {
+                    addAssignedTo.value = '';
+                }
+
+                if (addAssignedToOptions) {
+                    addAssignedToOptions.classList.remove('show');
+                }
             }
         );
 
@@ -1554,6 +1598,15 @@
             async function (event) {
 
                 event.preventDefault();
+
+                if (!addAssignedTo?.value) {
+                    const error = document.getElementById('addTaskError');
+                    if (error) {
+                        error.textContent = 'Please select a user from the list.';
+                        error.style.display = 'block';
+                    }
+                    return;
+                }
 
 
                 const formData =
@@ -1865,53 +1918,46 @@
         const reassignUserId =
             document.getElementById('reassignUserId');
 
+        const reassignUserSearch =
+            document.getElementById('reassignUserSearch');
+
+        const reassignUserOptions =
+            document.getElementById('reassignUserOptions');
+
         const reassignTaskError =
             document.getElementById('reassignTaskError');
 
         const confirmReassignTask =
             document.getElementById('confirmReassignTask');
 
+        function renderReassignUsers() {
+            renderUserOptions(
+                reassignUserSearch,
+                reassignUserId,
+                reassignUserOptions,
+                assignableUsers
+            );
+        }
+
+        setupUserAutocomplete(
+            reassignUserSearch,
+            reassignUserId,
+            reassignUserOptions
+        );
+
         async function loadReassignUsers() {
-            if (!reassignUserId) return;
+            assignableUsers = await fetchAssignableUsers();
 
-            reassignUserId.innerHTML =
-                '<option value="">Loading users...</option>';
-
-            try {
-                const response = await fetch(
-                    '/Admin/Tasks/Users?_=' + Date.now(),
-                    {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        },
-                        cache: 'no-store'
-                    }
-                );
-
-                const data = await readJson(response);
-                const users = Array.isArray(data?.users) ? data.users : [];
-
-                reassignUserId.innerHTML =
-                    '<option value="">Select User</option>';
-
-                users.forEach(function (user) {
-                    const option = document.createElement('option');
-                    option.value = user.id || user.userId || '';
-                    option.textContent =
-                        user.fullName || user.email || 'User';
-                    reassignUserId.appendChild(option);
-                });
-
-                if (!users.length) {
-                    reassignUserId.innerHTML =
-                        '<option value="">No users available</option>';
-                }
+            if (reassignUserSearch) {
+                reassignUserSearch.value = '';
             }
-            catch (error) {
-                console.error('Reassign user loading error:', error);
-                reassignUserId.innerHTML =
-                    '<option value="">Unable to load users</option>';
+
+            if (reassignUserId) {
+                reassignUserId.value = '';
+            }
+
+            if (reassignUserOptions) {
+                reassignUserOptions.classList.remove('show');
             }
         }
 
