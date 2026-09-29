@@ -326,55 +326,68 @@ namespace TaskManagement.Infrastructure.Services
             }
         }
 
-        public async Task<(bool Success, string Error, int TaskId, int ProjectId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus)
+        public async Task<(bool Success, string Error, int TaskId, int ProjectId, int AssignmentId, int NotificationId, string OldStatus, string NewStatus)> ChangeStatusAsync(
+            int taskId,
+            string userId,
+            string newStatus,
+            string? completionRepositoryUrl = null)
         {
             if (string.IsNullOrWhiteSpace(userId))
-                return (false, "User not found.", 0, 0, string.Empty, string.Empty);
+                return (false, "User not found.", 0, 0, 0, 0, string.Empty, string.Empty);
 
             if (string.IsNullOrWhiteSpace(newStatus))
-                return (false, "Invalid target status.", taskId, 0, string.Empty, string.Empty);
+                return (false, "Invalid target status.", taskId, 0, 0, 0, string.Empty, string.Empty);
 
-            // Normalize newStatus to canonical allowed value if case-insensitive match exists
-            newStatus = AllowedStatuses.FirstOrDefault(s => string.Equals(s, newStatus, StringComparison.OrdinalIgnoreCase)) ?? newStatus;
+            newStatus = AllowedStatuses.FirstOrDefault(s =>
+                string.Equals(s, newStatus, StringComparison.OrdinalIgnoreCase)) ?? newStatus;
 
             if (!AllowedStatuses.Contains(newStatus))
-                return (false, "Invalid target status.", taskId, 0, string.Empty, string.Empty);
+                return (false, "Invalid target status.", taskId, 0, 0, 0, string.Empty, newStatus);
 
             var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task == null)
-                return (false, "Task not found.", taskId, 0, string.Empty, string.Empty);
+                return (false, "Task not found.", taskId, 0, 0, 0, string.Empty, newStatus);
 
-            // Ensure the caller owns the task
             if (string.IsNullOrWhiteSpace(task.AssignedToUserId) || task.AssignedToUserId != userId)
-                return (false, "Unauthorized to modify this task.", taskId, task.ProjectId, task.Status ?? string.Empty, newStatus);
+                return (false, "Unauthorized to modify this task.", taskId, task.ProjectId, 0, 0, task.Status ?? string.Empty, newStatus);
 
             var oldStatus = task.Status ?? string.Empty;
 
-            // Completed is terminal
             if (string.Equals(oldStatus, "Completed", StringComparison.OrdinalIgnoreCase))
-                return (false, "Completed tasks cannot be modified.", taskId, task.ProjectId, oldStatus, newStatus);
+                return (false, "Completed tasks cannot be modified.", taskId, task.ProjectId, 0, 0, oldStatus, newStatus);
 
-            // No-op
             if (string.Equals(oldStatus, newStatus, StringComparison.OrdinalIgnoreCase))
-                return (false, "Task is already in the requested status.", taskId, task.ProjectId, oldStatus, newStatus);
+                return (false, "Task is already in the requested status.", taskId, task.ProjectId, 0, 0, oldStatus, newStatus);
 
-            // Strict workflow transitions
-            var allowed = false;
-            if (string.Equals(oldStatus, "Pending", StringComparison.OrdinalIgnoreCase) && string.Equals(newStatus, "In Progress", StringComparison.OrdinalIgnoreCase))
-                allowed = true;
-            else if (string.Equals(oldStatus, "In Progress", StringComparison.OrdinalIgnoreCase) && (string.Equals(newStatus, "On Hold", StringComparison.OrdinalIgnoreCase) || string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)))
-                allowed = true;
-            else if (string.Equals(oldStatus, "On Hold", StringComparison.OrdinalIgnoreCase) && string.Equals(newStatus, "In Progress", StringComparison.OrdinalIgnoreCase))
-                allowed = true;
+            var allowed =
+                (string.Equals(oldStatus, "Pending", StringComparison.OrdinalIgnoreCase) && string.Equals(newStatus, "In Progress", StringComparison.OrdinalIgnoreCase)) ||
+                (string.Equals(oldStatus, "In Progress", StringComparison.OrdinalIgnoreCase) &&
+                    (string.Equals(newStatus, "On Hold", StringComparison.OrdinalIgnoreCase) || string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))) ||
+                (string.Equals(oldStatus, "On Hold", StringComparison.OrdinalIgnoreCase) && string.Equals(newStatus, "In Progress", StringComparison.OrdinalIgnoreCase));
 
             if (!allowed)
-                return (false, "Status transition is not allowed.", taskId, task.ProjectId, oldStatus, newStatus);
+                return (false, "Status transition is not allowed.", taskId, task.ProjectId, 0, 0, oldStatus, newStatus);
+
+            var assignment = await _db.TaskAssignments
+                .Where(a => a.TaskId == taskId && a.UserId == userId)
+                .OrderByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            if (assignment == null)
+                return (false, "Task assignment not found.", taskId, task.ProjectId, 0, 0, oldStatus, newStatus);
+
+            if (string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!IsValidGitHubRepositoryUrl(completionRepositoryUrl))
+                    return (false, "A valid GitHub repository URL is required to complete this task.", taskId, task.ProjectId, assignment.Id, 0, oldStatus, newStatus);
+
+                assignment.CompletionRepositoryUrl = completionRepositoryUrl!.Trim();
+                assignment.RespondedAt ??= DateTime.UtcNow;
+            }
 
             task.Status = newStatus;
 
-            // Completed tasks must no longer retain their task-specific chat.
-            // ChatMessage -> ChatSession is configured with cascade delete.
             if (string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
             {
                 var taskChats = await _db.ChatSessions
@@ -387,13 +400,75 @@ namespace TaskManagement.Infrastructure.Services
 
             try
             {
-                await _db.SaveChangesAsync();
-                return (true, string.Empty, taskId, task.ProjectId, oldStatus, newStatus);
+                var notificationId = 0;
+                var executionStrategy = _db.Database.CreateExecutionStrategy();
+
+                await executionStrategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction = await _db.Database.BeginTransactionAsync();
+
+                    if (string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var admin = (await _userManager.GetUsersInRoleAsync("Admin")).FirstOrDefault();
+
+                        if (admin != null)
+                        {
+                            var notification = new Notification
+                            {
+                                UserId = admin.Id,
+                                TaskAssignmentId = assignment.Id,
+                                Type = "AdminTaskCompleted",
+                                Title = $"Task Completed: {task.Title}",
+                                IsRead = false,
+                                IsDelivered = false,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _db.Notifications.Add(notification);
+                            await _db.SaveChangesAsync();
+                            notificationId = notification.Id;
+                        }
+                        else
+                        {
+                            await _db.SaveChangesAsync();
+                        }
+                    }
+                    else
+                    {
+                        await _db.SaveChangesAsync();
+                    }
+
+                    await transaction.CommitAsync();
+                });
+
+                return (true, string.Empty, taskId, task.ProjectId, assignment.Id, notificationId, oldStatus, newStatus);
             }
-            catch
+            catch (Exception ex)
             {
-                return (false, "Failed to update task status.", taskId, task.ProjectId, oldStatus, newStatus);
+                _logger.LogError(ex, "Failed to update task status for TaskId {TaskId}.", taskId);
+                return (false, "Failed to update task status.", taskId, task.ProjectId, assignment.Id, 0, oldStatus, newStatus);
             }
+        }
+
+        private static bool IsValidGitHubRepositoryUrl(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            if (!Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri))
+                return false;
+
+            if (!string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(uri.Host, "www.github.com", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var segments = uri.AbsolutePath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            return segments.Length >= 2;
         }
 
         public async Task<(bool Success, string Error)> UpdateAsync(TaskDto model)
