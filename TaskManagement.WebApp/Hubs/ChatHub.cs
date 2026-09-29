@@ -98,59 +98,66 @@ namespace TaskManagement.WebApp.Hubs
                 throw new HubException(result.Error);
 
             // Persist an admin notification for every user message.
-            // IsDelivered stays false until the admin actually has a live SignalR connection.
+            // Notification delivery must never break the actual chat message.
             if (result.Message != null && !isAdmin)
             {
-                var assignmentId = await _context.TaskAssignments
-                    .Where(a =>
-                        a.TaskId == session.TaskId &&
-                        a.UserId == session.UserId)
-                    .OrderByDescending(a => a.Id)
-                    .Select(a => (int?)a.Id)
-                    .FirstOrDefaultAsync();
-
-                if (assignmentId.HasValue)
+                try
                 {
-                    var adminNotification = new Notification
+                    var assignmentId = await _context.TaskAssignments
+                        .Where(a =>
+                            a.TaskId == session.TaskId &&
+                            a.UserId == session.UserId)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => (int?)a.Id)
+                        .FirstOrDefaultAsync();
+
+                    if (assignmentId.HasValue)
                     {
-                        UserId = session.AdminId,
-                        TaskAssignmentId = assignmentId.Value,
-                        Type = "AdminChatMessage",
-                        Title = "New Chat Message",
-                        IsRead = false,
-                        IsDelivered = false,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    _context.Notifications.Add(adminNotification);
-                    await _context.SaveChangesAsync();
-
-                    if (NotificationHub.IsUserOnline(session.AdminId))
-                    {
-                        try
+                        var adminNotification = new Notification
                         {
-                            await _notificationHub.Clients.User(session.AdminId)
-                                .SendAsync("AdminLiveNotification", new
-                                {
-                                    notificationId = adminNotification.Id,
-                                    type = adminNotification.Type,
-                                    title = adminNotification.Title,
-                                    message = result.Message.Message,
-                                    userName = user.FullName ?? user.UserName,
-                                    chatSessionId = chatSessionId,
-                                    taskId = session.TaskId,
-                                    createdAt = adminNotification.CreatedAt
-                                });
+                            UserId = session.AdminId,
+                            TaskAssignmentId = assignmentId.Value,
+                            Type = "AdminChatMessage",
+                            Title = "New Chat Message",
+                            IsRead = false,
+                            IsDelivered = false,
+                            CreatedAt = DateTime.UtcNow
+                        };
 
-                            adminNotification.IsDelivered = true;
-                            adminNotification.IsRead = true;
-                            await _context.SaveChangesAsync();
-                        }
-                        catch
+                        _context.Notifications.Add(adminNotification);
+                        await _context.SaveChangesAsync();
+
+                        if (NotificationHub.IsUserOnline(session.AdminId))
                         {
-                            // Keep the notification undelivered so it will be shown on next admin connection.
+                            try
+                            {
+                                await _notificationHub.Clients.User(session.AdminId)
+                                    .SendAsync("AdminLiveNotification", new
+                                    {
+                                        notificationId = adminNotification.Id,
+                                        type = adminNotification.Type,
+                                        title = adminNotification.Title,
+                                        message = result.Message.Message,
+                                        userName = user.FullName ?? user.UserName,
+                                        chatSessionId = chatSessionId,
+                                        taskId = session.TaskId,
+                                        createdAt = adminNotification.CreatedAt
+                                    });
+
+                                adminNotification.IsDelivered = true;
+                                adminNotification.IsRead = true;
+                                await _context.SaveChangesAsync();
+                            }
+                            catch
+                            {
+                                // Keep the notification undelivered for the next admin connection.
+                            }
                         }
                     }
+                }
+                catch
+                {
+                    // Notification failure must not fail a successfully saved chat message.
                 }
             }
 
