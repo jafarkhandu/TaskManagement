@@ -329,6 +329,13 @@
 
             if (markReadAfterLoad && unreadTotal > 0) {
                 await markAllGlobalAdminNotificationsRead(false);
+                notificationSummary.textContent = "No unread notifications";
+
+                if (notificationDot) {
+                    notificationDot.hidden = true;
+                }
+
+                notificationButton?.classList.remove("has-notification");
             }
         }
         catch (error) {
