@@ -101,69 +101,54 @@ namespace TaskManagement.WebApp.Hubs
             // IsDelivered stays false until the admin actually has a live SignalR connection.
             if (result.Message != null && !isAdmin)
             {
-                var adminNotification = await _context.Notifications
-                    .FirstOrDefaultAsync(n =>
-                        n.Type == "AdminChatMessage" &&
-                        n.UserId == session.AdminId &&
-                        n.TaskAssignmentId == (
-                            _context.TaskAssignments
-                                .Where(a => a.TaskId == session.TaskId && a.UserId == session.UserId)
-                                .OrderByDescending(a => a.Id)
-                                .Select(a => (int?)a.Id)
-                                .FirstOrDefault() ?? 0) &&
-                        n.CreatedAt >= result.Message.SentAt.AddSeconds(-2));
+                var assignmentId = await _context.TaskAssignments
+                    .Where(a =>
+                        a.TaskId == session.TaskId &&
+                        a.UserId == session.UserId)
+                    .OrderByDescending(a => a.Id)
+                    .Select(a => (int?)a.Id)
+                    .FirstOrDefaultAsync();
 
-                if (adminNotification == null)
+                if (assignmentId.HasValue)
                 {
-                    var assignmentId = await _context.TaskAssignments
-                        .Where(a =>
-                            a.TaskId == session.TaskId &&
-                            a.UserId == session.UserId)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => (int?)a.Id)
-                        .FirstOrDefaultAsync();
-
-                    if (assignmentId.HasValue)
+                    var adminNotification = new Notification
                     {
-                        adminNotification = new Notification
+                        UserId = session.AdminId,
+                        TaskAssignmentId = assignmentId.Value,
+                        Type = "AdminChatMessage",
+                        Title = "New Chat Message",
+                        IsRead = false,
+                        IsDelivered = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Notifications.Add(adminNotification);
+                    await _context.SaveChangesAsync();
+
+                    if (NotificationHub.IsUserOnline(session.AdminId))
+                    {
+                        try
                         {
-                            UserId = session.AdminId,
-                            TaskAssignmentId = assignmentId.Value,
-                            Type = "AdminChatMessage",
-                            Title = "New Chat Message",
-                            IsRead = false,
-                            IsDelivered = false,
-                            CreatedAt = DateTime.UtcNow
-                        };
+                            await _notificationHub.Clients.User(session.AdminId)
+                                .SendAsync("AdminLiveNotification", new
+                                {
+                                    notificationId = adminNotification.Id,
+                                    type = adminNotification.Type,
+                                    title = adminNotification.Title,
+                                    message = result.Message.Message,
+                                    userName = user.FullName ?? user.UserName,
+                                    chatSessionId = chatSessionId,
+                                    taskId = session.TaskId,
+                                    createdAt = adminNotification.CreatedAt
+                                });
 
-                        _context.Notifications.Add(adminNotification);
-                        await _context.SaveChangesAsync();
-
-                        if (NotificationHub.IsUserOnline(session.AdminId))
+                            adminNotification.IsDelivered = true;
+                            adminNotification.IsRead = true;
+                            await _context.SaveChangesAsync();
+                        }
+                        catch
                         {
-                            try
-                            {
-                                await _notificationHub.Clients.User(session.AdminId)
-                                    .SendAsync("AdminLiveNotification", new
-                                    {
-                                        notificationId = adminNotification.Id,
-                                        type = adminNotification.Type,
-                                        title = adminNotification.Title,
-                                        message = result.Message.Message,
-                                        userName = user.FullName ?? user.UserName,
-                                        chatSessionId = chatSessionId,
-                                        taskId = session.TaskId,
-                                        createdAt = adminNotification.CreatedAt
-                                    });
-
-                                adminNotification.IsDelivered = true;
-                                adminNotification.IsRead = true;
-                                await _context.SaveChangesAsync();
-                            }
-                            catch
-                            {
-                                // Keep the notification undelivered so it will be shown on next admin connection.
-                            }
+                            // Keep the notification undelivered so it will be shown on next admin connection.
                         }
                     }
                 }
