@@ -222,7 +222,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Task accepted successfully."
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, new
                 {
@@ -260,6 +260,19 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 {
                     success = false,
                     message = "This assignment has already been processed."
+                });
+            }
+
+            var task = await _context.TaskItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == assignment.TaskId);
+
+            if (task == null)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Task not found."
                 });
             }
 
