@@ -328,9 +328,39 @@
                       `
                     : "";
 
+                const notificationId =
+                    Number(notification.notificationId) || 0;
+
+                const taskId =
+                    Number(notification.taskId) || 0;
+
+                const projectId =
+                    Number(notification.projectId) || 0;
+
+                const chatSessionId =
+                    Number(notification.chatSessionId) || 0;
+
+                let destination = "";
+
+                if (type.toLowerCase() === "adminchatmessage" && chatSessionId) {
+                    destination =
+                        "/Admin/Chat#chat-" +
+                        encodeURIComponent(chatSessionId);
+                }
+                else if (taskId) {
+                    destination =
+                        "/Admin/Tasks/Project/" +
+                        encodeURIComponent(projectId) +
+                        "?taskId=" +
+                        encodeURIComponent(taskId);
+                }
+
                 return `
                     <div class="admin-notification-item global-admin-notification${notificationClass(type)}"
-                         data-notification-id="${Number(notification.notificationId) || 0}">
+                         data-notification-id="${notificationId}"
+                         data-destination="${escapeNotificationText(destination)}"
+                         role="${destination ? "button" : "article"}"
+                         tabindex="${destination ? "0" : "-1"}">
                         <span class="admin-notification-item-icon">
                             ${notificationIcon(type)}
                         </span>
@@ -524,6 +554,41 @@
     clearAllNotificationsButton?.addEventListener("click", async event => {
         event.stopPropagation();
         await clearAllGlobalAdminNotifications();
+    });
+
+    function openAdminNotificationDestination(item) {
+        const destination =
+            item?.dataset?.destination || "";
+
+        if (!destination) return;
+
+        closeAdminNotifications();
+        window.location.href = destination;
+    }
+
+    notificationList?.addEventListener("click", event => {
+        const item =
+            event.target.closest(".global-admin-notification");
+
+        if (!item) return;
+
+        if (event.target.closest("a, button")) {
+            return;
+        }
+
+        openAdminNotificationDestination(item);
+    });
+
+    notificationList?.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+
+        const item =
+            event.target.closest(".global-admin-notification");
+
+        if (!item) return;
+
+        event.preventDefault();
+        openAdminNotificationDestination(item);
     });
 
     notificationPanel?.addEventListener("click", event => {
