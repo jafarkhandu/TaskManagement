@@ -161,6 +161,75 @@ namespace TaskManagement.WebApp.Hubs
                 }
             }
 
+
+            // Persist a user chat notification when Admin sends a message.
+            // This is intentionally separate from task-assignment notifications
+            // so the user chat toast can never be mixed with the bell toast.
+            if (result.Message != null && isAdmin)
+            {
+                try
+                {
+                    var assignmentId = await _context.TaskAssignments
+                        .Where(a =>
+                            a.TaskId == session.TaskId &&
+                            a.UserId == session.UserId)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => (int?)a.Id)
+                        .FirstOrDefaultAsync();
+
+                    if (assignmentId.HasValue)
+                    {
+                        var userChatNotification = new Notification
+                        {
+                            UserId = session.UserId,
+                            TaskAssignmentId = assignmentId.Value,
+                            Type = "UserChatMessage",
+                            Title = result.Message.Message,
+                            IsRead = false,
+                            IsDelivered = false,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.Notifications.Add(userChatNotification);
+                        await _context.SaveChangesAsync();
+
+                        if (NotificationHub.IsUserOnline(session.UserId))
+                        {
+                            try
+                            {
+                                await _notificationHub.Clients.User(session.UserId)
+                                    .SendAsync("UserChatMessageReceived", new
+                                    {
+                                        notificationId = userChatNotification.Id,
+                                        type = userChatNotification.Type,
+                                        title = "New message from Admin",
+                                        message = result.Message.Message,
+                                        senderName = user.FullName ?? user.UserName ?? "Admin",
+                                        chatSessionId = chatSessionId,
+                                        taskId = session.TaskId,
+                                        taskTitle = await _context.TaskItems
+                                            .Where(t => t.Id == session.TaskId)
+                                            .Select(t => t.Title)
+                                            .FirstOrDefaultAsync(),
+                                        createdAt = userChatNotification.CreatedAt
+                                    });
+
+                                userChatNotification.IsDelivered = true;
+                                await _context.SaveChangesAsync();
+                            }
+                            catch
+                            {
+                                // Keep the notification undelivered for the next user connection.
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Notification failure must never fail a successfully saved chat message.
+                }
+            }
+
             // Broadcast the exact message returned by the service (prevents race conditions)
             if (result.Message != null)
             {
