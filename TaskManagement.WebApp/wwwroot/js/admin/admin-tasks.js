@@ -2272,19 +2272,33 @@
                             const repositoryEmpty =
                                 document.getElementById('detailTaskRepositoryEmpty');
 
+                            const repositoryUrlElement =
+                                document.getElementById('detailTaskRepositoryUrl');
+
                             const repositoryUrl =
                                 String(task.completionRepositoryUrl || '').trim();
 
                             if (repositoryLink && repositoryEmpty) {
                                 if (repositoryUrl) {
                                     repositoryLink.href = repositoryUrl;
-                                    repositoryLink.textContent = 'Open Repository →';
                                     repositoryLink.style.display = 'inline-flex';
+
+                                    if (repositoryUrlElement) {
+                                        repositoryUrlElement.textContent = repositoryUrl;
+                                        repositoryUrlElement.style.display = 'block';
+                                    }
+
                                     repositoryEmpty.style.display = 'none';
                                 }
                                 else {
                                     repositoryLink.removeAttribute('href');
                                     repositoryLink.style.display = 'none';
+
+                                    if (repositoryUrlElement) {
+                                        repositoryUrlElement.textContent = '';
+                                        repositoryUrlElement.style.display = 'none';
+                                    }
+
                                     repositoryEmpty.style.display = 'inline';
                                 }
                             }
