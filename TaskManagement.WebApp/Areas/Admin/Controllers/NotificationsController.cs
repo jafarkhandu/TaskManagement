@@ -55,6 +55,15 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     userName = u.FullName ?? u.UserName ?? "User",
                     taskId = t.Id,
                     taskTitle = t.Title,
+                    projectId = t.ProjectId,
+                    chatSessionId =
+                        n.Type == "AdminChatMessage"
+                            ? (from s in _context.ChatSessions
+                               where s.TaskId == t.Id &&
+                                     s.UserId == a.UserId &&
+                                     s.IsActive
+                               select (int?)s.Id).FirstOrDefault()
+                            : null,
                     completionRepositoryUrl =
                         n.Type == "AdminTaskCompleted"
                             ? a.CompletionRepositoryUrl
