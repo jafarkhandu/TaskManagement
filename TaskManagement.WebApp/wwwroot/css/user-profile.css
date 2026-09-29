@@ -978,3 +978,50 @@
     .profile-hero-copy h1 { font-size: 25px; }
     .profile-photo-dialog { padding: 24px; }
 }
+
+
+/* Profile photo action buttons — unified professional control set.
+   Upload, Take Photo, Capture and Save all share the same visual language. */
+.profile-photo-actions > #uploadPhotoButton,
+.profile-photo-actions > #cameraPhotoButton,
+.profile-photo-actions > #capturePhotoButton,
+.profile-photo-actions > #savePhotoButton {
+    min-height: 48px;
+    height: 48px;
+    margin: 0;
+    border: 1px solid rgba(111,154,255,.34);
+    border-radius: 13px;
+    background: linear-gradient(100deg, #3f82ff, #774eff);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 750;
+    box-shadow: 0 10px 24px rgba(76,101,255,.16), inset 0 1px rgba(255,255,255,.10);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
+}
+
+.profile-photo-actions > #uploadPhotoButton:hover,
+.profile-photo-actions > #cameraPhotoButton:hover,
+.profile-photo-actions > #capturePhotoButton:hover,
+.profile-photo-actions > #savePhotoButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    box-shadow: 0 14px 30px rgba(76,101,255,.28), inset 0 1px rgba(255,255,255,.13);
+}
+
+.profile-photo-actions > #savePhotoButton:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
+    box-shadow: none;
+}
+
+.profile-photo-actions > #capturePhotoButton[hidden],
+.profile-photo-actions > #retakePhotoButton[hidden] {
+    display: none;
+}
+
+.profile-photo-actions > #removePhotoButton {
+    min-height: 44px;
+    margin-top: 1px;
+}
