@@ -375,6 +375,28 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Keep the shared account modal avatar synchronized with the profile photo.
+    function syncAccountModalPhoto() {
+        const modalAvatar = document.querySelector("#profileModal .profile-avatar");
+        const heroPhoto = document.querySelector("#profileHeroAvatar img");
+        if (!modalAvatar) return;
+
+        if (heroPhoto?.src) {
+            modalAvatar.classList.add("has-photo");
+            modalAvatar.innerHTML = "";
+            const img = document.createElement("img");
+            img.src = heroPhoto.src;
+            img.alt = "Profile picture";
+            modalAvatar.appendChild(img);
+        } else {
+            modalAvatar.classList.remove("has-photo");
+            const name = document.getElementById("profileFullName")?.value || "Student";
+            modalAvatar.textContent = name.charAt(0).toUpperCase();
+        }
+    }
+
+    syncAccountModalPhoto();
+
     // ================= PROFILE PHOTO =================
     const photoModal = document.getElementById("profilePhotoModal");
     const openPhotoButton = document.getElementById("changeProfilePhotoButton");
@@ -512,6 +534,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const hero = document.getElementById("profileHeroAvatar");
             hero.innerHTML = ""; hero.appendChild(img); hero.classList.add("has-photo");
             if (removePhotoButton) removePhotoButton.hidden = false;
+            syncAccountModalPhoto();
             setMessage(photoMessage, result.message, "success");
             setTimeout(function () { closeCamera(); photoModal.hidden = true; }, 600);
         } catch (error) {
@@ -529,6 +552,7 @@ document.addEventListener("DOMContentLoaded", function () {
             hero.classList.remove("has-photo"); hero.textContent = name.charAt(0).toUpperCase();
             removePhotoButton.hidden = true;
             photoBlob = null;
+            syncAccountModalPhoto();
             setMessage(photoMessage, result.message, "success");
         } catch (error) {
             setMessage(photoMessage, error.message, "error");
