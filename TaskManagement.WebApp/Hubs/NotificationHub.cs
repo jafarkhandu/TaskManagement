@@ -45,22 +45,37 @@ namespace TaskManagement.WebApp.Hubs
                         Context.ConnectionId,
                         "admins");
 
-                    var missedAdminNotifications = await _context.Notifications
-                        .Where(n =>
-                            n.UserId == userId &&
-                            !n.IsDelivered &&
-                            !n.IsRead &&
-                            n.Type.StartsWith("Admin"))
-                        .OrderBy(n => n.CreatedAt)
-                        .Select(n => new
-                        {
-                            notificationId = n.Id,
-                            type = n.Type,
-                            title = n.Title,
-                            createdAt = n.CreatedAt,
-                            taskAssignmentId = n.TaskAssignmentId
-                        })
-                        .ToListAsync();
+                    var missedAdminNotifications =
+                        await (from n in _context.Notifications
+                               join a in _context.TaskAssignments
+                                   on n.TaskAssignmentId equals a.Id
+                               join t in _context.TaskItems
+                                   on a.TaskId equals t.Id
+                               join u in _context.Users
+                                   on a.UserId equals u.Id
+                               where n.UserId == userId
+                                     && !n.IsDelivered
+                                     && !n.IsRead
+                                     && n.Type.StartsWith("Admin")
+                               orderby n.CreatedAt
+                               select new
+                               {
+                                   notificationId = n.Id,
+                                   type = n.Type,
+                                   title = n.Title,
+                                   message = n.Type == "AdminTaskCompleted"
+                                       ? ((u.FullName ?? u.UserName ?? "User") + " completed " + t.Title + ".")
+                                       : "You have a new administrator notification.",
+                                   userName = u.FullName ?? u.UserName ?? "User",
+                                   taskId = t.Id,
+                                   taskTitle = t.Title,
+                                   completionRepositoryUrl = n.Type == "AdminTaskCompleted"
+                                       ? a.CompletionRepositoryUrl
+                                       : null,
+                                   createdAt = n.CreatedAt,
+                                   taskAssignmentId = n.TaskAssignmentId
+                               })
+                              .ToListAsync();
 
                     if (missedAdminNotifications.Count > 0)
                     {
