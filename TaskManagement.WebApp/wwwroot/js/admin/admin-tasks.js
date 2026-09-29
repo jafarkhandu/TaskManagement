@@ -2266,6 +2266,29 @@
                             document.getElementById('detailTaskEnd').textContent =
                                 formatDate(task.expectedEndDate);
 
+                            const repositoryLink =
+                                document.getElementById('detailTaskRepository');
+
+                            const repositoryEmpty =
+                                document.getElementById('detailTaskRepositoryEmpty');
+
+                            const repositoryUrl =
+                                String(task.completionRepositoryUrl || '').trim();
+
+                            if (repositoryLink && repositoryEmpty) {
+                                if (repositoryUrl) {
+                                    repositoryLink.href = repositoryUrl;
+                                    repositoryLink.textContent = 'Open Repository →';
+                                    repositoryLink.style.display = 'inline-flex';
+                                    repositoryEmpty.style.display = 'none';
+                                }
+                                else {
+                                    repositoryLink.removeAttribute('href');
+                                    repositoryLink.style.display = 'none';
+                                    repositoryEmpty.style.display = 'inline';
+                                }
+                            }
+
                             const allTasksModalElement =
                                 document.getElementById('allTasksModal');
 
