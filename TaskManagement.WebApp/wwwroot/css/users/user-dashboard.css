@@ -607,6 +607,307 @@ button {
     }
 
 
+/* =========================================================
+   PREMIUM USER CHAT DYNAMIC-ISLAND TOAST
+   Chat only — notification/bell toast remains untouched.
+========================================================= */
+
+.user-chat-island-toast {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    z-index: 200000;
+    width: min(430px, calc(100vw - 28px));
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 11px;
+    padding: 8px 12px 9px 9px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 24px;
+    outline: 0;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    color: #f7faff;
+    background:
+        linear-gradient(135deg, rgba(24,39,66,.94), rgba(9,20,38,.91));
+    box-shadow:
+        0 25px 75px rgba(0,0,0,.38),
+        0 8px 30px rgba(59,116,255,.18),
+        inset 0 1px 0 rgba(255,255,255,.13);
+    backdrop-filter: blur(28px) saturate(165%);
+    -webkit-backdrop-filter: blur(28px) saturate(165%);
+    opacity: 0;
+    transform:
+        translate3d(-50%, -36px, 0)
+        scale(.74, .28);
+    transform-origin: 50% 0;
+    filter: blur(4px);
+    pointer-events: none;
+    transition:
+        opacity .24s ease,
+        transform .68s cubic-bezier(.16,1.36,.26,1),
+        filter .45s ease;
+}
+
+.user-chat-island-toast::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(91,145,255,.24), transparent 38%),
+        linear-gradient(
+            110deg,
+            transparent 18%,
+            rgba(255,255,255,.12) 43%,
+            transparent 67%
+        );
+    transform: translateX(-120%);
+}
+
+.user-chat-island-toast.is-visible {
+    opacity: 1;
+    transform:
+        translate3d(-50%, 0, 0)
+        scale(1);
+    filter: blur(0);
+    pointer-events: auto;
+}
+
+.user-chat-island-toast.is-visible::before {
+    animation: userChatIslandShine 1.25s .18s ease-out both;
+}
+
+.user-chat-island-toast.is-closing {
+    opacity: 0;
+    transform:
+        translate3d(-50%, -10px, 0)
+        scale(.72, .30);
+    filter: blur(4px);
+    pointer-events: none;
+}
+
+.user-chat-island-orb {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 17px;
+    background:
+        linear-gradient(145deg, rgba(91,145,255,.25), rgba(126,76,255,.18));
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.16),
+        0 8px 24px rgba(70,116,255,.20);
+}
+
+.user-chat-island-orb-ring {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(126,170,255,.30);
+    border-radius: 14px;
+    animation: userChatIslandRing 2.2s ease-in-out infinite;
+}
+
+.user-chat-island-orb-icon {
+    position: relative;
+    z-index: 1;
+    width: 29px;
+    height: 29px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #a9c8ff;
+    background: rgba(255,255,255,.055);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+.user-chat-island-orb-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.user-chat-island-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-chat-island-topline {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.user-chat-island-topline strong {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #f5f8ff;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.user-chat-island-topline small {
+    padding: 2px 6px;
+    border: 1px solid rgba(113,159,255,.18);
+    border-radius: 999px;
+    color: #7faaff;
+    background: rgba(82,132,255,.08);
+    font-size: 6px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.user-chat-island-task {
+    overflow: hidden;
+    color: #9eb1cc;
+    font-size: 8px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-chat-island-message {
+    max-width: 285px;
+    overflow: hidden;
+    color: #d8e2f1;
+    font-size: 10px;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-chat-island-arrow {
+    display: grid;
+    place-items: center;
+    color: #6f89ad;
+    font-size: 24px;
+    font-weight: 300;
+    transition: transform .22s ease, color .22s ease;
+}
+
+.user-chat-island-toast:hover .user-chat-island-arrow {
+    color: #9fc1ff;
+    transform: translateX(3px);
+}
+
+.user-chat-island-progress {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #72a7ff, #8b5cf6);
+    transform-origin: left center;
+    animation: userChatIslandProgress 5.6s linear both;
+}
+
+@keyframes userChatIslandShine {
+    from { transform: translateX(-120%); }
+    to { transform: translateX(120%); }
+}
+
+@keyframes userChatIslandRing {
+    0%, 100% {
+        opacity: .55;
+        transform: scale(.94);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.04);
+    }
+}
+
+@keyframes userChatIslandProgress {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+html.light-theme .user-chat-island-toast {
+    border-color: rgba(112,137,174,.24);
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.96), rgba(239,245,255,.94));
+    color: #20314a;
+    box-shadow:
+        0 25px 75px rgba(38,64,100,.20),
+        0 8px 30px rgba(59,116,255,.12),
+        inset 0 1px 0 rgba(255,255,255,.94);
+}
+
+html.light-theme .user-chat-island-topline strong {
+    color: #20314a;
+}
+
+html.light-theme .user-chat-island-task {
+    color: #667993;
+}
+
+html.light-theme .user-chat-island-message {
+    color: #40536e;
+}
+
+html.light-theme .user-chat-island-arrow {
+    color: #71839e;
+}
+
+html.light-theme .user-chat-island-orb {
+    background: linear-gradient(145deg, #edf4ff, #e7eaff);
+}
+
+@media (max-width: 600px) {
+    .user-chat-island-toast {
+        top: 8px;
+        width: calc(100vw - 18px);
+        min-height: 60px;
+        grid-template-columns: 42px minmax(0, 1fr) 20px;
+        gap: 9px;
+        padding: 7px 10px 8px 7px;
+        border-radius: 21px;
+    }
+
+    .user-chat-island-orb {
+        width: 42px;
+        height: 42px;
+        border-radius: 15px;
+    }
+
+    .user-chat-island-message {
+        max-width: 210px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .user-chat-island-toast,
+    .user-chat-island-orb-ring {
+        transition: opacity .2s ease !important;
+        animation: none !important;
+    }
+
+    .user-chat-island-toast {
+        transform: translate3d(-50%, 0, 0) !important;
+        filter: none !important;
+    }
+
+    .user-chat-island-toast.is-closing {
+        transform: translate3d(-50%, -6px, 0) !important;
+    }
+}
+
+
 /* ================= HERO ================= */
 
 .hero {
