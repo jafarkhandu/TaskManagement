@@ -69,8 +69,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (admin == null)
                 return Unauthorized();
 
-            var unreadMessages = await _chatService.GetAdminChatSessionsAsync();
-
             var sessions = await _context.ChatSessions
                 .Where(x => x.AdminId == admin.Id && x.IsActive)
                 .Select(x => x.Id)
