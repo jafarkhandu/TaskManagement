@@ -68,6 +68,10 @@ namespace TaskManagement.Infrastructure.Data
                     .HasMaxLength(20)
                     .IsRequired();
 
+                b.Property(x => x.CompletionRepositoryUrl)
+                    .HasMaxLength(2048)
+                    .IsRequired(false);
+
                 b.HasIndex(x => x.TaskId);
 
                 b.HasIndex(x => x.UserId);
