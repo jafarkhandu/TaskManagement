@@ -394,9 +394,20 @@ document.addEventListener("DOMContentLoaded", function () {
     let cameraStream = null;
 
     function closeCamera() {
-        if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+
         cameraStream = null;
-        if (cameraPreview) { cameraPreview.srcObject = null; cameraPreview.hidden = true; }
+
+        if (cameraPreview) {
+            cameraPreview.srcObject = null;
+            cameraPreview.hidden = true;
+        }
+
+        // Capture/Retake controls belong only to an active camera session.
+        if (capturePhotoButton) capturePhotoButton.hidden = true;
+        if (retakePhotoButton) retakePhotoButton.hidden = true;
     }
 
     function showPhotoPreview(blobOrFile) {
@@ -411,16 +422,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
     openPhotoButton?.addEventListener("click", function () {
         if (!photoModal) return;
+
+        // Every new modal session starts cleanly.
+        closeCamera();
         photoModal.hidden = false;
+        photoBlob = null;
+
+        if (photoFileInput) photoFileInput.value = "";
+        if (savePhotoButton) savePhotoButton.disabled = true;
         setMessage(photoMessage, "");
     });
 
     closePhotoButton?.addEventListener("click", function () {
-        closeCamera(); photoModal.hidden = true;
+        closeCamera();
+        photoBlob = null;
+        if (photoFileInput) photoFileInput.value = "";
+        if (savePhotoButton) savePhotoButton.disabled = true;
+        photoModal.hidden = true;
     });
 
     photoModal?.addEventListener("click", function (event) {
-        if (event.target === photoModal) { closeCamera(); photoModal.hidden = true; }
+        if (event.target === photoModal) {
+            closeCamera();
+            photoBlob = null;
+            if (photoFileInput) photoFileInput.value = "";
+            if (savePhotoButton) savePhotoButton.disabled = true;
+            photoModal.hidden = true;
+        }
     });
 
     uploadPhotoButton?.addEventListener("click", function () { photoFileInput?.click(); });
@@ -462,7 +490,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }, "image/jpeg", 0.9);
     });
 
-    retakePhotoButton?.addEventListener("click", function () { cameraPhotoButton?.click(); });
+    retakePhotoButton?.addEventListener("click", function () {
+        closeCamera();
+        cameraPhotoButton?.click();
+    });
 
     savePhotoButton?.addEventListener("click", async function () {
         if (!photoBlob) return;
