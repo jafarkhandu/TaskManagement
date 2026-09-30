@@ -264,17 +264,53 @@
                         }
                         else if (paymentDetails.PaymentMethod == "UPI")
                         {
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="admin-payment-field">
-                                        <span>Payment Method</span>
-                                        <strong>UPI</strong>
+                            <div class="admin-payment-upi-layout">
+                                <div class="row g-3 admin-payment-upi-fields">
+                                    <div class="col-md-6">
+                                        <div class="admin-payment-field">
+                                            <span>Payment Method</span>
+                                            <strong>UPI</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="admin-payment-field">
+                                            <span>UPI ID</span>
+                                            <strong class="admin-payment-value">@paymentDetails.UpiId</strong>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="admin-payment-field">
-                                        <span>UPI ID</span>
-                                        <strong class="admin-payment-value">@paymentDetails.UpiId</strong>
+
+                                <div class="admin-payment-qr-card">
+                                    <div class="admin-payment-qr-heading">
+                                        <span class="admin-payment-qr-icon">⌁</span>
+                                        <div>
+                                            <strong>UPI QR</strong>
+                                            <span>Scan to open a UPI payment app</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="admin-payment-qr-frame">
+                                        <img src="@Url.Action("PaymentQr", "Users", new { area = "Admin", upiId = paymentDetails.UpiId })"
+                                             alt="UPI QR for @paymentDetails.UpiId"
+                                             loading="lazy" />
+                                    </div>
+
+                                    <div class="admin-payment-qr-note">
+                                        QR is generated from the UPI ID submitted by the user. It is not an ownership verification.
+                                    </div>
+
+                                    <div class="admin-payment-qr-actions">
+                                        <a class="btn btn-sm btn-primary"
+                                           href="@Url.Action("PaymentQr", "Users", new { area = "Admin", upiId = paymentDetails.UpiId })"
+                                           target="_blank"
+                                           rel="noopener">
+                                            Open QR
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="@Url.Action("PaymentQr", "Users", new { area = "Admin", upiId = paymentDetails.UpiId })"
+                                           download="upi-qr.png">
+                                            Download
+                                        </a>
                                     </div>
                                 </div>
                             </div>
