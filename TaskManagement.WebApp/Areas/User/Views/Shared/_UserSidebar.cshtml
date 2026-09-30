@@ -1,4 +1,4 @@
-@{
+﻿@{
     var currentPath = Context.Request.Path.Value?.TrimEnd('/');
 
     var dashboardActive =
@@ -17,74 +17,150 @@
         currentPath?.StartsWith(
             "/User/Notifications",
             StringComparison.OrdinalIgnoreCase) == true;
-
-    var paymentDetailsActive =
-        currentPath?.StartsWith(
-            "/User/PaymentDetails",
-            StringComparison.OrdinalIgnoreCase) == true;
 }
+
 
 <aside class="sidebar">
 
     <div class="brand">
-        <img src="~/images/ciit-logo.png"
-             alt="CIIT Training Institute"
-             class="sidebar-brand-image" />
+
+        <div class="brand-logo">
+            ✓
+        </div>
+
+        <div class="brand-copy">
+            <strong>CIIT INSTITUTE</strong>
+            <span>Plan · Focus · Achieve</span>
+        </div>
+
     </div>
+
 
     <nav class="navigation">
 
+        <!-- Dashboard -->
+
         <a href="@Url.Action("Index", "Dashboard", new { area = "User" })"
            class="nav-link @(dashboardActive ? "active" : "")">
-            <span class="nav-symbol">⌂</span>
-            <span>Dashboard</span>
+
+            <span class="nav-symbol">
+                ⌂
+            </span>
+
+            <span>
+                Dashboard
+            </span>
+
         </a>
+
+
+        <!-- My Tasks -->
 
         <a href="@Url.Action("Index", "MyTasks", new { area = "User" })"
            class="nav-link @(myTasksActive ? "active" : "")">
-            <span class="nav-symbol">✓</span>
-            <span>My Tasks</span>
+
+            <span class="nav-symbol">
+                ✓
+            </span>
+
+            <span>
+                My Tasks
+            </span>
+
         </a>
+
+
+        <!-- Notifications -->
 
         <a href="@Url.Action("Index", "Notifications", new { area = "User" })"
            class="nav-link @(notificationsActive ? "active" : "")">
-            <span class="nav-symbol">🔔</span>
-            <span>Notifications</span>
+
+            <span class="nav-symbol">
+                🔔
+            </span>
+
+            <span>
+                Notifications
+            </span>
+
         </a>
 
-        <a href="@Url.Action("Index", "PaymentDetails", new { area = "User" })"
-           class="nav-link @(paymentDetailsActive ? "active" : "")">
-            <span class="nav-symbol">▣</span>
-            <span>Payment Details</span>
-        </a>
+
+        <!-- Files -->
+
+        <button type="button"
+                class="nav-link"
+                data-modal="filesModal">
+
+            <span class="nav-symbol">
+                ▤
+            </span>
+
+            <span>
+                Files
+            </span>
+
+        </button>
+
+
+        <!-- Profile -->
 
         <a href="@Url.Action("Index", "Profile", new { area = "User" })"
            class="nav-link @(currentPath?.StartsWith("/User/Profile", StringComparison.OrdinalIgnoreCase) == true ? "active" : "")">
-            <span class="nav-symbol">♙</span>
-            <span>Profile</span>
+
+            <span class="nav-symbol">
+                ♙
+            </span>
+
+            <span>
+                Profile
+            </span>
+
         </a>
+
+
+        <!-- Settings -->
 
         <button type="button"
                 class="nav-link"
                 data-modal="settingsModal">
-            <span class="nav-symbol">⚙</span>
-            <span>Settings</span>
+
+            <span class="nav-symbol">
+                ⚙
+            </span>
+
+            <span>
+                Settings
+            </span>
+
         </button>
 
     </nav>
 
+
     <div class="sidebar-bottom">
 
         <div class="sidebar-message">
-            <span>✦</span>
+
+            <span>
+                ✦
+            </span>
+
             <p>
                 Small steps every day
                 create big results.
             </p>
+
         </div>
 
+
+        <!-- LOGOUT -->
+
         <form id="logoutForm"
-              action="@Url.Action("Logout", "Account", new { area = "" })"
+              action="@Url.Action(
+                                      "Logout",
+                                      "Account",
+                                      new { area = "" })"
               method="post"
               class="logout-form">
 
@@ -92,8 +168,15 @@
 
             <button type="submit"
                     class="logout-button">
-                <span>↪</span>
-                <span>Logout</span>
+
+                <span>
+                    ↪
+                </span>
+
+                <span>
+                    Logout
+                </span>
+
             </button>
 
         </form>
