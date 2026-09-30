@@ -153,6 +153,16 @@ namespace TaskManagement.Infrastructure.Services
             var assignment = await _db.TaskAssignments.FirstOrDefaultAsync(x => x.Id == review.TaskAssignmentId);
             if (task == null || assignment == null) return (false, "Task assignment not found.");
 
+            if (payNow)
+            {
+                var paymentDetails = await _db.UserPaymentDetails
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.UserId == assignment.UserId);
+
+                if (paymentDetails == null)
+                    return (false, "The user has not submitted payment details yet.");
+            }
+
             payment.Status = payNow ? "Paid" : "Pending";
             payment.PaidAt = payNow ? DateTime.UtcNow : null;
             payment.SettledByAdminId = payNow ? adminId : null;
