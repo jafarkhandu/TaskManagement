@@ -25,6 +25,8 @@ namespace TaskManagement.Infrastructure.Data
 
         public DbSet<ChatMessage> ChatMessages { get; set; }
 
+        public DbSet<UserPaymentDetails> UserPaymentDetails { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -153,6 +155,38 @@ namespace TaskManagement.Infrastructure.Data
                     .WithMany()
                     .HasForeignKey(x => x.AdminId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            builder.Entity<UserPaymentDetails>(b =>
+            {
+                b.HasKey(x => x.Id);
+
+                b.Property(x => x.UserId)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                b.Property(x => x.PaymentMethod)
+                    .HasMaxLength(20)
+                    .IsRequired();
+
+                b.Property(x => x.UpiId)
+                    .HasMaxLength(200);
+
+                b.Property(x => x.AccountHolderName)
+                    .HasMaxLength(200);
+
+                b.Property(x => x.BankName)
+                    .HasMaxLength(200);
+
+                b.Property(x => x.AccountNumber)
+                    .HasMaxLength(50);
+
+                b.Property(x => x.IfscCode)
+                    .HasMaxLength(20);
+
+                b.HasIndex(x => x.UserId)
+                    .IsUnique();
             });
 
 
