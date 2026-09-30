@@ -68,6 +68,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
 
+            await SendLatestUserNotificationAsync(id, "TaskReviewApproved");
+
             return Json(new { success = true, message = "Task approved. Payment details are ready." });
         }
 
