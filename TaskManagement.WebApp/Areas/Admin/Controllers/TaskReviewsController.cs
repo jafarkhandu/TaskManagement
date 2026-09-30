@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Identity;
+using TaskManagement.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using TaskManagement.WebApp.Hubs;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
@@ -15,15 +17,18 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         private readonly ITaskReviewService _reviewService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<NotificationHub> _notificationHub;
+        private readonly ApplicationDbContext _context;
 
         public TaskReviewsController(
             ITaskReviewService reviewService,
             UserManager<ApplicationUser> userManager,
-            IHubContext<NotificationHub> notificationHub)
+            IHubContext<NotificationHub> notificationHub,
+            ApplicationDbContext context)
         {
             _reviewService = reviewService;
             _userManager = userManager;
             _notificationHub = notificationHub;
+            _context = context;
         }
 
         [HttpGet]
@@ -76,6 +81,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
 
+            await SendLatestUserNotificationAsync(id, "TaskReviewRejected");
+
             return Json(new { success = true, message = "Task rejected and placed on hold." });
         }
 
@@ -89,6 +96,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             var result = await _reviewService.SettlePaymentAsync(id, admin.Id, payNow);
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
+
+            await SendLatestUserNotificationAsync(id, payNow ? "TaskPaymentSettled" : "TaskReviewApproved");
 
             return Json(new
             {
