@@ -41,7 +41,7 @@ namespace TaskManagement.Infrastructure.Services
                        Amount = t.Amount,
                        UserId = u.Id,
                        UserName = u.FullName ?? u.Email ?? u.UserName ?? "User",
-                       ProjectTitle = p.Title,
+                       ProjectTitle = p.ProjectTitle,
                        RepositoryUrl = a.CompletionRepositoryUrl,
                        ReviewStatus = r.Status,
                        RejectionReason = r.RejectionReason,
