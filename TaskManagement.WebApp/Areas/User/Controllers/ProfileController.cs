@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.DTOs;
-using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Identity;
 using TaskManagement.Infrastructure.Services;
@@ -29,18 +28,15 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly EmailService _emailService;
-        private readonly IProfilePictureStorage _profilePictureStorage;
 
         public ProfileController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            EmailService emailService,
-            IProfilePictureStorage profilePictureStorage)
+            EmailService emailService)
         {
             _context = context;
             _userManager = userManager;
             _emailService = emailService;
-            _profilePictureStorage = profilePictureStorage;
         }
 
         [HttpGet]
@@ -144,7 +140,6 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
         public async Task<IActionResult> UploadProfilePicture(IFormFile? file)
         {
             var user = await _userManager.GetUserAsync(User);
-
             if (user == null)
                 return Unauthorized(new { success = false, message = "User session expired." });
 
@@ -152,62 +147,46 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 return BadRequest(new { success = false, message = "Please select or capture a photo." });
 
             const long maxBytes = 5 * 1024 * 1024;
-
             if (file.Length > maxBytes)
                 return BadRequest(new { success = false, message = "Profile photo must be 5 MB or smaller." });
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-
             if (!allowed.Contains(extension))
                 return BadRequest(new { success = false, message = "Only JPG, JPEG, PNG and WEBP images are allowed." });
 
-            try
+            var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
+            Directory.CreateDirectory(uploads);
+
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
             {
-                await using var stream = file.OpenReadStream();
+                var oldPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    user.ProfilePictureUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 
-                var profilePictureUrl = await _profilePictureStorage.UploadAsync(
-                    stream,
-                    file.FileName,
-                    user.Id);
-
-                user.ProfilePictureUrl = profilePictureUrl;
-
-                var result = await _userManager.UpdateAsync(user);
-
-                if (!result.Succeeded)
-                {
-                    try
-                    {
-                        await _profilePictureStorage.DeleteAsync(user.Id);
-                    }
-                    catch
-                    {
-                        // Do not hide the Identity update error.
-                    }
-
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = string.Join(" ", result.Errors.Select(x => x.Description))
-                    });
-                }
-
-                return Json(new
-                {
-                    success = true,
-                    message = "Profile photo updated successfully.",
-                    profilePictureUrl = user.ProfilePictureUrl
-                });
+                if (System.IO.File.Exists(oldPath))
+                    System.IO.File.Delete(oldPath);
             }
-            catch
+
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var physicalPath = Path.Combine(uploads, fileName);
+
+            await using (var stream = new FileStream(physicalPath, FileMode.CreateNew))
             {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Unable to save the profile photo right now. Please try again."
-                });
+                await file.CopyToAsync(stream);
             }
+
+            user.ProfilePictureUrl = $"/uploads/profiles/{fileName}";
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                System.IO.File.Delete(physicalPath);
+                return BadRequest(new { success = false, message = string.Join(" ", result.Errors.Select(x => x.Description)) });
+            }
+
+            return Json(new { success = true, message = "Profile photo updated successfully.", profilePictureUrl = user.ProfilePictureUrl });
         }
 
         [HttpPost]
@@ -215,41 +194,45 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
         public async Task<IActionResult> RemoveProfilePicture()
         {
             var user = await _userManager.GetUserAsync(User);
-
             if (user == null)
                 return Unauthorized(new { success = false, message = "User session expired." });
 
-            try
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
             {
-                if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
-                    await _profilePictureStorage.DeleteAsync(user.Id);
+                var path = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    user.ProfilePictureUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 
-                user.ProfilePictureUrl = null;
-
-                var result = await _userManager.UpdateAsync(user);
-
-                if (!result.Succeeded)
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = "Unable to remove the profile photo."
-                    });
-
-                return Json(new
-                {
-                    success = true,
-                    message = "Profile photo removed successfully."
-                });
+                if (System.IO.File.Exists(path))
+                    System.IO.File.Delete(path);
             }
-            catch
-            {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Unable to remove the profile photo right now. Please try again."
-                });
-            }
+
+            user.ProfilePictureUrl = null;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return BadRequest(new { success = false, message = "Unable to remove the profile photo." });
+
+            return Json(new { success = true, message = "Profile photo removed successfully." });
         }
+
+        private static int CalculateProfileCompletion(ApplicationUser user)
+        {
+            var filled = new[]
+            {
+                !string.IsNullOrWhiteSpace(user.FullName),
+                !string.IsNullOrWhiteSpace(user.Email),
+                !string.IsNullOrWhiteSpace(user.PhoneNumber)
+            }.Count(x => x);
+
+            return (int)Math.Round(filled * 100m / 3m);
+        }
+
+        private static bool IsProfileComplete(ApplicationUser user) =>
+            !string.IsNullOrWhiteSpace(user.FullName) &&
+            !string.IsNullOrWhiteSpace(user.Email) &&
+            !string.IsNullOrWhiteSpace(user.PhoneNumber);
 
         [HttpPost]
         [ValidateAntiForgeryToken]
