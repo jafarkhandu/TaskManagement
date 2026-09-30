@@ -31,6 +31,9 @@
     <link rel="stylesheet"
           href="~/css/admin/admin-common.css"
           asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/css/admin/admin-user-manage.css"
+          asp-append-version="true" />
 
 </head>
 
@@ -237,26 +240,25 @@
                         var paymentDetails = ViewBag.PaymentDetails as UserPaymentDetails;
                     }
 
-                    <section class="mt-5 p-4 rounded-4 border"
-                             style="background:rgba(15,29,52,.55);border-color:rgba(255,255,255,.10)!important;">
+                    <section class="admin-payment-panel">
 
-                        <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                        <div class="admin-payment-header">
                             <div>
-                                <div class="text-uppercase small fw-bold opacity-50">Payment Profile</div>
-                                <h3 class="mb-1">Payment Details</h3>
-                                <p class="mb-0 opacity-50 small">
-                                    Original payment information submitted by this user.
-                                </p>
+                                <div class="admin-payment-eyebrow">PAYMENT PROFILE</div>
+                                <h3>Payment Details</h3>
+                                <p>Validated payment information submitted by this user.</p>
                             </div>
 
-                            <span class="badge rounded-pill @(paymentDetails == null ? "text-bg-secondary" : "text-bg-success")">
-                                @(paymentDetails == null ? "Not Added" : paymentDetails.PaymentMethod)
+                            <span class="admin-payment-badge @(paymentDetails == null ? "empty" : "saved")">
+                                <span class="admin-payment-badge-dot"></span>
+                                @(paymentDetails == null ? "Not Added" : paymentDetails.PaymentMethod + " • Format Validated")
                             </span>
                         </div>
 
                         @if (paymentDetails == null)
                         {
-                            <div class="py-3 opacity-60">
+                            <div class="admin-payment-empty">
+                                <span>＋</span>
                                 This user has not added payment details yet.
                             </div>
                         }
@@ -264,12 +266,16 @@
                         {
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label opacity-50">Payment Method</label>
-                                    <div class="form-control">UPI</div>
+                                    <div class="admin-payment-field">
+                                        <span>Payment Method</span>
+                                        <strong>UPI</strong>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label opacity-50">UPI ID</label>
-                                    <div class="form-control">@paymentDetails.UpiId</div>
+                                    <div class="admin-payment-field">
+                                        <span>UPI ID</span>
+                                        <strong class="admin-payment-value">@paymentDetails.UpiId</strong>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -277,20 +283,28 @@
                         {
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label opacity-50">Account Holder Name</label>
-                                    <div class="form-control">@paymentDetails.AccountHolderName</div>
+                                    <div class="admin-payment-field">
+                                        <span>Account Holder Name</span>
+                                        <strong>@paymentDetails.AccountHolderName</strong>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label opacity-50">Bank Name</label>
-                                    <div class="form-control">@paymentDetails.BankName</div>
+                                    <div class="admin-payment-field">
+                                        <span>Bank Name</span>
+                                        <strong>@paymentDetails.BankName</strong>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label opacity-50">Account Number</label>
-                                    <div class="form-control">@paymentDetails.AccountNumber</div>
+                                    <div class="admin-payment-field">
+                                        <span>Account Number</span>
+                                        <strong class="admin-payment-value">@paymentDetails.AccountNumber</strong>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label opacity-50">IFSC Code</label>
-                                    <div class="form-control">@paymentDetails.IfscCode</div>
+                                    <div class="admin-payment-field">
+                                        <span>IFSC Code</span>
+                                        <strong class="admin-payment-value">@paymentDetails.IfscCode</strong>
+                                    </div>
                                 </div>
                             </div>
                         }
