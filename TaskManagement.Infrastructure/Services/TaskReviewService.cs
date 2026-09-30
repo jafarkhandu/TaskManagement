@@ -28,6 +28,8 @@ namespace TaskManagement.Infrastructure.Services
                    join u in _db.Users.AsNoTracking() on r.SubmittedByUserId equals u.Id
                    join pay in _db.TaskPayments.AsNoTracking() on r.TaskAssignmentId equals pay.TaskAssignmentId into payments
                    from pay in payments.OrderByDescending(x => x.Id).Take(1).DefaultIfEmpty()
+                   join pd in _db.UserPaymentDetails.AsNoTracking() on u.Id equals pd.UserId into paymentDetails
+                   from pd in paymentDetails.Take(1).DefaultIfEmpty()
                    select new TaskReviewDto
                    {
                        ReviewId = r.Id,
@@ -44,7 +46,13 @@ namespace TaskManagement.Infrastructure.Services
                        ReviewStatus = r.Status,
                        RejectionReason = r.RejectionReason,
                        PaymentStatus = pay == null ? null : pay.Status,
-                       SubmittedAt = r.SubmittedAt
+                       SubmittedAt = r.SubmittedAt,
+                       PaymentMethod = pd == null ? null : pd.PaymentMethod,
+                       UpiId = pd == null ? null : pd.UpiId,
+                       AccountHolderName = pd == null ? null : pd.AccountHolderName,
+                       BankName = pd == null ? null : pd.BankName,
+                       AccountNumber = pd == null ? null : pd.AccountNumber,
+                       IfscCode = pd == null ? null : pd.IfscCode
                    };
 
         public Task<List<TaskReviewDto>> GetPendingReviewsAsync() =>
