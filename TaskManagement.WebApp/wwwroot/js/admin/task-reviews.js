@@ -40,6 +40,25 @@ async function settle(payNow){
  if(!r.ok||!j.success){alert(j.message||'Unable to settle payment.');return;}
  bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentReviewModal')).hide();location.reload();
 }
+document.querySelectorAll('.pending-pay-btn').forEach(button => button.addEventListener('click', async () => {
+ const id=Number(button.dataset.reviewId||0); if(!id)return;
+ try{
+   const d=await (await fetch('/Admin/TaskReviews/Details?id='+id)).json();
+   if(!d.success) throw new Error(d.message||'Unable to load payment details.');
+   activeReview=d.data;
+   const x=d.data;
+   document.getElementById('paymentTaskTitle').textContent=x.taskTitle||'Payment Details';
+   document.getElementById('paymentUserName').textContent=x.userName||'-';
+   document.getElementById('paymentAmount').textContent='₹ '+Number(x.amount||0).toFixed(2);
+   document.getElementById('paymentMethod').textContent=x.paymentMethod||'Not set';
+   document.getElementById('paymentUpi').textContent=x.upiId||'-';
+   document.getElementById('paymentHolder').textContent=x.accountHolderName||'-';
+   document.getElementById('paymentBank').textContent=x.bankName||'-';
+   document.getElementById('paymentAccount').textContent=x.accountNumber||'-';
+   document.getElementById('paymentIfsc').textContent=x.ifscCode||'-';
+   bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentReviewModal')).show();
+ }catch(err){alert(err.message)}
+}));
 document.getElementById('payNow')?.addEventListener('click',()=>settle(true));
 document.getElementById('payLater')?.addEventListener('click',()=>settle(false));
 })();
