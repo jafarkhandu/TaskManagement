@@ -107,7 +107,7 @@ namespace TaskManagement.WebApp.Hubs
                             n.UserId == userId &&
                             !n.IsDelivered &&
                             !n.IsRead &&
-                            n.Type == "TaskAssignment")
+                            n.Type != "UserChatMessage")
                         .Join(
                             _context.TaskAssignments,
                             n => n.TaskAssignmentId,
