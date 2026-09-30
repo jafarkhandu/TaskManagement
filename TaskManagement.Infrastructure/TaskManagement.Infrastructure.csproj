@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
-    <PackageReference Include="CloudinaryDotNet" Version="1.27.8" />
+    <PackageReference Include="CloudinaryDotNet" Version="1.29.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
       <PrivateAssets>all</PrivateAssets>
