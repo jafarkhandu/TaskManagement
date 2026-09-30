@@ -172,7 +172,14 @@ namespace TaskManagement.Infrastructure.Data
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.TaskAssignmentId);
                 b.HasIndex(x => x.Status);
-                b.HasOne<TaskAssignment>().WithMany().HasForeignKey(x => x.TaskAssignmentId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne<TaskItem>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne<TaskAssignment>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskAssignmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<TaskPayment>(b =>
@@ -185,8 +192,14 @@ namespace TaskManagement.Infrastructure.Data
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.TaskAssignmentId);
                 b.HasIndex(x => x.Status);
-                b.HasOne<TaskItem>().WithMany().HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
-                b.HasOne<TaskAssignment>().WithMany().HasForeignKey(x => x.TaskAssignmentId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne<TaskItem>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne<TaskAssignment>()
+                    .WithMany()
+                    .HasForeignKey(x => x.TaskAssignmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<UserPaymentDetails>(b =>
