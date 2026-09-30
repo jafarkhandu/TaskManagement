@@ -16,12 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/User/Notifications/Pending');
             if (!res.ok) return;
             const json = await res.json();
-            if (!json.success) return;
+            if (!json.success) throw new Error(json.message || 'Unable to load notifications.');
 
             renderList(json.notifications);
         }
         catch (err) {
             console.error('Failed to load notifications', err);
+            if (listEl) {
+                listEl.innerHTML = '<div class="notification-empty"><span>!</span><strong>Unable to load notifications</strong><small>Please refresh the page and try again.</small></div>';
+            }
         }
     }
 
