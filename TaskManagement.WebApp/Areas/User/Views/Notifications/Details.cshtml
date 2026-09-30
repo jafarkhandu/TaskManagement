@@ -1,34 +1,33 @@
-@model dynamic
-
 @{
     Layout = null;
+
+    var notificationType = Model.NotificationType?.ToString() ?? "TaskAssignment";
+    var isReviewApproved = notificationType == "TaskReviewApproved";
+    var isReviewRejected = notificationType == "TaskReviewRejected";
+    var isPaymentSettled = notificationType == "TaskPaymentSettled";
+    var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled;
+
+    var detailTitle = isPaymentSettled
+        ? "Payment Settled"
+        : isReviewApproved
+            ? "Task Review Approved"
+            : isReviewRejected
+                ? "Task Review Rejected"
+                : "New Task Assignment";
+
+    var detailDescription = isPaymentSettled
+        ? "Your task review is complete and the payment has been settled."
+        : isReviewApproved
+            ? "Your submitted work has been reviewed and approved by the admin."
+            : isReviewRejected
+                ? "Your submitted work was rejected and the task has been placed on hold."
+                : "Review the task details below and choose to accept or reject.";
 }
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TaskManager — Notification Details</title>
-    @{
-        var notificationType = Model.NotificationType?.ToString() ?? "TaskAssignment";
-        var isReviewApproved = notificationType == "TaskReviewApproved";
-        var isReviewRejected = notificationType == "TaskReviewRejected";
-        var isPaymentSettled = notificationType == "TaskPaymentSettled";
-        var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled;
-        var detailTitle = isPaymentSettled
-            ? "Payment Settled"
-            : isReviewApproved
-                ? "Task Review Approved"
-                : isReviewRejected
-                    ? "Task Review Rejected"
-                    : "New Task Assignment";
-        var detailDescription = isPaymentSettled
-            ? "Your task review is complete and the payment has been settled."
-            : isReviewApproved
-                ? "Your submitted work has been reviewed and approved by the admin."
-                : isReviewRejected
-                    ? "Your submitted work was rejected and the task has been placed on hold."
-                    : "Review the task details below and choose to accept or reject.";
-    }
     <link rel="stylesheet"
       href="~/css/users/user-dashboard.css"
       asp-append-version="true" />
