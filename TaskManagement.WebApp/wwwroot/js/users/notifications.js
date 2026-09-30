@@ -42,6 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'notification-card';
             card.dataset.notificationId = n.notificationId;
             card.dataset.assignmentId = n.assignmentId;
+            const isProtectedPendingAssignment =
+                n.notificationType === 'TaskAssignment' &&
+                n.assignmentStatus === 'Pending';
+            if (isProtectedPendingAssignment) {
+                card.dataset.protected = 'true';
+            }
 
             card.innerHTML = `
                 <div class="notification-card-inner">
@@ -70,12 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Right-click for desktop
             card.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
+                if (isProtectedPendingAssignment) return;
                 showContextMenu(e.pageX, e.pageY, n.notificationId, card);
             });
 
             // Long press for mobile
             let touchTimer = null;
             card.addEventListener('touchstart', (e) => {
+                if (isProtectedPendingAssignment) return;
                 touchTimer = setTimeout(() => {
                     showContextMenu(e.touches[0].pageX, e.touches[0].pageY, n.notificationId, card);
                 }, 600);
@@ -165,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
 
         const cards = [
-            ...listEl.querySelectorAll('.notification-card')
+            ...listEl.querySelectorAll('.notification-card:not([data-protected="true"])')
         ];
 
         if (!cards.length)
@@ -233,27 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // SHOW EMPTY STATE AFTER ANIMATION
             // ===============================
 
-            setTimeout(() => {
-
-                listEl.innerHTML = `
-                <div class="notification-empty">
-
-                    <span>✓</span>
-
-                    <strong>
-                        You're all caught up
-                    </strong>
-
-                    <small>
-                        No new task assignments.
-                    </small>
-
-                </div>
-            `;
+            setTimeout(async () => {
+                // Reload from the server so protected pending task
+                // notifications remain visible after Clear All.
+                await loadList();
 
                 if (clearButton)
                     clearButton.disabled = false;
-
             }, animationTime);
 
         }
