@@ -1,0 +1,127 @@
+@model List<TaskManagement.Application.DTOs.TaskReviewDto>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Task Reviews</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-common.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/task-reviews.css" asp-append-version="true" />
+</head>
+<body>
+<div class="admin-review-page">
+    @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
+    <main class="admin-review-main">
+        @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
+        <section class="review-hero">
+            <div>
+                <span>WORKFLOW</span>
+                <h1>Task Reviews</h1>
+                <p>Review submitted work before approving the task and settling its payment.</p>
+            </div>
+            <div class="review-counter"><strong>@Model.Count</strong><span>Pending reviews</span></div>
+        </section>
+
+        <section class="review-list" id="reviewList">
+        @foreach (var review in Model)
+        {
+            <article class="review-card" data-review-id="@review.ReviewId">
+                <div class="review-card-head">
+                    <div>
+                        <span class="review-task-id">TASK-@review.TaskId</span>
+                        <h2>@review.TaskTitle</h2>
+                        <p>@review.ProjectTitle · @review.UserName</p>
+                    </div>
+                    <span class="review-pill">REVIEW PENDING</span>
+                </div>
+
+                <div class="review-grid">
+                    <div><span>Amount</span><strong>₹ @review.Amount.ToString("N2")</strong></div>
+                    <div><span>Priority</span><strong>@review.Priority</strong></div>
+                    <div><span>Submitted</span><strong>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</strong></div>
+                </div>
+
+                <div class="review-scenario"><span>Scenario</span><p>@review.Scenario</p></div>
+
+                <div class="review-repository">
+                    <span>Submitted Repository</span>
+                    @if (!string.IsNullOrWhiteSpace(review.RepositoryUrl))
+                    {
+                        <a href="@review.RepositoryUrl" target="_blank" rel="noopener noreferrer">Open Repository ↗</a>
+                    }
+                </div>
+
+                <div class="review-actions">
+                    <button type="button" class="btn btn-review-approve" data-action="approve">✓ Approve</button>
+                    <button type="button" class="btn btn-review-reject" data-action="reject">✕ Reject</button>
+                </div>
+            </article>
+        }
+        @if (!Model.Any())
+        {
+            <div class="review-empty">
+                <div>✓</div>
+                <h3>No pending reviews</h3>
+                <p>New task submissions will appear here automatically.</p>
+            </div>
+        }
+        </section>
+    </main>
+</div>
+
+<div class="modal fade" id="rejectReviewModal" tabindex="-1" aria-hidden="true">
+ <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-content review-modal">
+   <div class="modal-header"><div><span>REVIEW ACTION</span><h5>Reject Task</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+   <div class="modal-body">
+    <label for="rejectReason">Reason for rejection</label>
+    <textarea id="rejectReason" rows="5" maxlength="2000" placeholder="Explain what needs to be corrected..."></textarea>
+    <div id="rejectError" class="review-error"></div>
+   </div>
+   <div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="confirmReject">Reject Task</button></div>
+  </div>
+ </div>
+</div>
+
+<div class="modal fade" id="paymentReviewModal" tabindex="-1" aria-hidden="true">
+ <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-content review-modal payment-review-modal">
+   <div class="modal-header"><div><span>PAYMENT SETTLEMENT</span><h5 id="paymentTaskTitle">Payment Details</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+   <div class="modal-body">
+    <div class="payment-review-grid">
+      <div class="payment-review-summary">
+        <span>User</span><strong id="paymentUserName">-</strong>
+        <span>Amount</span><strong id="paymentAmount">₹ 0.00</strong>
+        <span>Method</span><strong id="paymentMethod">-</strong>
+      </div>
+      <div class="payment-review-details">
+        <div><span>UPI ID</span><strong id="paymentUpi">-</strong></div>
+        <div><span>Account Holder</span><strong id="paymentHolder">-</strong></div>
+        <div><span>Bank</span><strong id="paymentBank">-</strong></div>
+        <div><span>Account Number</span><strong id="paymentAccount">-</strong></div>
+        <div><span>IFSC</span><strong id="paymentIfsc">-</strong></div>
+      </div>
+    </div>
+    <div class="payment-review-warning">Payment is handled by the admin outside this workflow. Use <b>Pay Now</b> only after you have actually settled the amount.</div>
+   </div>
+   <div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-outline-warning" id="payLater">Later</button><button class="btn btn-success" id="payNow">Pay Now</button></div>
+  </div>
+ </div>
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+window.taskReviewConfig = {
+    approveUrl: '@Url.Action("Approve","TaskReviews",new { area="Admin" })',
+    rejectUrl: '@Url.Action("Reject","TaskReviews",new { area="Admin" })',
+    settleUrl: '@Url.Action("SettlePayment","TaskReviews",new { area="Admin" })'
+};
+</script>
+<script src="~/js/admin/task-reviews.js" asp-append-version="true"></script>
+</body>
+</html>
