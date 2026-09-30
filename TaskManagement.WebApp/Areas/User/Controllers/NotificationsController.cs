@@ -95,7 +95,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 .AsNoTracking()
                 .Where(n =>
                     n.UserId == user.Id &&
-                    n.Type == "TaskAssignment")
+                    (n.Type == "TaskAssignment" || n.Type == "TaskReviewApproved" || n.Type == "TaskReviewRejected" || n.Type == "TaskPaymentSettled"))
                 .Join(
                     _context.TaskAssignments,
                     n => n.TaskAssignmentId,
