@@ -78,6 +78,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IProfilePictureStorage, CloudinaryProfilePictureStorage>();
 builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
