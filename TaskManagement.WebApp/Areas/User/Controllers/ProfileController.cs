@@ -205,7 +205,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = ex.Message
+                    message = "Unable to save the profile photo right now. Please try again."
                 });
             }
         }
@@ -246,7 +246,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = ex.Message
+                    message = "Unable to remove the profile photo right now. Please try again."
                 });
             }
         }
