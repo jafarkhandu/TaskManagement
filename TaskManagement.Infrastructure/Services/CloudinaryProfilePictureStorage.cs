@@ -31,7 +31,6 @@ namespace TaskManagement.Infrastructure.Services
                 Overwrite = true,
                 UniqueFilename = false,
                 UseFilename = false,
-                Folder = "profiles"
             };
 
             var result = await cloudinary.UploadAsync(uploadParams);
