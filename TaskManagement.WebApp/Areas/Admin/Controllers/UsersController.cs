@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QRCoder;
 using System.Security.Cryptography;
 using TaskManagement.Infrastructure.Identity;
+using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Services;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
@@ -15,15 +17,18 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly EmailService _emailService;
+        private readonly ApplicationDbContext _context;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-             EmailService emailService)
+             EmailService emailService,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _emailService = emailService;
+            _context = context;
         }
 
         [HttpPost]
@@ -127,7 +132,44 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            ViewBag.PaymentDetails = await _context.UserPaymentDetails
+                .AsNoTracking()
+                .SingleOrDefaultAsync(x => x.UserId == user.Id);
+
             return View(user);
+        }
+
+        [HttpGet]
+        public IActionResult PaymentQr(string upiId)
+        {
+            if (string.IsNullOrWhiteSpace(upiId))
+            {
+                return BadRequest();
+            }
+
+            upiId = upiId.Trim();
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    upiId,
+                    @"^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$"))
+            {
+                return BadRequest();
+            }
+
+            // Standard UPI payment deep-link payload for a static QR.
+            // pa = payee UPI ID, pn = payee name, cu = currency.
+            var paymentUri =
+                $"upi://pay?pa={Uri.EscapeDataString(upiId)}&pn={Uri.EscapeDataString("UPI Payment")}&cu=INR";
+
+            using var generator = new QRCodeGenerator();
+            using var qrData = generator.CreateQrCode(
+                paymentUri,
+                QRCodeGenerator.ECCLevel.Q);
+
+            var qrCode = new PngByteQRCode(qrData);
+            var pngBytes = qrCode.GetGraphic(12);
+
+            return File(pngBytes, "image/png");
         }
 
         [HttpPost]

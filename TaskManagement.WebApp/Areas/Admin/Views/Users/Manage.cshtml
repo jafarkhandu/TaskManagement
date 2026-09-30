@@ -1,5 +1,6 @@
 ﻿@using TaskManagement.Infrastructure.Identity
 @using Microsoft.AspNetCore.Identity
+@using TaskManagement.Domain.Entities
 @inject UserManager<ApplicationUser> _userManager
 @model ApplicationUser
 
@@ -17,6 +18,7 @@
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/images/ciit-logo.png" asp-append-version="true" />
 
     <title>TaskManager - Manage User</title>
 
@@ -28,6 +30,9 @@
           asp-append-version="true" />
     <link rel="stylesheet"
           href="~/css/admin/admin-common.css"
+          asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/css/admin/admin-user-manage.css"
           asp-append-version="true" />
 
 </head>
@@ -229,6 +234,118 @@
                         </div>
 
                     </form>
+
+
+                    @{
+                        var paymentDetails = ViewBag.PaymentDetails as UserPaymentDetails;
+                    }
+
+                    <section class="admin-payment-panel">
+
+                        <div class="admin-payment-header">
+                            <div>
+                                <div class="admin-payment-eyebrow">PAYMENT PROFILE</div>
+                                <h3>Payment Details</h3>
+                                <p>Validated payment information submitted by this user.</p>
+                            </div>
+
+                            <span class="admin-payment-badge @(paymentDetails == null ? "empty" : "saved")">
+                                <span class="admin-payment-badge-dot"></span>
+                                @(paymentDetails == null ? "Not Added" : paymentDetails.PaymentMethod + " • Format Validated")
+                            </span>
+                        </div>
+
+                        @if (paymentDetails == null)
+                        {
+                            <div class="admin-payment-empty">
+                                <span>＋</span>
+                                This user has not added payment details yet.
+                            </div>
+                        }
+                        else if (paymentDetails.PaymentMethod == "UPI")
+                        {
+                            <div class="admin-payment-upi-layout">
+                                <div class="row g-3 admin-payment-upi-fields">
+                                    <div class="col-md-6">
+                                        <div class="admin-payment-field">
+                                            <span>Payment Method</span>
+                                            <strong>UPI</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="admin-payment-field">
+                                            <span>UPI ID</span>
+                                            <strong class="admin-payment-value">@paymentDetails.UpiId</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="admin-payment-qr-card">
+                                    <div class="admin-payment-qr-heading">
+                                        <span class="admin-payment-qr-icon">⌁</span>
+                                        <div>
+                                            <strong>UPI QR</strong>
+                                            <span>Scan to open a UPI payment app</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="admin-payment-qr-frame">
+                                        <img src="@Url.Action("PaymentQr", "Users", new { area = "Admin", upiId = paymentDetails.UpiId })"
+                                             alt="UPI QR for @paymentDetails.UpiId"
+                                             loading="lazy" />
+                                    </div>
+
+                                    <div class="admin-payment-qr-note">
+                                        QR is generated from the UPI ID submitted by the user. It is not an ownership verification.
+                                    </div>
+
+                                    <div class="admin-payment-qr-actions">
+                                        <a class="btn btn-sm btn-primary"
+                                           href="@Url.Action("PaymentQr", "Users", new { area = "Admin", upiId = paymentDetails.UpiId })"
+                                           target="_blank"
+                                           rel="noopener">
+                                            Open QR
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="@Url.Action("PaymentQr", "Users", new { area = "Admin", upiId = paymentDetails.UpiId })"
+                                           download="upi-qr.png">
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="admin-payment-field">
+                                        <span>Account Holder Name</span>
+                                        <strong>@paymentDetails.AccountHolderName</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="admin-payment-field">
+                                        <span>Bank Name</span>
+                                        <strong>@paymentDetails.BankName</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="admin-payment-field">
+                                        <span>Account Number</span>
+                                        <strong class="admin-payment-value">@paymentDetails.AccountNumber</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="admin-payment-field">
+                                        <span>IFSC Code</span>
+                                        <strong class="admin-payment-value">@paymentDetails.IfscCode</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                    </section>
 
 
                     @if (_userManager.GetUserId(User) != Model.Id)

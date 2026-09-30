@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace TaskManagement.Infrastructure.Services
 {
@@ -13,43 +16,44 @@ namespace TaskManagement.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task SendEmailAsync(
-            string toEmail,
-            string subject,
-            string body)
+        public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            var email =
-                _configuration["EmailSettings:Email"];
+            var email = _configuration["EmailSettings:EmailId"];
+            var password = _configuration["EmailSettings:Password"];
+            var host = _configuration["EmailSettings:Host"];
+            var port = int.Parse(_configuration["EmailSettings:Port"]!);
 
-            var password =
-                _configuration["EmailSettings:Password"];
+            var message = new MimeMessage();
 
-            var host =
-                _configuration["EmailSettings:Host"];
+            message.From.Add(
+                new MailboxAddress(
+                    _configuration["EmailSettings:Name"],
+                    email));
 
-            var port =
-                int.Parse(
-                    _configuration["EmailSettings:Port"]!);
+            message.To.Add(
+                MailboxAddress.Parse(toEmail));
 
-            using var message = new MailMessage();
-
-            message.From = new MailAddress(email!);
-            message.To.Add(toEmail);
             message.Subject = subject;
-            message.Body = body;
-            message.IsBodyHtml = true;
 
-            using var client =
-                new SmtpClient(host, port);
+            message.Body = new BodyBuilder
+            {
+                HtmlBody = body
+            }.ToMessageBody();
 
-            client.EnableSsl = true;
+            using var client = new MailKit.Net.Smtp.SmtpClient();
 
-            client.Credentials =
-                new NetworkCredential(
-                    email,
-                    password);
+            await client.ConnectAsync(
+                host,
+                port,
+                SecureSocketOptions.SslOnConnect);
 
-            await client.SendMailAsync(message);
+            await client.AuthenticateAsync(
+                email,
+                password);
+
+            await client.SendAsync(message);
+
+            await client.DisconnectAsync(true);
         }
     }
 }
