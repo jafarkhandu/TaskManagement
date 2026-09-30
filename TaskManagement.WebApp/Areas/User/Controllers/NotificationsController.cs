@@ -111,6 +111,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     (x, t) => new
                     {
                         NotificationId = x.Notification.Id,
+                        NotificationType = x.Notification.Type,
+                        NotificationTitle = x.Notification.Title,
                         AssignmentId = x.Assignment.Id,
                         AssignmentStatus = x.Assignment.Status,
 
@@ -424,7 +426,10 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 var notifications = await _context.Notifications
                     .Where(n =>
                         n.UserId == user.Id &&
-                        n.Type == "TaskAssignment")
+                        (n.Type == "TaskAssignment" ||
+                         n.Type == "TaskReviewApproved" ||
+                         n.Type == "TaskReviewRejected" ||
+                         n.Type == "TaskPaymentSettled"))
                     .ToListAsync();
 
                 if (notifications.Count > 0)
