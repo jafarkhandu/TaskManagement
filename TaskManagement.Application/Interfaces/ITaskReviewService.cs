@@ -4,7 +4,6 @@ namespace TaskManagement.Application.Interfaces
 {
     public interface ITaskReviewService
     {
-        Task<(bool Success, string Error, int ReviewId)> SubmitForReviewAsync(int taskId, string userId, string repositoryUrl);
         Task<List<TaskReviewDto>> GetPendingReviewsAsync();
         Task<TaskReviewDto?> GetReviewAsync(int reviewId);
         Task<(bool Success, string Error)> ApproveAsync(int reviewId, string adminId);
