@@ -401,8 +401,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
             // A fresh task-assignment notification is protected until the
             // user explicitly accepts or rejects the assignment.
-            if (notification.Type == "TaskAssignment" &&
-                notificatiotrue)
+            if (notification.Type == "TaskAssignment")
             {
                 var assignmentPending = await _context.TaskAssignments
                     .AnyAsync(a =>
@@ -452,7 +451,6 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                          n.Type == "TaskReviewRejected" ||
                          n.Type == "TaskPaymentSettled") &&
                         !(n.Type == "TaskAssignment" &&
-                          true &&
                           _context.TaskAssignments.Any(a =>
                               a.Id == n.TaskAssignmentId &&
                               a.Status == "Pending")))
