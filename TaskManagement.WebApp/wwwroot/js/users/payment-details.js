@@ -53,6 +53,49 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
 
         showMessage("", "");
+
+        const confirmation = document.getElementById("confirmOriginalDetails");
+        if (!confirmation?.checked) {
+            showMessage("Please confirm that these are your own original payment details.", "error");
+            confirmation?.focus();
+            return;
+        }
+
+        if (methodInput.value === "UPI") {
+            const upi = document.getElementById("upiId")?.value.trim() || "";
+            const upiPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{1,254}@[A-Za-z][A-Za-z0-9.-]{1,63}$/;
+            if (!upiPattern.test(upi)) {
+                showMessage("Enter a valid UPI ID before saving.", "error");
+                return;
+            }
+        } else {
+            const holder = document.getElementById("accountHolderName")?.value.trim() || "";
+            const bank = document.getElementById("bankName")?.value.trim() || "";
+            const account = document.getElementById("accountNumber")?.value.trim() || "";
+            const ifsc = document.getElementById("ifscCode")?.value.trim().toUpperCase() || "";
+
+            if (!/^[A-Za-z][A-Za-z .'-]{1,99}$/.test(holder)) {
+                showMessage("Enter a valid account holder name.", "error");
+                return;
+            }
+
+            if (!/^[A-Za-z0-9][A-Za-z0-9 &'().,-]{1,99}$/.test(bank)) {
+                showMessage("Enter a valid bank name.", "error");
+                return;
+            }
+
+            if (!/^[0-9]{9,18}$/.test(account)) {
+                showMessage("Account number must contain 9 to 18 digits only.", "error");
+                return;
+            }
+
+            if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                showMessage("Enter a valid 11-character IFSC code.", "error");
+                return;
+            }
+        }
+
+        showMessage("Checking your payment details...", "checking");
         saveButton.disabled = true;
         saveButton.innerHTML = "<span>…</span> Saving...";
 
