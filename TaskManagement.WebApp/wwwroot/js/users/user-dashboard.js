@@ -944,11 +944,28 @@
         dashboardTaskModalTitle.textContent = title;
         dashboardTaskModalSubtitle.textContent = subtitle;
 
-        const tasks = Array.from(
-            document.querySelectorAll(".task-item")
-        ).filter(task => {
+        // Focus tasks exclude completed items, while Recent Activity includes
+        // the latest tasks. Combine both rendered sources and de-duplicate by ID
+        // so the summary modal can show completed tasks without any backend change.
+        const renderedTasks = Array.from(
+            document.querySelectorAll(".task-item, .activity-item")
+        );
+
+        const seen = new Set();
+
+        const tasks = renderedTasks.filter(task => {
+            const id = task.dataset.id || "";
             const status =
-                (task.dataset.status || "").trim().toLowerCase();
+                (task.dataset.status ||
+                    task.querySelector("small")?.textContent ||
+                    "").trim().toLowerCase();
+
+            if (id) {
+                if (seen.has(id))
+                    return false;
+
+                seen.add(id);
+            }
 
             if (filter === "progress")
                 return status === "in progress";
@@ -976,11 +993,17 @@
                     escapeHtml(task.dataset.title || "Task");
 
                 const status =
-                    escapeHtml(task.dataset.status || "Unknown");
+                    escapeHtml(
+                        task.dataset.status ||
+                        task.querySelector("small")?.textContent.trim() ||
+                        "Unknown"
+                    );
 
                 const scenario =
                     escapeHtml(
-                        task.querySelector(".task-text small")?.textContent.trim() || ""
+                        task.querySelector(".task-text small")?.textContent.trim() ||
+                        task.querySelector(".activity-item small")?.textContent.trim() ||
+                        ""
                     );
 
                 const priority =
