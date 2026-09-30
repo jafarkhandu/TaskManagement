@@ -13,7 +13,7 @@
         .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
 
     var progressTasks = Model?
-        .Where(x => x.Status == "In Progress")
+        .Where(x => x.Status == "In Progress" || x.Status == "Review Pending")
         .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
 
     var holdTasks = Model?
@@ -254,6 +254,11 @@
                                     @task.Priority
                                 </span>
 
+                                @if (string.Equals(task.Status, "Review Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="review-status-badge">Review Pending</span>
+                                }
+
                             </div>
 
                             <h3>@task.Title</h3>
@@ -304,7 +309,7 @@
 
                     <div>
                         <span class="column-dot progress-dot"></span>
-                        <strong>In Progress</strong>
+                        <strong>In Progress / Review</strong>
                         <b id="progressCount">@progressTasks.Count</b>
                     </div>
 
