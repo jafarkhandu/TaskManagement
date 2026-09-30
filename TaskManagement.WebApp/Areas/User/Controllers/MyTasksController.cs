@@ -85,6 +85,29 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitForReview(int taskId, string completionRepositoryUrl)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var result = await _taskService.SubmitForReviewAsync(
+                taskId,
+                user.Id,
+                completionRepositoryUrl);
+
+            if (!result.Success)
+                return Json(new { success = false, message = result.Error });
+
+            return Json(new
+            {
+                success = true,
+                reviewId = result.ReviewId,
+                message = "Task submitted for admin review."
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(
             int taskId,
             string newStatus,
