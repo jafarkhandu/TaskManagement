@@ -3871,3 +3871,10 @@ body:has(.notifications-page) {
         object-position: center;
     }
 }
+
+.task-chat-logo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
