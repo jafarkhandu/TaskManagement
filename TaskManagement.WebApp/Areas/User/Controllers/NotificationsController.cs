@@ -59,6 +59,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     (x, t) => new
                     {
                         NotificationId = x.Notification.Id,
+                        NotificationType = x.Notification.Type,
+                        NotificationTitle = x.Notification.Title,
                         AssignmentId = x.Assignment.Id,
                         AssignmentStatus = x.Assignment.Status,
 
