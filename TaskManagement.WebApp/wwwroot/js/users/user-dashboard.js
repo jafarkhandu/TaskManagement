@@ -77,8 +77,8 @@
                 <div class="live-toast-icon">🔔</div>
 
                 <div class="live-toast-body">
-                    <strong>${n.notificationTitle || "New assignment for you"}</strong>
-                    <div class="live-toast-sub">Click to view</div>
+                    <strong>${payload.title || "Task Review Update"}</strong>
+                    <div class="live-toast-sub">${payload.message || "Click to view"}</div>
 
                     <div class="live-toast-progress">
                         <div></div>
