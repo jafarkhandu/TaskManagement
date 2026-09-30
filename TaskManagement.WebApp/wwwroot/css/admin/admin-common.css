@@ -1196,18 +1196,16 @@ html:not(.light-theme) .admin-notification-view-all {
 
 .sidebar-brand-image {
     display: block;
-    width: 210px;
+    width: 176px;
     max-width: 100%;
-    height: auto !important;
-    max-height: none !important;
-    flex: 0 0 auto;
+    height: auto;
     object-fit: contain;
     object-position: left center;
 }
 
 @media (max-width: 1200px) {
     .sidebar-brand-image {
-        width: 190px;
+        width: 166px;
     }
 }
 
@@ -1217,9 +1215,9 @@ html:not(.light-theme) .admin-notification-view-all {
     }
 
     .sidebar-brand-image {
-        width: 54px;
-        max-width: 54px;
-        height: auto !important;
+        width: 48px;
+        max-width: 48px;
+        height: auto;
         object-position: center;
     }
 }
