@@ -94,5 +94,10 @@
         }
     }
 
-    start();
+    document.addEventListener("DOMContentLoaded", () => {
+        if (document.querySelector('script[src*="/js/users/user-dashboard.js"]')) {
+            return;
+        }
+        start();
+    });
 })();
