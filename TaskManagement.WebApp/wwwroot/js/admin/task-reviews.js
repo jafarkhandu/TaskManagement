@@ -25,6 +25,16 @@ document.querySelectorAll('.review-card').forEach(card=>card.addEventListener('c
    document.getElementById('paymentBank').textContent=x.bankName||'-';
    document.getElementById('paymentAccount').textContent=x.accountNumber||'-';
    document.getElementById('paymentIfsc').textContent=x.ifscCode||'-';
+   const qr=document.getElementById('paymentQrImage');
+   if(qr){
+      if(x.upiId){
+         qr.src='/Admin/Users/PaymentQr?upiId='+encodeURIComponent(x.upiId);
+         qr.style.display='block';
+      } else {
+         qr.removeAttribute('src');
+         qr.style.display='none';
+      }
+   }
    bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentReviewModal')).show();
  }catch(err){alert(err.message)}
 }));
