@@ -102,9 +102,9 @@ namespace TaskManagement.Infrastructure.Services
             review.Status = "Approved";
             review.ReviewedByAdminId = adminId;
             review.ReviewedAt = DateTime.UtcNow;
-            task.Status = "Completed";
+            // Keep the task in review state until the admin chooses Pay Now or Later.
+            task.Status = "Review Pending";
 
-            var admin = await _userManager.FindByIdAsync(adminId);
             await _db.SaveChangesAsync();
 
             return (true, string.Empty);
