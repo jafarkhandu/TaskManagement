@@ -156,8 +156,10 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return BadRequest();
             }
 
+            // Standard UPI payment deep-link payload for a static QR.
+            // pa = payee UPI ID, pn = payee name, cu = currency.
             var paymentUri =
-                $"upi://pay?pa={Uri.EscapeDataString(upiId)}&pn={Uri.EscapeDataString("TaskManager Payment")}";
+                $"upi://pay?pa={Uri.EscapeDataString(upiId)}&pn={Uri.EscapeDataString("UPI Payment")}&cu=INR";
 
             using var generator = new QRCodeGenerator();
             using var qrData = generator.CreateQrCode(
