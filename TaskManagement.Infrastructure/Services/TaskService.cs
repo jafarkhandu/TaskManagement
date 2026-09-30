@@ -539,7 +539,7 @@ namespace TaskManagement.Infrastructure.Services
                 {
                     UserId = admin.Id,
                     TaskAssignmentId = assignment.Id,
-                    Type = "TaskReviewRequested",
+                    Type = "AdminTaskReviewRequested",
                     Title = $"Task Review Requested: {task.Title}",
                     IsRead = false,
                     IsDelivered = false,
