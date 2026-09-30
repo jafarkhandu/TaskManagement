@@ -122,9 +122,11 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return;
 
             var notification = await _context.Notifications
-                .FirstOrDefaultAsync(x =>
+                .Where(x =>
                     x.TaskAssignmentId == review.TaskAssignmentId &&
-                    x.Type == type);
+                    x.Type == type)
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
 
             if (notification == null)
                 return;
