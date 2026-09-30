@@ -1,74 +1,156 @@
 (() => {
-const cfg=window.taskReviewConfig||{};
-let activeReview=null;
-const token=()=>document.querySelector('input[name="__RequestVerificationToken"]')?.value||'';
-const formToken=document.createElement('form'); formToken.innerHTML='<input name="__RequestVerificationToken" type="hidden" value="">'; document.body.appendChild(formToken);
-const getToken=()=>document.querySelector('#reviewAntiForgery input[name="__RequestVerificationToken"]')?.value||'';
-function post(url,data){const body=new URLSearchParams(data); return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','RequestVerificationToken':getToken(),'X-Requested-With':'XMLHttpRequest'},body});}
-document.querySelectorAll('.review-card').forEach(card=>card.addEventListener('click',async e=>{
- const action=e.target.closest('[data-action]')?.dataset.action; if(!action)return;
- activeReview=Number(card.dataset.reviewId);
- if(action==='reject'){document.getElementById('rejectReason').value='';bootstrap.Modal.getOrCreateInstance(document.getElementById('rejectReviewModal')).show();return;}
- try{
-   const r=await post(cfg.approveUrl,{id:activeReview,__RequestVerificationToken:getToken()}); const j=await r.json();
-   if(!r.ok||!j.success)throw new Error(j.message||'Unable to approve review.');
-   const d=await (await fetch('/Admin/TaskReviews/Details?id='+activeReview)).json();
-   if(!d.success)throw new Error(d.message||'Unable to load payment details.');
-   activeReview=d.data;
-   const x=d.data;
-   document.getElementById('paymentTaskTitle').textContent=x.taskTitle||'Payment Details';
-   document.getElementById('paymentUserName').textContent=x.userName||'-';
-   document.getElementById('paymentAmount').textContent='₹ '+Number(x.amount||0).toFixed(2);
-   document.getElementById('paymentMethod').textContent=x.paymentMethod||'Not set';
-   document.getElementById('paymentUpi').textContent=x.upiId||'-';
-   document.getElementById('paymentHolder').textContent=x.accountHolderName||'-';
-   document.getElementById('paymentBank').textContent=x.bankName||'-';
-   document.getElementById('paymentAccount').textContent=x.accountNumber||'-';
-   document.getElementById('paymentIfsc').textContent=x.ifscCode||'-';
-   const qr=document.getElementById('paymentQrImage');
-   if(qr){
-      if(x.upiId){
-         qr.src='/Admin/Users/PaymentQr?upiId='+encodeURIComponent(x.upiId);
-         qr.style.display='block';
-      } else {
-         qr.removeAttribute('src');
-         qr.style.display='none';
-      }
-   }
-   bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentReviewModal')).show();
- }catch(err){alert(err.message)}
-}));
-document.getElementById('confirmReject')?.addEventListener('click',async()=>{
- const reason=document.getElementById('rejectReason').value.trim();
- const err=document.getElementById('rejectError'); if(!reason){err.textContent='Rejection reason is required.';return;}
- const r=await post(cfg.rejectUrl,{id:activeReview,reason,__RequestVerificationToken:getToken()});const j=await r.json();
- if(!r.ok||!j.success){err.textContent=j.message||'Unable to reject task.';return;}
- location.reload();
-});
-async function settle(payNow){
- const r=await post(cfg.settleUrl,{id:activeReview.reviewId||activeReview, payNow:String(payNow),__RequestVerificationToken:getToken()});const j=await r.json();
- if(!r.ok||!j.success){alert(j.message||'Unable to settle payment.');return;}
- bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentReviewModal')).hide();location.reload();
+const cfg = window.taskReviewConfig || {};
+let activeReview = null;
+const token = () => document.querySelector('#reviewAntiForgery input[name="__RequestVerificationToken"]')?.value || '';
+
+function post(url, data) {
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'RequestVerificationToken': token(),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams(data)
+    });
 }
-document.querySelectorAll('.pending-pay-btn').forEach(button => button.addEventListener('click', async () => {
- const id=Number(button.dataset.reviewId||0); if(!id)return;
- try{
-   const d=await (await fetch('/Admin/TaskReviews/Details?id='+id)).json();
-   if(!d.success) throw new Error(d.message||'Unable to load payment details.');
-   activeReview=d.data;
-   const x=d.data;
-   document.getElementById('paymentTaskTitle').textContent=x.taskTitle||'Payment Details';
-   document.getElementById('paymentUserName').textContent=x.userName||'-';
-   document.getElementById('paymentAmount').textContent='₹ '+Number(x.amount||0).toFixed(2);
-   document.getElementById('paymentMethod').textContent=x.paymentMethod||'Not set';
-   document.getElementById('paymentUpi').textContent=x.upiId||'-';
-   document.getElementById('paymentHolder').textContent=x.accountHolderName||'-';
-   document.getElementById('paymentBank').textContent=x.bankName||'-';
-   document.getElementById('paymentAccount').textContent=x.accountNumber||'-';
-   document.getElementById('paymentIfsc').textContent=x.ifscCode||'-';
-   bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentReviewModal')).show();
- }catch(err){alert(err.message)}
-}));
-document.getElementById('payNow')?.addEventListener('click',()=>settle(true));
-document.getElementById('payLater')?.addEventListener('click',()=>settle(false));
+
+function fillPaymentModal(x) {
+    document.getElementById('paymentTaskTitle').textContent = x.taskTitle || 'Payment Details';
+    document.getElementById('paymentUserName').textContent = x.userName || '-';
+    document.getElementById('paymentAmount').textContent = '₹ ' + Number(x.amount || 0).toFixed(2);
+    document.getElementById('paymentMethod').textContent = x.paymentMethod || 'Not set';
+    document.getElementById('paymentUpi').textContent = x.upiId || '-';
+    document.getElementById('paymentHolder').textContent = x.accountHolderName || '-';
+    document.getElementById('paymentBank').textContent = x.bankName || '-';
+    document.getElementById('paymentAccount').textContent = x.accountNumber || '-';
+    document.getElementById('paymentIfsc').textContent = x.ifscCode || '-';
+
+    const qr = document.getElementById('paymentQrImage');
+    const isUpi = x.upiId && String(x.paymentMethod || '').toUpperCase() === 'UPI';
+
+    if (qr && isUpi) {
+        qr.src = '/Admin/Users/PaymentQr?upiId=' + encodeURIComponent(x.upiId) + '&v=' + Date.now();
+        qr.style.display = 'block';
+        qr.alt = 'UPI payment QR for ' + x.upiId;
+    } else if (qr) {
+        qr.removeAttribute('src');
+        qr.style.display = 'none';
+    }
+}
+
+async function openPaymentModal(reviewId) {
+    const response = await fetch('/Admin/TaskReviews/Details?id=' + encodeURIComponent(reviewId), {
+        credentials: 'same-origin',
+        cache: 'no-store'
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success)
+        throw new Error(data.message || 'Unable to load payment details.');
+
+    activeReview = data.data;
+    fillPaymentModal(activeReview);
+
+    bootstrap.Modal.getOrCreateInstance(
+        document.getElementById('paymentReviewModal')
+    ).show();
+}
+
+document.querySelectorAll('.review-card').forEach(card => {
+    card.addEventListener('click', async event => {
+        const action = event.target.closest('[data-action]')?.dataset.action;
+        if (!action) return;
+
+        activeReview = { reviewId: Number(card.dataset.reviewId) };
+
+        if (action === 'reject') {
+            document.getElementById('rejectReason').value = '';
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById('rejectReviewModal')
+            ).show();
+            return;
+        }
+
+        try {
+            const response = await post(cfg.approveUrl, { id: activeReview.reviewId });
+            const data = await response.json();
+
+            if (!response.ok || !data.success)
+                throw new Error(data.message || 'Unable to approve review.');
+
+            await openPaymentModal(activeReview.reviewId);
+        }
+        catch (error) {
+            alert(error.message);
+        }
+    });
+});
+
+document.getElementById('confirmReject')?.addEventListener('click', async () => {
+    const reason = document.getElementById('rejectReason').value.trim();
+    const errorBox = document.getElementById('rejectError');
+
+    if (!reason) {
+        errorBox.textContent = 'Rejection reason is required.';
+        return;
+    }
+
+    try {
+        const response = await post(cfg.rejectUrl, {
+            id: activeReview?.reviewId || 0,
+            reason
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success)
+            throw new Error(data.message || 'Unable to reject task.');
+
+        location.reload();
+    }
+    catch (error) {
+        errorBox.textContent = error.message;
+    }
+});
+
+async function settle(payNow) {
+    if (!activeReview?.reviewId) return;
+
+    try {
+        const response = await post(cfg.settleUrl, {
+            id: activeReview.reviewId,
+            payNow: String(payNow)
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success)
+            throw new Error(data.message || 'Unable to settle payment.');
+
+        bootstrap.Modal.getOrCreateInstance(
+            document.getElementById('paymentReviewModal')
+        ).hide();
+
+        location.reload();
+    }
+    catch (error) {
+        alert(error.message);
+    }
+}
+
+document.getElementById('payNow')?.addEventListener('click', () => settle(true));
+document.getElementById('payLater')?.addEventListener('click', () => settle(false));
+
+document.querySelectorAll('.pending-pay-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+        const id = Number(button.dataset.reviewId || 0);
+        if (!id) return;
+
+        try {
+            await openPaymentModal(id);
+        }
+        catch (error) {
+            alert(error.message);
+        }
+    });
+});
 })();
