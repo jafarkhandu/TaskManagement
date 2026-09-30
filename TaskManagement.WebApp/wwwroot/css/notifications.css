@@ -1,0 +1,42 @@
+/* User notifications list
+   Keeps the existing notification card design intact while making the
+   inbox independently scrollable so cards never get clipped. */
+
+.notifications-list {
+    max-height: min(58vh, 620px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 8px 8px 4px;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+}
+
+.notifications-list::-webkit-scrollbar {
+    width: 7px;
+}
+
+.notifications-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.34);
+}
+
+.notification-card {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+    .notifications-list {
+        max-height: 60vh;
+        padding-right: 5px;
+    }
+}
