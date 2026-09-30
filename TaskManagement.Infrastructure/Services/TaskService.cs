@@ -354,6 +354,9 @@ namespace TaskManagement.Infrastructure.Services
             if (!AllowedStatuses.Contains(newStatus))
                 return (false, "Invalid target status.", taskId, 0, 0, 0, string.Empty, newStatus);
 
+            if (string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Tasks must be submitted for admin review before they can be completed.", taskId, 0, 0, 0, string.Empty, newStatus);
+
             var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task == null)
@@ -567,6 +570,9 @@ namespace TaskManagement.Infrastructure.Services
 
             if (!AllowedStatuses.Contains(model.Status))
                 return (false, "Invalid status.");
+
+            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Tasks can only be completed through the review and payment workflow.");
 
             if (model.StartDate > model.ExpectedEndDate)
                 return (false, "Task start date cannot be after expected end date.");
