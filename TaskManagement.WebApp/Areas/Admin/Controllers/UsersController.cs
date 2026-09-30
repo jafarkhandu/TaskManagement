@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QRCoder;
 using System.Security.Cryptography;
 using TaskManagement.Infrastructure.Identity;
 using TaskManagement.Infrastructure.Data;
@@ -136,6 +137,37 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 .SingleOrDefaultAsync(x => x.UserId == user.Id);
 
             return View(user);
+        }
+
+        [HttpGet]
+        public IActionResult PaymentQr(string upiId)
+        {
+            if (string.IsNullOrWhiteSpace(upiId))
+            {
+                return BadRequest();
+            }
+
+            upiId = upiId.Trim();
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    upiId,
+                    @"^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$"))
+            {
+                return BadRequest();
+            }
+
+            var paymentUri =
+                $"upi://pay?pa={Uri.EscapeDataString(upiId)}&pn={Uri.EscapeDataString("TaskManager Payment")}";
+
+            using var generator = new QRCodeGenerator();
+            using var qrData = generator.CreateQrCode(
+                paymentUri,
+                QRCodeGenerator.ECCLevel.Q);
+
+            var qrCode = new PngByteQRCode(qrData);
+            var pngBytes = qrCode.GetGraphic(12);
+
+            return File(pngBytes, "image/png");
         }
 
         [HttpPost]
