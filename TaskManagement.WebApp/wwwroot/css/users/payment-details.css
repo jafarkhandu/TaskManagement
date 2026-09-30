@@ -252,3 +252,25 @@
     .payment-actions { align-items: stretch; flex-direction: column; }
     #savePaymentButton { width: 100%; }
 }
+
+
+.payment-confirm {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 22px;
+    padding: 13px 15px;
+    border: 1px solid rgba(93,141,255,.18);
+    border-radius: 13px;
+    background: rgba(93,141,255,.055);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.payment-confirm input {
+    width: 17px;
+    height: 17px;
+    accent-color: #4d8dff;
+    flex: 0 0 auto;
+}
