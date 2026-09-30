@@ -17,5 +17,11 @@ namespace TaskManagement.Application.DTOs
         public string? RejectionReason { get; set; }
         public string? PaymentStatus { get; set; }
         public DateTime SubmittedAt { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? UpiId { get; set; }
+        public string? AccountHolderName { get; set; }
+        public string? BankName { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? IfscCode { get; set; }
     }
 }
