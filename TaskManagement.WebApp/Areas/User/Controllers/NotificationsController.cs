@@ -310,7 +310,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Task assignment rejected."
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, new
                 {
@@ -402,11 +402,11 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             // A fresh task-assignment notification is protected until the
             // user explicitly accepts or rejects the assignment.
             if (notification.Type == "TaskAssignment" &&
-                notification.TaskAssignmentId.HasValue)
+                notificatiotrue)
             {
                 var assignmentPending = await _context.TaskAssignments
                     .AnyAsync(a =>
-                        a.Id == notification.TaskAssignmentId.Value &&
+                        a.Id == notification.TaskAssignmentId &&
                         a.UserId == user.Id &&
                         a.Status == "Pending");
 
@@ -452,9 +452,9 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                          n.Type == "TaskReviewRejected" ||
                          n.Type == "TaskPaymentSettled") &&
                         !(n.Type == "TaskAssignment" &&
-                          n.TaskAssignmentId.HasValue &&
+                          true &&
                           _context.TaskAssignments.Any(a =>
-                              a.Id == n.TaskAssignmentId.Value &&
+                              a.Id == n.TaskAssignmentId &&
                               a.Status == "Pending")))
                     .ToListAsync();
 
