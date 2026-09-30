@@ -77,7 +77,7 @@
                 <div class="live-toast-icon">🔔</div>
 
                 <div class="live-toast-body">
-                    <strong>New assignment for you</strong>
+                    <strong>${n.notificationTitle || "New assignment for you"}</strong>
                     <div class="live-toast-sub">Click to view</div>
 
                     <div class="live-toast-progress">
