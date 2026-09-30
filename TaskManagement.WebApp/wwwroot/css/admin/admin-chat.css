@@ -698,17 +698,19 @@
 
 
 .chat-header-avatar {
-    flex: 0 0 43px;
-    width: 43px;
-    height: 43px;
+    flex: 0 0 118px;
+    width: 118px;
+    height: 44px;
     display: grid;
     place-items: center;
     overflow: hidden;
+    background: transparent;
+    border-radius: 0;
 }
 
 .chat-header-logo {
-    width: 100%;
-    height: 100%;
+    width: 118px;
+    height: 44px;
     display: block;
     object-fit: contain;
 }
