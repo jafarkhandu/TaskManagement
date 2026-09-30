@@ -2,13 +2,25 @@
 @model UserPaymentDetails?
 
 @{
-    ViewData["Title"] = "Payment Details";
-    Layout = "~/Areas/User/Views/Shared/_UserLayout.cshtml";
+    Layout = null;
 }
 
-<link rel="stylesheet"
-      href="~/css/users/payment-details.css"
-      asp-append-version="true" />
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/images/ciit-logo.png" asp-append-version="true" />
+    <title>TaskManager — Payment Details</title>
+    <link rel="stylesheet" href="~/css/users/user-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/users/payment-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+</head>
+
+<div class="user-app-shell">
+    @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserSidebar.cshtml")
+
+    <main class="main-content">
+        @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserTopbar.cshtml")
+        @await Html.PartialAsync("~/Areas/User/Views/Shared/_UserModals.cshtml")
 
 <div class="payment-page">
 
@@ -173,6 +185,7 @@
 
 </div>
 
-@section Scripts {
-    <script src="~/js/users/payment-details.js" asp-append-version="true"></script>
-}
+    </main>
+</div>
+
+<script src="~/js/users/payment-details.js" asp-append-version="true"></script>
