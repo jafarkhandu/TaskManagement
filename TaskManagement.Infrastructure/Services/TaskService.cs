@@ -571,7 +571,8 @@ namespace TaskManagement.Infrastructure.Services
             if (!AllowedStatuses.Contains(model.Status))
                 return (false, "Invalid status.");
 
-            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
                 return (false, "Tasks can only be completed through the review and payment workflow.");
 
             if (model.StartDate > model.ExpectedEndDate)
