@@ -98,6 +98,42 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (!result.Success)
                 return Json(new { success = false, message = result.Error });
 
+            try
+            {
+                var reviewNotification = await _context.Notifications
+                    .AsNoTracking()
+                    .Where(n => n.Type == "TaskReviewRequested")
+                    .OrderByDescending(n => n.Id)
+                    .FirstOrDefaultAsync();
+
+                var task = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == taskId)
+                    .Select(t => new { t.Id, t.Title, t.ProjectId })
+                    .FirstOrDefaultAsync();
+
+                if (reviewNotification != null && task != null &&
+                    NotificationHub.IsUserOnline(reviewNotification.UserId))
+                {
+                    await _notificationHub.Clients.User(reviewNotification.UserId)
+                        .SendAsync("AdminLiveNotification", new
+                        {
+                            notificationId = reviewNotification.Id,
+                            type = reviewNotification.Type,
+                            title = reviewNotification.Title,
+                            message = $"{user.FullName ?? user.UserName ?? "User"} submitted {task.Title} for review.",
+                            userName = user.FullName ?? user.UserName ?? "User",
+                            taskId = task.Id,
+                            projectId = task.ProjectId,
+                            createdAt = reviewNotification.CreatedAt
+                        });
+                }
+            }
+            catch
+            {
+                // Database submission remains successful if live delivery fails.
+            }
+
             return Json(new
             {
                 success = true,
