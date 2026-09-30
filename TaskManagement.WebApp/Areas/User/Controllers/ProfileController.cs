@@ -200,7 +200,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     profilePictureUrl = user.ProfilePictureUrl
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, new
                 {
@@ -241,7 +241,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Profile photo removed successfully."
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, new
                 {
