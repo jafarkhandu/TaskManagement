@@ -34,6 +34,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            ViewBag.PendingPayments = await _reviewService.GetPendingPaymentsAsync();
             return View(await _reviewService.GetPendingReviewsAsync());
         }
 
