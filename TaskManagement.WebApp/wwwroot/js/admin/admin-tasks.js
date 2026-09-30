@@ -2195,194 +2195,126 @@
            DETAILS
         ===================================================== */
 
-        document.addEventListener(
-            'click',
-            async function (event) {
+        document.addEventListener('click', async function (event) {
 
-                const button =
-                    event.target.closest(
-                        '.task-details-btn'
-                    );
+            const button = event.target.closest('.task-details-btn');
+            if (!button) return;
 
+            event.preventDefault();
+            event.stopPropagation();
 
-                if (!button) {
-                    return;
-                }
+            const taskId = Number(button.dataset.taskId || 0);
+            if (!taskId) {
+                alert('Invalid task.');
+                return;
+            }
 
+            try {
+                const response = await fetch(
+                    '/Admin/Tasks/Details?id=' + encodeURIComponent(taskId),
+                    {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        cache: 'no-store'
+                    }
+                );
 
-                const taskId =
-                    button.dataset.taskId;
-
+                const raw = await response.text();
+                let result;
 
                 try {
-
-                    const response =
-                        await fetch(
-                            '/Admin/Tasks/Details?id=' +
-                            encodeURIComponent(
-                                taskId
-                            )
-                        );
-
-
-                    const result =
-                        await response.json();
-
-
-                    if (
-                        !result.success
-                    ) {
-
-                        alert(
-                            result.message ||
-                            'Task not found.'
-                        );
-
-                        return;
-                    }
-
-
-                    const task =
-                        result.data;
-
-
-                    document.addEventListener('click', async function (event) {
-
-                        const button = event.target.closest('.task-details-btn');
-
-                        if (!button) return;
-
-                        const taskId = button.dataset.taskId;
-
-                        try {
-
-                            const response = await fetch(
-                                '/Admin/Tasks/Details?id=' +
-                                encodeURIComponent(taskId)
-                            );
-
-                            const result = await response.json();
-
-                            if (!result.success) {
-                                alert(result.message || 'Task not found.');
-                                return;
-                            }
-
-                            const task = result.data;
-
-                            document.getElementById('detailTaskId').textContent =
-                                'TASK-' + task.id;
-
-                            document.getElementById('detailTaskTitle').textContent =
-                                task.title || '-';
-
-                            document.getElementById('detailTaskScenario').textContent =
-                                task.scenario || '-';
-
-                            document.getElementById('detailTaskAssignee').textContent =
-                                task.assignedToUserName ||
-                                task.assignedToUserId ||
-                                'Unassigned';
-
-                            document.getElementById('detailTaskPriority').textContent =
-                                task.priority || '-';
-
-                            document.getElementById('detailTaskStatus').textContent =
-                                task.status || '-';
-
-                            document.getElementById('detailTaskAmount').textContent =
-                                '₹ ' + Number(task.amount || 0).toFixed(2);
-
-                            document.getElementById('detailTaskStart').textContent =
-                                formatDate(task.startDate);
-
-                            document.getElementById('detailTaskEnd').textContent =
-                                formatDate(task.expectedEndDate);
-
-                            const repositoryLink =
-                                document.getElementById('detailTaskRepository');
-
-                            const repositoryEmpty =
-                                document.getElementById('detailTaskRepositoryEmpty');
-
-                            const repositoryUrlElement =
-                                document.getElementById('detailTaskRepositoryUrl');
-
-                            const repositoryUrl =
-                                String(task.completionRepositoryUrl || '').trim();
-
-                            if (repositoryLink && repositoryEmpty) {
-                                if (repositoryUrl) {
-                                    repositoryLink.href = repositoryUrl;
-                                    repositoryLink.style.display = 'inline-flex';
-
-                                    if (repositoryUrlElement) {
-                                        repositoryUrlElement.textContent = repositoryUrl;
-                                        repositoryUrlElement.style.display = 'block';
-                                    }
-
-                                    repositoryEmpty.style.display = 'none';
-                                }
-                                else {
-                                    repositoryLink.removeAttribute('href');
-                                    repositoryLink.style.display = 'none';
-
-                                    if (repositoryUrlElement) {
-                                        repositoryUrlElement.textContent = '';
-                                        repositoryUrlElement.style.display = 'none';
-                                    }
-
-                                    repositoryEmpty.style.display = 'inline';
-                                }
-                            }
-
-                            const allTasksModalElement =
-                                document.getElementById('allTasksModal');
-
-                            const allTasksModal =
-                                bootstrap.Modal.getInstance(
-                                    allTasksModalElement
-                                );
-
-                            if (allTasksModal) {
-                                allTasksModal.hide();
-                            }
-
-
-
-                            const modalElement =
-                                document.getElementById('taskDetailsModal');
-
-                            const modal =
-                                bootstrap.Modal.getOrCreateInstance(
-                                    modalElement
-                                );
-
-                            modal.show();
-
-                        }
-                        catch (error) {
-
-                            console.error('Details error:', error);
-
-                            alert('Unable to load task details.');
-
-                        }
-
-                    });
-
+                    result = raw ? JSON.parse(raw) : null;
                 }
-                catch (error) {
-
-                    console.error(
-                        'Details error:',
-                        error
+                catch {
+                    throw new Error(
+                        response.status === 401 || response.status === 403
+                            ? 'Your admin session has expired. Please login again.'
+                            : 'The server returned an invalid task response.'
                     );
-
                 }
+
+                if (!response.ok || !result?.success || !result.data) {
+                    throw new Error(
+                        result?.message || 'Task could not be loaded.'
+                    );
+                }
+
+                const task = result.data;
+
+                const setText = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) element.textContent = value ?? '-';
+                };
+
+                setText('detailTaskId', 'TASK-' + task.id);
+                setText('detailTaskTitle', task.title || '-');
+                setText('detailTaskScenario', task.scenario || '-');
+                setText(
+                    'detailTaskAssignee',
+                    task.assignedToUserName ||
+                    task.assignedToUserId ||
+                    'Unassigned'
+                );
+                setText('detailTaskPriority', task.priority || '-');
+                setText('detailTaskStatus', task.status || '-');
+                setText('detailTaskAmount', '₹ ' + Number(task.amount || 0).toFixed(2));
+                setText('detailTaskStart', formatDate(task.startDate));
+                setText('detailTaskEnd', formatDate(task.expectedEndDate));
+
+                const repositoryLink = document.getElementById('detailTaskRepository');
+                const repositoryEmpty = document.getElementById('detailTaskRepositoryEmpty');
+                const repositoryUrlElement = document.getElementById('detailTaskRepositoryUrl');
+                const repositoryUrl = String(task.completionRepositoryUrl || '').trim();
+
+                if (repositoryLink) {
+                    if (repositoryUrl) {
+                        repositoryLink.href = repositoryUrl;
+                        repositoryLink.target = '_blank';
+                        repositoryLink.rel = 'noopener noreferrer';
+                        repositoryLink.style.display = 'inline-flex';
+
+                        if (repositoryUrlElement) {
+                            repositoryUrlElement.textContent = repositoryUrl;
+                            repositoryUrlElement.style.display = 'block';
+                        }
+
+                        if (repositoryEmpty) repositoryEmpty.style.display = 'none';
+                    }
+                    else {
+                        repositoryLink.removeAttribute('href');
+                        repositoryLink.style.display = 'none';
+
+                        if (repositoryUrlElement) {
+                            repositoryUrlElement.textContent = '';
+                            repositoryUrlElement.style.display = 'none';
+                        }
+
+                        if (repositoryEmpty) repositoryEmpty.style.display = 'inline';
+                    }
+                }
+
+                const allTasksModalElement = document.getElementById('allTasksModal');
+                if (allTasksModalElement) {
+                    bootstrap.Modal.getOrCreateInstance(allTasksModalElement).hide();
+                }
+
+                const modalElement = document.getElementById('taskDetailsModal');
+                if (!modalElement) {
+                    throw new Error('Task details modal is missing from the page.');
+                }
+
+                bootstrap.Modal.getOrCreateInstance(modalElement).show();
 
             }
-        );
+            catch (error) {
+                console.error('Task details error:', error);
+                alert(error.message || 'Unable to load task.');
+            }
+        });
 
 
         /* =====================================================
