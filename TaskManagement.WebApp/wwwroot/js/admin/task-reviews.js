@@ -3,7 +3,7 @@ const cfg=window.taskReviewConfig||{};
 let activeReview=null;
 const token=()=>document.querySelector('input[name="__RequestVerificationToken"]')?.value||'';
 const formToken=document.createElement('form'); formToken.innerHTML='<input name="__RequestVerificationToken" type="hidden" value="">'; document.body.appendChild(formToken);
-const getToken=()=>document.querySelector('meta[name="csrf-token"]')?.content||'';
+const getToken=()=>document.querySelector('#reviewAntiForgery input[name="__RequestVerificationToken"]')?.value||'';
 function post(url,data){const body=new URLSearchParams(data); return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','RequestVerificationToken':getToken(),'X-Requested-With':'XMLHttpRequest'},body});}
 document.querySelectorAll('.review-card').forEach(card=>card.addEventListener('click',async e=>{
  const action=e.target.closest('[data-action]')?.dataset.action; if(!action)return;
