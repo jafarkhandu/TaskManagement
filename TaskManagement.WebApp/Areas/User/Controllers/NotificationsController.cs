@@ -399,6 +399,27 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (notification == null)
                 return NotFound(new { success = false, message = "Notification not found." });
 
+            // A fresh task-assignment notification is protected until the
+            // user explicitly accepts or rejects the assignment.
+            if (notification.Type == "TaskAssignment" &&
+                notification.TaskAssignmentId.HasValue)
+            {
+                var assignmentPending = await _context.TaskAssignments
+                    .AnyAsync(a =>
+                        a.Id == notification.TaskAssignmentId.Value &&
+                        a.UserId == user.Id &&
+                        a.Status == "Pending");
+
+                if (assignmentPending)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "This task notification cannot be deleted until you accept or reject the task."
+                    });
+                }
+            }
+
             try
             {
                 _context.Notifications.Remove(notification);
@@ -429,7 +450,12 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         (n.Type == "TaskAssignment" ||
                          n.Type == "TaskReviewApproved" ||
                          n.Type == "TaskReviewRejected" ||
-                         n.Type == "TaskPaymentSettled"))
+                         n.Type == "TaskPaymentSettled") &&
+                        !(n.Type == "TaskAssignment" &&
+                          n.TaskAssignmentId.HasValue &&
+                          _context.TaskAssignments.Any(a =>
+                              a.Id == n.TaskAssignmentId.Value &&
+                              a.Status == "Pending")))
                     .ToListAsync();
 
                 if (notifications.Count > 0)
