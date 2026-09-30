@@ -36,6 +36,12 @@
                   aria-label="New chat message"></span>
         </a>
 
+        <a href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })"
+           class="sidebar-link @(currentController.Equals("TaskReviews", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+            <span class="nav-icon">✓</span>
+            <span>Task Reviews</span>
+        </a>
+
         <a href="@Url.Action("Index", "Projects", new { area = "Admin" })"
            class="sidebar-link @(currentController.Equals("Projects", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
             <span class="nav-icon">▣</span>
