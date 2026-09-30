@@ -120,7 +120,9 @@ namespace TaskManagement.WebApp.Hubs
                             (x, t) => new
                             {
                                 notificationId = x.Notification.Id,
-                                title = t.Title,
+                                type = x.Notification.Type,
+                                title = x.Notification.Title,
+                                message = x.Notification.Title,
                                 scenario = t.Scenario,
                                 priority = t.Priority,
                                 startDate = t.StartDate,
