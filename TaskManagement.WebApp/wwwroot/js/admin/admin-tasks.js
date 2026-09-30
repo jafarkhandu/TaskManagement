@@ -491,6 +491,59 @@
 
 
         /* =====================================================
+           EDIT ASSIGNEE LOADER
+        ===================================================== */
+
+        async function loadMembers(select) {
+            if (!select) {
+                return;
+            }
+
+            const response = await fetch(
+                '/Admin/Tasks/Users',
+                {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    cache: 'no-store'
+                }
+            );
+
+            const raw = await response.text();
+            let result;
+
+            try {
+                result = raw ? JSON.parse(raw) : null;
+            }
+            catch {
+                throw new Error(
+                    response.status === 401 || response.status === 403
+                        ? 'Your admin session has expired. Please login again.'
+                        : 'Unable to load assignable users.'
+                );
+            }
+
+            if (!response.ok || !result?.success || !Array.isArray(result.users)) {
+                throw new Error(
+                    result?.message || 'Unable to load assignable users.'
+                );
+            }
+
+            select.innerHTML = '<option value="">Select user</option>';
+
+            result.users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id || '';
+                option.textContent = user.fullName || user.email || user.id || 'User';
+                select.appendChild(option);
+            });
+        }
+
+
+        /* =====================================================
            ASSIGNEE FILTER
         ===================================================== */
 
