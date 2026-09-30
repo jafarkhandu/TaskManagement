@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,26 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
     [Authorize(Roles = "User")]
     public class PaymentDetailsController : Controller
     {
+        private static readonly Regex UpiRegex =
+            new(@"^[A-Za-z0-9][A-Za-z0-9._-]{1,254}@[A-Za-z][A-Za-z0-9.-]{1,63}$",
+                RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        private static readonly Regex NameRegex =
+            new(@"^[A-Za-z][A-Za-z .'-]{1,99}$",
+                RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        private static readonly Regex BankNameRegex =
+            new(@"^[A-Za-z0-9][A-Za-z0-9 &'().,-]{1,99}$",
+                RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        private static readonly Regex AccountNumberRegex =
+            new(@"^[0-9]{9,18}$",
+                RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        private static readonly Regex IfscRegex =
+            new(@"^[A-Z]{4}0[A-Z0-9]{6}$",
+                RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -54,7 +75,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 return Unauthorized(new { success = false, message = "User session expired." });
 
             paymentMethod = paymentMethod?.Trim() ?? string.Empty;
-            upiId = upiId?.Trim();
+            upiId = upiId?.Trim().ToLowerInvariant();
             accountHolderName = accountHolderName?.Trim();
             bankName = bankName?.Trim();
             accountNumber = accountNumber?.Trim();
@@ -65,8 +86,14 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
             if (paymentMethod == "UPI")
             {
-                if (string.IsNullOrWhiteSpace(upiId) || !upiId.Contains('@'))
-                    return BadRequest(new { success = false, message = "Enter your original and valid UPI ID." });
+                if (string.IsNullOrWhiteSpace(upiId) || !UpiRegex.IsMatch(upiId))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Enter a valid UPI ID, for example name@upi."
+                    });
+                }
 
                 accountHolderName = null;
                 bankName = null;
@@ -83,19 +110,45 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     return BadRequest(new
                     {
                         success = false,
-                        message = "Enter the complete bank account details."
+                        message = "Enter all bank account details before saving."
                     });
                 }
 
-                if (accountNumber.Any(char.IsWhiteSpace) ||
-                    accountNumber.Length < 6 ||
-                    accountNumber.Length > 30)
+                if (!NameRegex.IsMatch(accountHolderName))
                 {
-                    return BadRequest(new { success = false, message = "Enter a valid bank account number." });
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Account holder name contains invalid characters."
+                    });
                 }
 
-                if (ifscCode.Length != 11)
-                    return BadRequest(new { success = false, message = "IFSC code must contain 11 characters." });
+                if (!BankNameRegex.IsMatch(bankName))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Enter a valid bank name."
+                    });
+                }
+
+                if (!AccountNumberRegex.IsMatch(accountNumber))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Bank account number must contain 9 to 18 digits only."
+                    });
+                }
+
+                if (!IfscRegex.IsMatch(ifscCode))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Enter a valid 11-character IFSC code."
+                    });
+                }
 
                 upiId = null;
             }
@@ -126,7 +179,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             return Json(new
             {
                 success = true,
-                message = "Payment details saved successfully.",
+                message = "Details validated and saved successfully.",
                 updatedAt = details.UpdatedAt
             });
         }
