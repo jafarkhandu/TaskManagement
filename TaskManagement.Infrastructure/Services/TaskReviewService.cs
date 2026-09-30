@@ -52,6 +52,7 @@ namespace TaskManagement.Infrastructure.Services
                        AccountNumber = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.AccountNumber).FirstOrDefault(),
                        IfscCode = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.IfscCode).FirstOrDefault()
                    };
+        }
 
         public Task<List<TaskReviewDto>> GetPendingReviewsAsync() =>
             ReviewQuery().Where(x => x.ReviewStatus == "Pending").OrderBy(x => x.SubmittedAt).ToListAsync();
