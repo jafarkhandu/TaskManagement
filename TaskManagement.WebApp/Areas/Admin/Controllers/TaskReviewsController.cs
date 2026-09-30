@@ -109,5 +109,39 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     : "Task completed. Payment remains pending."
             });
         }
+
+        private async Task SendLatestUserNotificationAsync(int reviewId, string type)
+        {
+            var review = await _context.TaskReviews
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == reviewId);
+
+            if (review == null)
+                return;
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(x =>
+                    x.TaskAssignmentId == review.TaskAssignmentId &&
+                    x.Type == type);
+
+            if (notification == null)
+                return;
+
+            if (!NotificationHub.IsUserOnline(notification.UserId))
+                return;
+
+            await _notificationHub.Clients.User(notification.UserId)
+                .SendAsync("UserReviewNotificationReceived", new
+                {
+                    notificationId = notification.Id,
+                    type = notification.Type,
+                    title = notification.Title,
+                    message = notification.Title,
+                    createdAt = notification.CreatedAt
+                });
+
+            notification.IsDelivered = true;
+            await _context.SaveChangesAsync();
+        }
     }
 }
