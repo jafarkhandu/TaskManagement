@@ -29,8 +29,8 @@
             <span class="payment-eyebrow">PAYMENT PROFILE</span>
             <h1>Payment Details</h1>
             <p>
-                Add the original payment details you want the administrator
-                to use when a payment needs to be processed.
+                Enter your real payment details. The server validates the format
+                before anything is saved.
             </p>
         </div>
 
@@ -158,10 +158,15 @@
                 </div>
 
                 <small class="field-note">
-                    Enter the exact bank details from your bank account. Do not enter sample or placeholder values.
+                    Account number: 9–18 digits. IFSC: 11 characters in the standard Indian IFSC format.
                 </small>
 
             </div>
+
+            <label class="payment-confirm">
+                <input type="checkbox" id="confirmOriginalDetails" />
+                <span>I confirm these are my own, original payment details.</span>
+            </label>
 
             <div class="payment-message"
                  id="paymentMessage"
