@@ -1,0 +1,178 @@
+@using TaskManagement.Domain.Entities
+@model UserPaymentDetails?
+
+@{
+    ViewData["Title"] = "Payment Details";
+    Layout = "~/Areas/User/Views/Shared/_UserLayout.cshtml";
+}
+
+<link rel="stylesheet"
+      href="~/css/users/payment-details.css"
+      asp-append-version="true" />
+
+<div class="payment-page">
+
+    <section class="payment-hero">
+        <div>
+            <span class="payment-eyebrow">PAYMENT PROFILE</span>
+            <h1>Payment Details</h1>
+            <p>
+                Add the original payment details you want the administrator
+                to use when a payment needs to be processed.
+            </p>
+        </div>
+
+        <div class="payment-status @(Model == null ? "empty" : "saved")"
+             id="paymentStatus">
+            <span class="status-dot"></span>
+            <span id="paymentStatusText">@(Model == null ? "Not Added" : "Details Saved")</span>
+        </div>
+    </section>
+
+    <section class="payment-card">
+
+        <div class="payment-card-header">
+            <div class="payment-icon">▣</div>
+            <div>
+                <h2>Your Payment Information</h2>
+                <p>Choose one payment method and enter its actual details.</p>
+            </div>
+        </div>
+
+        <form id="paymentDetailsForm"
+              action="@Url.Action("Save", "PaymentDetails", new { area = "User" })"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <div class="method-grid">
+
+                <button type="button"
+                        class="method-option @(Model?.PaymentMethod == "UPI" ? "selected" : "")"
+                        data-method="UPI">
+                    <span class="method-radio"></span>
+                    <span>
+                        <strong>UPI</strong>
+                        <small>UPI ID for receiving payments</small>
+                    </span>
+                </button>
+
+                <button type="button"
+                        class="method-option @(Model?.PaymentMethod == "Bank" ? "selected" : "")"
+                        data-method="Bank">
+                    <span class="method-radio"></span>
+                    <span>
+                        <strong>Bank Account</strong>
+                        <small>Account holder and bank information</small>
+                    </span>
+                </button>
+
+            </div>
+
+            <input type="hidden"
+                   id="paymentMethod"
+                   name="paymentMethod"
+                   value="@(Model?.PaymentMethod ?? "UPI")" />
+
+            <div id="upiFields"
+                 class="payment-fields @(Model?.PaymentMethod == "Bank" ? "hidden" : "")">
+
+                <label for="upiId">UPI ID</label>
+
+                <input id="upiId"
+                       name="upiId"
+                       type="text"
+                       maxlength="200"
+                       autocomplete="off"
+                       placeholder="example@upi"
+                       value="@Model?.UpiId" />
+
+                <small class="field-note">
+                    Enter your original UPI ID exactly as registered with your UPI app.
+                </small>
+
+            </div>
+
+            <div id="bankFields"
+                 class="payment-fields @(Model?.PaymentMethod == "Bank" ? "" : "hidden")">
+
+                <div class="field-grid">
+
+                    <div>
+                        <label for="accountHolderName">Account Holder Name</label>
+                        <input id="accountHolderName"
+                               name="accountHolderName"
+                               type="text"
+                               maxlength="200"
+                               autocomplete="off"
+                               placeholder="As per bank records"
+                               value="@Model?.AccountHolderName" />
+                    </div>
+
+                    <div>
+                        <label for="bankName">Bank Name</label>
+                        <input id="bankName"
+                               name="bankName"
+                               type="text"
+                               maxlength="200"
+                               autocomplete="off"
+                               placeholder="e.g. HDFC Bank"
+                               value="@Model?.BankName" />
+                    </div>
+
+                    <div>
+                        <label for="accountNumber">Account Number</label>
+                        <input id="accountNumber"
+                               name="accountNumber"
+                               type="text"
+                               inputmode="numeric"
+                               maxlength="30"
+                               autocomplete="off"
+                               placeholder="Enter actual account number"
+                               value="@Model?.AccountNumber" />
+                    </div>
+
+                    <div>
+                        <label for="ifscCode">IFSC Code</label>
+                        <input id="ifscCode"
+                               name="ifscCode"
+                               type="text"
+                               maxlength="11"
+                               autocomplete="off"
+                               placeholder="e.g. HDFC0001234"
+                               value="@Model?.IfscCode" />
+                    </div>
+
+                </div>
+
+                <small class="field-note">
+                    Enter the exact bank details from your bank account. Do not enter sample or placeholder values.
+                </small>
+
+            </div>
+
+            <div class="payment-message"
+                 id="paymentMessage"
+                 role="status"></div>
+
+            <div class="payment-actions">
+                <span class="last-updated">
+                    @(Model == null ? "No payment details saved yet." : $"Last updated: {Model.UpdatedAt.ToLocalTime():dd MMM yyyy, hh:mm tt}")
+                </span>
+
+                <button type="submit"
+                        id="savePaymentButton">
+                    <span>✓</span>
+                    Save Payment Details
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/users/payment-details.js" asp-append-version="true"></script>
+}
