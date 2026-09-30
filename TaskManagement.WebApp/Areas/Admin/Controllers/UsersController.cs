@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using TaskManagement.Infrastructure.Identity;
-using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Services;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
@@ -16,18 +15,15 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly EmailService _emailService;
-        private readonly ApplicationDbContext _context;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-             EmailService emailService,
-            ApplicationDbContext context)
+             EmailService emailService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _emailService = emailService;
-            _context = context;
         }
 
         [HttpPost]
@@ -130,10 +126,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             {
                 return NotFound();
             }
-
-            ViewBag.PaymentDetails = await _context.UserPaymentDetails
-                .AsNoTracking()
-                .SingleOrDefaultAsync(x => x.UserId == user.Id);
 
             return View(user);
         }
