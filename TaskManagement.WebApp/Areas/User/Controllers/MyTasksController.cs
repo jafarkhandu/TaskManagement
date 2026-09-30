@@ -100,9 +100,14 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
             try
             {
+                var assignmentId = await _context.TaskReviews
+                    .Where(r => r.Id == result.ReviewId)
+                    .Select(r => r.TaskAssignmentId)
+                    .FirstOrDefaultAsync();
+
                 var reviewNotification = await _context.Notifications
                     .AsNoTracking()
-                    .Where(n => n.Type == "TaskReviewRequested")
+                    .Where(n => n.TaskAssignmentId == assignmentId && n.Type == "TaskReviewRequested")
                     .OrderByDescending(n => n.Id)
                     .FirstOrDefaultAsync();
 
