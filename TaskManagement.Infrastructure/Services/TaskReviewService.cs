@@ -96,8 +96,19 @@ namespace TaskManagement.Infrastructure.Services
             review.Status = "Approved";
             review.ReviewedByAdminId = adminId;
             review.ReviewedAt = DateTime.UtcNow;
-            // Keep the task in review state until the admin chooses Pay Now or Later.
+            // Approval is a distinct user-facing event. Payment settlement is reported separately.
             task.Status = "Review Pending";
+
+            _db.Notifications.Add(new Notification
+            {
+                UserId = assignment.UserId,
+                TaskAssignmentId = assignment.Id,
+                Type = "TaskReviewApproved",
+                Title = $"Task Review Approved: {task.Title}",
+                IsRead = false,
+                IsDelivered = false,
+                CreatedAt = DateTime.UtcNow
+            });
 
             await _db.SaveChangesAsync();
 
@@ -167,18 +178,19 @@ namespace TaskManagement.Infrastructure.Services
             payment.SettledByAdminId = payNow ? adminId : null;
             task.Status = "Completed";
 
-            _db.Notifications.Add(new Notification
+            if (payNow)
             {
-                UserId = assignment.UserId,
-                TaskAssignmentId = assignment.Id,
-                Type = payNow ? "TaskPaymentSettled" : "TaskReviewApproved",
-                Title = payNow
-                    ? $"Task Approved & Payment Settled: {task.Title}"
-                    : $"Task Reviewed: {task.Title}",
-                IsRead = false,
-                IsDelivered = false,
-                CreatedAt = DateTime.UtcNow
-            });
+                _db.Notifications.Add(new Notification
+                {
+                    UserId = assignment.UserId,
+                    TaskAssignmentId = assignment.Id,
+                    Type = "TaskPaymentSettled",
+                    Title = $"Payment Settled: {task.Title}",
+                    IsRead = false,
+                    IsDelivered = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
 
             await _db.SaveChangesAsync();
             return (true, string.Empty);
