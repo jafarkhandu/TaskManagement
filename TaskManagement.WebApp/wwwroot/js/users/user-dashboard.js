@@ -674,6 +674,33 @@
 
 
         notificationConnection.on(
+            "UserReviewNotificationReceived",
+            async function (payload) {
+                if (!payload || !payload.notificationId) return;
+
+                showLiveToast({
+                    notificationId: payload.notificationId,
+                    type: payload.type,
+                    title: payload.title || "Task Review Update",
+                    message: payload.message || "",
+                    taskId: payload.taskId,
+                    projectId: payload.projectId,
+                    createdAt: payload.createdAt
+                });
+
+                try {
+                    await notificationConnection.invoke(
+                        "AcknowledgeNotification",
+                        Number(payload.notificationId)
+                    );
+                }
+                catch (error) {
+                    console.warn("Review notification acknowledgement failed:", error);
+                }
+            }
+        );
+
+        notificationConnection.on(
             "MissedNotificationsReceived",
             (notifications) => {
 
