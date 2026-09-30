@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="notification-card-inner">
                     <div class="notification-icon">\uD83D\uDD14</div>
                     <div class="notification-main">
-                        <strong>New assignment for you</strong>
-                        <small>${formatDate(n.createdAt)}</small>
+                        <strong>${n.title || "Task update"}</strong>
+                        <small>${n.message || n.title || "Task update"} · ${formatDate(n.createdAt)}</small>
                     </div>
 
                     <div class="notification-action">
