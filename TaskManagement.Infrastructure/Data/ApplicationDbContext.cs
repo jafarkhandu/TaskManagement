@@ -27,6 +27,10 @@ namespace TaskManagement.Infrastructure.Data
 
         public DbSet<UserPaymentDetails> UserPaymentDetails { get; set; }
 
+        public DbSet<TaskReview> TaskReviews { get; set; }
+
+        public DbSet<TaskPayment> TaskPayments { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -157,6 +161,34 @@ namespace TaskManagement.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+
+            builder.Entity<TaskReview>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.SubmittedByUserId).HasMaxLength(450).IsRequired();
+                b.Property(x => x.ReviewedByAdminId).HasMaxLength(450).IsRequired(false);
+                b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+                b.Property(x => x.RejectionReason).HasMaxLength(2000).IsRequired(false);
+                b.HasIndex(x => x.TaskId);
+                b.HasIndex(x => x.TaskAssignmentId);
+                b.HasIndex(x => x.Status);
+                b.HasOne<TaskItem>().WithMany().HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne<TaskAssignment>().WithMany().HasForeignKey(x => x.TaskAssignmentId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<TaskPayment>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+                b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+                b.Property(x => x.SettledByAdminId).HasMaxLength(450).IsRequired(false);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => x.TaskId);
+                b.HasIndex(x => x.TaskAssignmentId);
+                b.HasIndex(x => x.Status);
+                b.HasOne<TaskItem>().WithMany().HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne<TaskAssignment>().WithMany().HasForeignKey(x => x.TaskAssignmentId).OnDelete(DeleteBehavior.Cascade);
+            });
 
             builder.Entity<UserPaymentDetails>(b =>
             {
