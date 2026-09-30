@@ -398,7 +398,7 @@
 
         if (submitCompletion) {
             submitCompletion.disabled = false;
-            submitCompletion.innerHTML = '<span class="completion-submit-icon">✓</span><span>Submit &amp; Complete</span>';
+            submitCompletion.innerHTML = '<span class="completion-submit-icon">✓</span><span>Submit for Review</span>';
         }
 
         completionModal.classList.add('show');
@@ -436,7 +436,7 @@
         const card = pending.card;
         const taskId = pending.taskId;
         const oldStatus = pending.oldStatus;
-        const targetList = document.getElementById('completedList');
+        const targetList = document.getElementById('progressList');
 
         if (!targetList) {
             if (completionRepositoryError) {
@@ -460,12 +460,11 @@
         try {
             const body = new URLSearchParams({
                 taskId: taskId,
-                newStatus: 'Completed',
                 completionRepositoryUrl: repositoryUrl,
                 __RequestVerificationToken: token
             });
 
-            const response = await fetch('/User/MyTasks/ChangeStatus', {
+            const response = await fetch('/User/MyTasks/SubmitForReview', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -478,10 +477,10 @@
             const json = await response.json();
 
             if (!response.ok || !json?.success) {
-                throw new Error(json?.message || 'Unable to complete the task.');
+                throw new Error(json?.message || 'Unable to submit the task for review.');
             }
 
-            card.dataset.status = 'Completed';
+            card.dataset.status = 'Review Pending';
             card.draggable = false;
 
             const chatButton = card.querySelector('.task-chat-btn');
@@ -489,13 +488,12 @@
                 chatButton.remove();
             }
 
+            card.classList.add('review-pending-card');
             targetList.querySelector('.empty-column')?.remove();
 
-            if (targetList.firstElementChild) {
-                targetList.insertBefore(card, targetList.firstElementChild);
-            }
-            else {
-                targetList.appendChild(card);
+            const reviewBadge = card.querySelector('.review-status-badge');
+            if (reviewBadge) {
+                reviewBadge.textContent = 'Review Pending';
             }
 
             const map = {
@@ -506,18 +504,11 @@
             };
 
             const oldCount = document.getElementById(map[oldStatus]);
-            const completedCount = document.getElementById(map.Completed);
-
             if (oldCount) {
                 oldCount.textContent = Math.max(
                     0,
                     parseInt(oldCount.textContent || '0', 10) - 1
                 );
-            }
-
-            if (completedCount) {
-                completedCount.textContent =
-                    parseInt(completedCount.textContent || '0', 10) + 1;
             }
 
             try {
@@ -534,7 +525,7 @@
             }
 
             closeCompletionSubmissionModal();
-            showStatusToast('Task completed and GitHub repository submitted.');
+            showStatusToast('Task submitted for admin review.');
         }
         catch (error) {
             console.error('Task completion error:', error);
