@@ -72,6 +72,38 @@
             </div>
         }
         </section>
+
+        @{
+            var pendingPayments = ViewBag.PendingPayments as List<TaskManagement.Application.DTOs.TaskReviewDto>
+                ?? new List<TaskManagement.Application.DTOs.TaskReviewDto>();
+        }
+        <section class="pending-payment-section">
+            <div class="section-heading">
+                <div>
+                    <span>PAYMENT QUEUE</span>
+                    <h2>Payment Remaining</h2>
+                    <p>Approved tasks that were completed with payment deferred.</p>
+                </div>
+                <strong class="pending-payment-count">@pendingPayments.Count</strong>
+            </div>
+            <div class="pending-payment-list">
+            @foreach (var payment in pendingPayments)
+            {
+                <article class="pending-payment-card">
+                    <div>
+                        <span>TASK-@payment.TaskId · @payment.UserName</span>
+                        <h3>@payment.TaskTitle</h3>
+                    </div>
+                    <strong>₹ @payment.Amount.ToString("N2")</strong>
+                    <button type="button" class="btn btn-warning pending-pay-btn" data-review-id="@payment.ReviewId">Pay Now</button>
+                </article>
+            }
+            @if (!pendingPayments.Any())
+            {
+                <div class="pending-payment-empty">No pending task payments.</div>
+            }
+            </div>
+        </section>
     </main>
 </div>
 
