@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.DTOs;
 using TaskManagement.Application.Interfaces;
-using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Data;
 
 namespace TaskManagement.WebApp.Areas.Admin.Controllers
@@ -13,7 +12,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly ITaskReviewService _reviewService;
         private readonly ITaskReviewService _reviewService;
 
         public DashboardController(ApplicationDbContext context, ITaskReviewService reviewService)
