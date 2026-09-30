@@ -65,11 +65,6 @@ namespace TaskManagement.Infrastructure.Services
             ReviewQuery().Where(x => x.ReviewStatus == "Approved" && x.PaymentStatus == "Pending")
                 .OrderBy(x => x.SubmittedAt).ToListAsync();
 
-        public async Task<(bool Success, string Error, int ReviewId)> SubmitForReviewAsync(int taskId, string userId, string repositoryUrl)
-        {
-            return (false, "Use the task service submission endpoint.", 0);
-        }
-
         public async Task<(bool Success, string Error)> ApproveAsync(int reviewId, string adminId)
         {
             var review = await _db.TaskReviews.FirstOrDefaultAsync(x => x.Id == reviewId && x.Status == "Pending");
