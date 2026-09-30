@@ -17,6 +17,7 @@
 <div class="admin-review-page">
     @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminSidebar.cshtml")
     <main class="admin-review-main">
+        <form id="reviewAntiForgery">@Html.AntiForgeryToken()</form>
         @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
         <section class="review-hero">
             <div>
