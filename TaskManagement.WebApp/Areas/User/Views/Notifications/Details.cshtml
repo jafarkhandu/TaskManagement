@@ -8,6 +8,27 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TaskManager — Notification Details</title>
+    @{
+        var notificationType = Model.NotificationType?.ToString() ?? "TaskAssignment";
+        var isReviewApproved = notificationType == "TaskReviewApproved";
+        var isReviewRejected = notificationType == "TaskReviewRejected";
+        var isPaymentSettled = notificationType == "TaskPaymentSettled";
+        var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled;
+        var detailTitle = isPaymentSettled
+            ? "Payment Settled"
+            : isReviewApproved
+                ? "Task Review Approved"
+                : isReviewRejected
+                    ? "Task Review Rejected"
+                    : "New Task Assignment";
+        var detailDescription = isPaymentSettled
+            ? "Your task review is complete and the payment has been settled."
+            : isReviewApproved
+                ? "Your submitted work has been reviewed and approved by the admin."
+                : isReviewRejected
+                    ? "Your submitted work was rejected and the task has been placed on hold."
+                    : "Review the task details below and choose to accept or reject.";
+    }
     <link rel="stylesheet"
       href="~/css/users/user-dashboard.css"
       asp-append-version="true" />
@@ -63,15 +84,15 @@
                         <div class="task-header-text">
 
                             <span class="task-eyebrow">
-                                TASK ASSIGNMENT
+                                @(isReviewUpdate ? "TASK REVIEW" : "TASK ASSIGNMENT")
                             </span>
 
                             <h1>
-                                New Task Assignment
+                                @detailTitle
                             </h1>
 
                             <p>
-                                Review the task details below and choose to accept or reject.
+                                @detailDescription
                             </p>
 
                         </div>
@@ -208,7 +229,32 @@
                                     @Html.AntiForgeryToken()
                                 </form>
 
-                                @if (Model.AssignmentStatus == "Pending")
+                                @if (isReviewRejected)
+                                {
+                                    <div class="final-status rejected-status">
+                                        <span>✕</span>
+                                        Task On Hold
+                                    </div>
+                                    <div class="action-info-box">
+                                        <span class="action-info-icon">ⓘ</span>
+                                        <p>@Model.NotificationTitle</p>
+                                    </div>
+                                }
+                                else if (isReviewApproved)
+                                {
+                                    <div class="final-status accepted-status">
+                                        <span>✓</span>
+                                        Task Review Approved
+                                    </div>
+                                }
+                                else if (isPaymentSettled)
+                                {
+                                    <div class="final-status accepted-status">
+                                        <span>₹</span>
+                                        Payment Settled
+                                    </div>
+                                }
+                                else if (Model.AssignmentStatus == "Pending")
                                 {
                                     <button type="button"
                                             id="rejectButton"
