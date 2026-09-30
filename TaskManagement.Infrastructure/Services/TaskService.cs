@@ -481,6 +481,76 @@ namespace TaskManagement.Infrastructure.Services
             return segments.Length >= 2;
         }
 
+        public async Task<(bool Success, string Error, int ReviewId)> SubmitForReviewAsync(
+            int taskId,
+            string userId,
+            string completionRepositoryUrl)
+        {
+            if (!IsValidGitHubRepositoryUrl(completionRepositoryUrl))
+                return (false, "A valid GitHub repository URL is required.", 0);
+
+            var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
+            if (task == null)
+                return (false, "Task not found.", 0);
+
+            if (!string.Equals(task.AssignedToUserId, userId, StringComparison.Ordinal))
+                return (false, "Unauthorized to submit this task.", 0);
+
+            if (string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return (false, "Completed tasks cannot be submitted again.", 0);
+
+            if (!string.Equals(task.Status, "In Progress", StringComparison.OrdinalIgnoreCase))
+                return (false, "Only tasks currently in progress can be submitted for review.", 0);
+
+            var assignment = await _db.TaskAssignments
+                .Where(a => a.TaskId == taskId && a.UserId == userId)
+                .OrderByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            if (assignment == null)
+                return (false, "Task assignment not found.", 0);
+
+            var pending = await _db.TaskReviews.AnyAsync(x =>
+                x.TaskId == taskId &&
+                x.Status == "Pending");
+
+            if (pending)
+                return (false, "This task is already waiting for admin review.", 0);
+
+            assignment.CompletionRepositoryUrl = completionRepositoryUrl.Trim();
+            assignment.RespondedAt = DateTime.UtcNow;
+            task.Status = "Review Pending";
+
+            var review = new TaskReview
+            {
+                TaskId = taskId,
+                TaskAssignmentId = assignment.Id,
+                SubmittedByUserId = userId,
+                SubmittedAt = DateTime.UtcNow,
+                Status = "Pending"
+            };
+
+            _db.TaskReviews.Add(review);
+
+            var admin = (await _userManager.GetUsersInRoleAsync("Admin")).FirstOrDefault();
+            if (admin != null)
+            {
+                _db.Notifications.Add(new Notification
+                {
+                    UserId = admin.Id,
+                    TaskAssignmentId = assignment.Id,
+                    Type = "TaskReviewRequested",
+                    Title = $"Task Review Requested: {task.Title}",
+                    IsRead = false,
+                    IsDelivered = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await _db.SaveChangesAsync();
+            return (true, string.Empty, review.Id);
+        }
+
         public async Task<(bool Success, string Error)> UpdateAsync(TaskDto model)
         {
             var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == model.Id);
