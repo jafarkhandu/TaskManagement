@@ -131,6 +131,7 @@
       <div class="payment-review-summary">
         <span>User</span><strong id="paymentUserName">-</strong>
         <span>Amount</span><strong id="paymentAmount">₹ 0.00</strong>
+        <span>Eligibility</span><strong id="paymentEligibility">-</strong>
         <span>Method</span><strong id="paymentMethod">-</strong>
       </div>
       <div class="payment-review-method" id="paymentReviewMethod">
@@ -150,7 +151,7 @@
         </div>
       </div>
     </div>
-    <div class="payment-review-warning">Payment is handled by the admin outside this workflow. Use <b>Pay Now</b> only after you have actually settled the amount.</div>
+    <div class="payment-review-warning" id="paymentReviewWarning">Payment is handled by the admin outside this workflow. Use <b>Pay Now</b> only after you have actually settled the amount.</div>
    </div>
    <div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-outline-warning" id="payLater">Later</button><button class="btn btn-success" id="payNow">Pay Now</button></div>
   </div>
