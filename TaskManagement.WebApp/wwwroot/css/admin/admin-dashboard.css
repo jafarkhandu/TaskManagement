@@ -1922,3 +1922,133 @@ html:not(.light-theme) .admin-dashboard .admin-notification-view-all {
     border-radius:7px;
     font-size:9px;
 }
+
+
+/* =========================================================
+   COMPACT PENDING PAYMENT WARNING
+========================================================= */
+.admin-pending-payment-card {
+    margin: 16px 0 14px;
+    min-height: 84px;
+    border: 1px solid #f0d8d8;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fff, #fffafa);
+    overflow: hidden;
+}
+
+.admin-pending-payment-compact {
+    min-height: 84px;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 18px;
+}
+
+.admin-pending-payment-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #fff0f0;
+    color: #d94343;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.admin-pending-payment-copy {
+    min-width: 0;
+}
+
+.admin-pending-payment-eyebrow {
+    display: block;
+    color: #d94343;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: .12em;
+}
+
+.admin-pending-payment-copy > strong {
+    display: block;
+    margin-top: 3px;
+    color: #1d2b46;
+    font-size: 13px;
+}
+
+.admin-pending-payment-copy > span:last-child {
+    display: block;
+    margin-top: 2px;
+    color: #8a95a8;
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-pending-payment-total {
+    min-width: 132px;
+    padding: 8px 12px;
+    border-left: 1px solid #f0e4e4;
+}
+
+.admin-pending-payment-total small {
+    display: block;
+    color: #8a95a8;
+    font-size: 8px;
+}
+
+.admin-pending-payment-total strong {
+    display: block;
+    margin-top: 2px;
+    color: #c93636;
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.admin-pending-payment-card .admin-pending-payment-action {
+    min-height: 34px;
+    padding: 8px 13px;
+    border: 1px solid #e14d4d;
+    border-radius: 9px;
+    background: #e14d4d;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 850;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(225,77,77,.14);
+    transition: .18s ease;
+}
+
+.admin-pending-payment-card .admin-pending-payment-action:hover {
+    background: #c93636;
+    border-color: #c93636;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+    .admin-pending-payment-compact {
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .admin-pending-payment-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 17px;
+    }
+
+    .admin-pending-payment-total {
+        min-width: 0;
+        padding: 8px 0 0;
+        border-left: 0;
+        grid-column: 2;
+    }
+
+    .admin-pending-payment-card .admin-pending-payment-action {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
