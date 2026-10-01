@@ -71,6 +71,11 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         StartDate = t.StartDate,
                         ExpectedEndDate = t.ExpectedEndDate,
                         Amount = t.Amount,
+                        ReviewReason = _context.TaskReviews
+                            .Where(r => r.TaskAssignmentId == x.Assignment.Id && r.Status == "Rejected")
+                            .OrderByDescending(r => r.Id)
+                            .Select(r => r.RejectionReason)
+                            .FirstOrDefault(),
 
                         IsRead = x.Notification.IsRead,
                         CreatedAt = x.Notification.CreatedAt
