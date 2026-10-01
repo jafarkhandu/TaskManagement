@@ -180,15 +180,22 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (!result.Success)
                 return Json(new { success = false, message = result.Error });
 
+            var taskAfterUpdate = await _context.TaskItems
+                .AsNoTracking()
+                .Where(t => t.Id == model.Id)
+                .Select(t => new { t.Status, t.ProjectId, t.AssignedToUserId })
+                .FirstOrDefaultAsync();
+
             if (taskBeforeUpdate != null &&
-                !string.Equals(taskBeforeUpdate.Status, model.Status, StringComparison.OrdinalIgnoreCase))
+                taskAfterUpdate != null &&
+                !string.Equals(taskBeforeUpdate.Status, taskAfterUpdate.Status, StringComparison.OrdinalIgnoreCase))
             {
                 var statusPayload = new
                 {
                     TaskId = model.Id,
-                    ProjectId = model.ProjectId,
+                    ProjectId = taskAfterUpdate.ProjectId,
                     OldStatus = taskBeforeUpdate.Status,
-                    NewStatus = model.Status,
+                    NewStatus = taskAfterUpdate.Status,
                     UpdatedAt = DateTime.UtcNow
                 };
 
@@ -196,10 +203,14 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     .Group($"project-{model.ProjectId}")
                     .SendAsync("TaskStatusChanged", statusPayload);
 
-                if (!string.IsNullOrWhiteSpace(taskBeforeUpdate.AssignedToUserId))
+                var statusRecipientUserId =
+                    taskAfterUpdate.AssignedToUserId ??
+                    taskBeforeUpdate.AssignedToUserId;
+
+                if (!string.IsNullOrWhiteSpace(statusRecipientUserId))
                 {
                     await _notificationHub.Clients
-                        .User(taskBeforeUpdate.AssignedToUserId)
+                        .User(statusRecipientUserId)
                         .SendAsync("TaskStatusChanged", statusPayload);
                 }
             }
