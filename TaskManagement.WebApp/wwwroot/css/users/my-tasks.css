@@ -2027,3 +2027,30 @@ html.light-theme .task-card .task-chat-btn:hover span {
     line-height: 1.15;
     white-space: nowrap;
 }
+
+
+/* Final reference override: keep Review Pending badge intact after theme.css loads. */
+html .user-task-app .task-card .task-card-top .task-review-pending {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    margin: 0 0 0 6px !important;
+    padding: 8px 22px !important;
+    box-sizing: border-box !important;
+    border-radius: 999px !important;
+    color: #7044c6 !important;
+    background: #f0ebfa !important;
+    border: 2px solid #d7c9ef !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
