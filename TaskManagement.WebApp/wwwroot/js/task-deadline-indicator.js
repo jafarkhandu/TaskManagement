@@ -188,23 +188,16 @@
             .forEach(card => updateCard(card, now));
     }
 
+    // Board pages can replace task cards without observing the entire DOM.
+    // Call this after a board re-render when needed.
+    window.refreshTaskDeadlineIndicators = updateAll;
+
     function initialize() {
         updateAll();
 
-        window.setInterval(updateAll, 1000);
-
-        if (document.body) {
-            const observer = new MutationObserver(mutations => {
-                if (mutations.some(mutation => mutation.addedNodes.length > 0)) {
-                    updateAll();
-                }
-            });
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-        }
+        // The UI displays hours/minutes, so a 30-second refresh is enough.
+        // Avoids needless DOM work every second.
+        window.setInterval(updateAll, 30000);
 
         window.addEventListener(
             'taskmanager:task-status-changed',
