@@ -511,6 +511,12 @@
                 );
             }
 
+            const newCount = document.getElementById('progressCount');
+            if (newCount) {
+                newCount.textContent =
+                    Number(newCount.textContent || 0) + 1;
+            }
+
             try {
                 const idx = cards.findIndex(item => item === card);
 
