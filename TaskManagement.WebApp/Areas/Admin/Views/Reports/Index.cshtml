@@ -39,6 +39,7 @@
                     </div>
                     <h1>Reports</h1>
                     <p>Track delivery, workload and task health across the workspace.</p>
+                    <div id="reportPrintMeta" class="report-print-meta" aria-hidden="true"></div>
                 </div>
 
                 <div class="reports-actions">
@@ -51,13 +52,13 @@
                             <option value="month">This Month</option>
                         </select>
                     </label>
-                    <button type="button" id="printReport" class="report-action">
-                        <span class="action-icon">↥</span>
-                        Export PDF
-                    </button>
-                    <button type="button" id="exportExcel" class="report-action primary">
+                    <button type="button"
+                            id="exportReport"
+                            class="report-action primary"
+                            aria-haspopup="dialog"
+                            aria-controls="exportReportModal">
                         <span class="action-icon">↓</span>
-                        Export CSV
+                        Export Report
                     </button>
                 </div>
             </section>
@@ -329,6 +330,38 @@
             </section>
         </div>
     </main>
+
+    <div id="exportReportModal" class="report-export-modal" hidden aria-hidden="true">
+        <div class="report-export-backdrop" data-export-close></div>
+        <section class="report-export-dialog" role="dialog" aria-modal="true" aria-labelledby="exportReportTitle">
+            <div class="report-export-header">
+                <div>
+                    <span class="report-export-eyebrow">REPORT EXPORT</span>
+                    <h2 id="exportReportTitle">Export report</h2>
+                    <p>Choose the format you want to export from the current report view.</p>
+                </div>
+                <button type="button" class="report-export-close" data-export-close aria-label="Close export report dialog">×</button>
+            </div>
+            <div class="report-export-options">
+                <button type="button" class="report-export-option" data-export-format="pdf">
+                    <span class="report-export-option-icon pdf">PDF</span>
+                    <span class="report-export-option-copy">
+                        <strong>Export as PDF</strong>
+                        <small>Print the complete report with the current period, analytics and tables.</small>
+                    </span>
+                    <span class="report-export-option-arrow">→</span>
+                </button>
+                <button type="button" class="report-export-option" data-export-format="csv">
+                    <span class="report-export-option-icon csv">CSV</span>
+                    <span class="report-export-option-copy">
+                        <strong>Export as CSV</strong>
+                        <small>Download the report data in a spreadsheet-friendly format.</small>
+                    </span>
+                    <span class="report-export-option-arrow">→</span>
+                </button>
+            </div>
+        </section>
+    </div>
 
     <script src="~/js/admin/admin-reports.js" asp-append-version="true"></script>
     <script src="~/js/admin/admin-common.js" asp-append-version="true"></script>
