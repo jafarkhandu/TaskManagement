@@ -68,7 +68,11 @@
 
             const matchesStatus =
                 statusValue === "all" ||
-                status === statusValue;
+                (
+                    statusValue === "In Progress"
+                        ? (status === "In Progress" || status === "Review Pending")
+                        : status === statusValue
+                );
 
             const matchesPriority =
                 priorityValue === "all" ||
