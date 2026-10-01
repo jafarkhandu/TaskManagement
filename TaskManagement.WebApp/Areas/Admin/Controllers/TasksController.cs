@@ -155,9 +155,110 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                         .ToListAsync()
                     : new List<int>();
 
+            // Capture a still-pending assignment before the update so a reassignment
+            // can be delivered live to both the old and new users.
+            var previousPendingAssignment = await _context.TaskAssignments
+                .AsNoTracking()
+                .Where(a => a.TaskId == model.Id && a.Status == "Pending")
+                .OrderByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            var assignmentChangedWhilePending =
+                previousPendingAssignment != null &&
+                !string.Equals(
+                    previousPendingAssignment.UserId,
+                    model.AssignedToUserId,
+                    StringComparison.Ordinal);
+
             var result = await _taskService.UpdateAsync(model);
             if (!result.Success)
                 return Json(new { success = false, message = result.Error });
+
+            if (assignmentChangedWhilePending && previousPendingAssignment != null)
+            {
+                var task = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == model.Id)
+                    .Select(t => new
+                    {
+                        t.Id,
+                        t.Title,
+                        t.Scenario,
+                        t.Priority,
+                        t.StartDate,
+                        t.ExpectedEndDate,
+                        t.Amount,
+                        t.ProjectId
+                    })
+                    .FirstOrDefaultAsync();
+
+                var newAssignment = await _context.TaskAssignments
+                    .AsNoTracking()
+                    .Where(a =>
+                        a.TaskId == model.Id &&
+                        a.UserId == model.AssignedToUserId &&
+                        a.Status == "Pending")
+                    .OrderByDescending(a => a.Id)
+                    .FirstOrDefaultAsync();
+
+                if (task != null && newAssignment != null)
+                {
+                    var oldNotification = await _context.Notifications
+                        .AsNoTracking()
+                        .Where(n =>
+                            n.TaskAssignmentId == previousPendingAssignment.Id &&
+                            n.UserId == previousPendingAssignment.UserId &&
+                            n.Type == "TaskAssignmentReassigned")
+                        .OrderByDescending(n => n.Id)
+                        .FirstOrDefaultAsync();
+
+                    var newNotification = await _context.Notifications
+                        .AsNoTracking()
+                        .Where(n =>
+                            n.TaskAssignmentId == newAssignment.Id &&
+                            n.UserId == model.AssignedToUserId &&
+                            n.Type == "TaskAssignment")
+                        .OrderByDescending(n => n.Id)
+                        .FirstOrDefaultAsync();
+
+                    if (oldNotification != null)
+                    {
+                        await _notificationHub.Clients
+                            .User(previousPendingAssignment.UserId)
+                            .SendAsync("TaskAssignmentReassigned", new
+                            {
+                                notificationId = oldNotification.Id,
+                                type = oldNotification.Type,
+                                title = oldNotification.Title,
+                                message = $"Task "{task.Title}" has been reassigned. You can no longer accept or reject this task.",
+                                taskId = task.Id,
+                                projectId = task.ProjectId,
+                                createdAt = oldNotification.CreatedAt
+                            });
+                    }
+
+                    if (newNotification != null)
+                    {
+                        await _notificationHub.Clients
+                            .User(model.AssignedToUserId)
+                            .SendAsync("TaskAssignmentReceived", new
+                            {
+                                notificationId = newNotification.Id,
+                                type = newNotification.Type,
+                                title = newNotification.Title,
+                                message = $"Task "{task.Title}" has been assigned to you. Please accept or reject it.",
+                                scenario = task.Scenario,
+                                priority = task.Priority,
+                                startDate = task.StartDate,
+                                expectedEndDate = task.ExpectedEndDate,
+                                amount = task.Amount,
+                                taskId = task.Id,
+                                projectId = task.ProjectId,
+                                createdAt = newNotification.CreatedAt
+                            });
+                    }
+                }
+            }
 
             if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
