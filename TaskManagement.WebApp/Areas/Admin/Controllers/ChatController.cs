@@ -114,6 +114,12 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (admin == null)
                 return Unauthorized();
 
+            var chatUserId = await _context.ChatSessions
+                .AsNoTracking()
+                .Where(x => x.Id == chatSessionId)
+                .Select(x => x.UserId)
+                .FirstOrDefaultAsync();
+
             var result = await _chatService.DeleteChatAsync(
                 chatSessionId,
                 admin.Id);
@@ -129,6 +135,16 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     {
                         chatSessionId
                     });
+
+                if (!string.IsNullOrWhiteSpace(chatUserId))
+                {
+                    await _chatHub.Clients
+                        .User(chatUserId)
+                        .SendAsync("ChatDeleted", new
+                        {
+                            chatSessionId
+                        });
+                }
             }
             catch
             {
