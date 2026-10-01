@@ -277,6 +277,7 @@
             setText('modalAmount', card.dataset.amount ? '₹ ' + card.dataset.amount : '₹ 0.00');
             updateModalDeadlineWarning(card);
 
+            taskModal.dataset.openTaskId = String(card.dataset.taskId || '');
             taskModal.classList.add('show');
             document.body.style.overflow = 'hidden';
             return;
