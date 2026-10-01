@@ -125,13 +125,22 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 .Join(_context.TaskItems, r => r.TaskId, t => t.Id, (r, t) => new { t.Id, t.Status, t.ProjectId })
                 .FirstOrDefaultAsync();
 
-            var chatSessionsToDelete = taskBeforeSettlement == null
-                ? new List<(int Id, string UserId)>()
-                : await _context.ChatSessions
-                    .AsNoTracking()
-                    .Where(x => x.TaskId == taskBeforeSettlement.Id && x.IsActive)
-                    .Select(x => new ValueTuple<int, string>(x.Id, x.UserId))
-                    .ToListAsync();
+            var chatSessionsQuery = _context.ChatSessions
+                .AsNoTracking()
+                .Where(x => x.IsActive);
+
+            if (taskBeforeSettlement == null)
+                chatSessionsQuery = chatSessionsQuery.Where(x => false);
+            else
+                chatSessionsQuery = chatSessionsQuery.Where(x => x.TaskId == taskBeforeSettlement.Id);
+
+            var chatSessionsToDelete = await chatSessionsQuery
+                .Select(x => new
+                {
+                    x.Id,
+                    x.UserId
+                })
+                .ToListAsync();
 
             var result = await _reviewService.SettlePaymentAsync(id, admin.Id, payNow);
             if (!result.Success)
