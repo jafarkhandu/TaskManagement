@@ -103,7 +103,8 @@ async function openPaymentModal(reviewId) {
 
 document.querySelectorAll('.review-card').forEach(card => {
     card.addEventListener('click', async event => {
-        const action = event.target.closest('[data-action]')?.dataset.action;
+        const actionButton = event.target.closest('[data-action]');
+        const action = actionButton?.dataset.action;
         if (!action) return;
 
         activeReview = { reviewId: Number(card.dataset.reviewId) };
@@ -113,6 +114,18 @@ document.querySelectorAll('.review-card').forEach(card => {
             bootstrap.Modal.getOrCreateInstance(
                 document.getElementById('rejectReviewModal')
             ).show();
+            return;
+        }
+
+        if (action === 'approve' && card.dataset.late === 'true') {
+            if (actionButton) {
+                actionButton.disabled = true;
+            }
+
+            // Late submissions never enter the payment modal. The existing
+            // settlement endpoint already converts them to Completed + ₹0 +
+            // Withheld, so this keeps the new path centralized on the backend.
+            await settle(false, false);
             return;
         }
 
@@ -157,7 +170,7 @@ document.getElementById('confirmReject')?.addEventListener('click', async () => 
     }
 });
 
-async function settle(payNow) {
+async function settle(payNow, closePaymentModal = true) {
     if (!activeReview?.reviewId) return;
 
     try {
@@ -170,9 +183,11 @@ async function settle(payNow) {
         if (!response.ok || !data.success)
             throw new Error(data.message || 'Unable to settle payment.');
 
-        bootstrap.Modal.getOrCreateInstance(
-            document.getElementById('paymentReviewModal')
-        ).hide();
+        if (closePaymentModal) {
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById('paymentReviewModal')
+            ).hide();
+        }
 
         location.reload();
     }
