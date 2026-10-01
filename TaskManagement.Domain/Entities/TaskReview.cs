@@ -10,7 +10,7 @@ namespace TaskManagement.Domain.Entities
 
         // Snapshot of the task deadline at the moment the user submits for review.
         // This keeps payment eligibility stable even if an admin edits the task later.
-        public DateTime DeadlineAtSubmission { get; set; }
+        public DateTime? DeadlineAtSubmission { get; set; }
 
         public string Status { get; set; } = "Pending";
         public string? ReviewedByAdminId { get; set; }
