@@ -171,10 +171,10 @@
                                 <tr>
                                     <th>Project</th>
                                     <th>Tasks</th>
+                                    <th>Progress</th>
                                     <th>Completed</th>
                                     <th>In progress</th>
                                     <th>Overdue</th>
-                                    <th>Progress</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -197,9 +197,6 @@
                                             </div>
                                         </td>
                                         <td><span class="table-number">@row.TaskCount</span></td>
-                                        <td><span class="metric-pill success">@row.Completed</span></td>
-                                        <td><span class="metric-pill info">@row.InProgress</span></td>
-                                        <td><span class="metric-pill danger">@row.Overdue</span></td>
                                         <td>
                                             <div class="progress-cell">
                                                 <strong>@projectPercent%</strong>
@@ -208,6 +205,9 @@
                                                 </div>
                                             </div>
                                         </td>
+                                        <td><span class="metric-pill success">@row.Completed</span></td>
+                                        <td><span class="metric-pill info">@row.InProgress</span></td>
+                                        <td><span class="metric-pill danger">@row.Overdue</span></td>
                                     </tr>
                                 }
                             }
@@ -262,8 +262,6 @@
                                         </div>
                                     </td>
                                     <td><span class="table-number">@row.Assigned</span></td>
-                                    <td><span class="metric-pill success">@row.Completed</span></td>
-                                    <td><span class="metric-pill neutral">@row.Pending</span></td>
                                     <td>
                                         <div class="progress-cell">
                                             <strong>@studentPercent%</strong>
@@ -272,6 +270,8 @@
                                             </div>
                                         </div>
                                     </td>
+                                    <td><span class="metric-pill success">@row.Completed</span></td>
+                                    <td><span class="metric-pill neutral">@row.Pending</span></td>
                                 </tr>
                             }
                         }
