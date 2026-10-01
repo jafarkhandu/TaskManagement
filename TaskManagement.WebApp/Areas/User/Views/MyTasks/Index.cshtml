@@ -4,7 +4,7 @@
     Layout = null;
 
     var totalTasks = Model?.Count ?? 0;
-    var inProgress = Model?.Count(x => x.Status == "In Progress") ?? 0;
+    var inProgress = Model?.Count(x => x.Status == "In Progress" || x.Status == "Review Pending") ?? 0;
     var onHold = Model?.Count(x => x.Status == "On Hold") ?? 0;
     var completed = Model?.Count(x => x.Status == "Completed") ?? 0;
 
@@ -193,6 +193,7 @@
                 <option value="all">All Status</option>
                 <option value="Pending">To Do</option>
                 <option value="In Progress">In Progress</option>
+                <option value="Review Pending">Review Pending</option>
                 <option value="On Hold">On Hold</option>
                 <option value="Completed">Completed</option>
             </select>
