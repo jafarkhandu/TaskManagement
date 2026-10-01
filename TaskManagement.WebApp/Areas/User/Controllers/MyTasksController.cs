@@ -199,9 +199,9 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     ? await _context.ChatSessions
                         .AsNoTracking()
                         .Where(x => x.TaskId == taskId && x.IsActive)
-                        .Select(x => new ValueTuple<int, string>(x.Id, x.UserId))
+                        .Select(x => new ValueTuple<int, string, string>(x.Id, x.UserId, x.AdminId))
                         .ToListAsync()
-                    : new List<(int Id, string UserId)>();
+                    : new List<(int Id, string UserId, string AdminId)>();
 
             var result = await _taskService.ChangeStatusAsync(
                 taskId,
@@ -312,6 +312,10 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         // directly so the stale conversation disappears there too.
                         await _chatHub.Clients
                             .User(chat.UserId)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        await _chatHub.Clients
+                            .User(chat.AdminId)
                             .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
                     }
                     catch
