@@ -307,10 +307,6 @@
             @{
                 var pendingPayments = ViewBag.PendingPayments as List<TaskManagement.Application.DTOs.TaskReviewDto>
                     ?? new List<TaskManagement.Application.DTOs.TaskReviewDto>();
-            }
-            @{
-                var pendingPayments = ViewBag.PendingPayments as List<TaskManagement.Application.DTOs.TaskReviewDto>
-                    ?? new List<TaskManagement.Application.DTOs.TaskReviewDto>();
                 var pendingPaymentTotal = pendingPayments.Sum(x => x.Amount);
             }
             <section class="dashboard-card admin-pending-payment-card" aria-label="Pending payments summary">
