@@ -2039,8 +2039,9 @@ html .user-task-app .task-card .task-card-top .task-review-pending {
 
 
 /* =========================================================
-   REVIEW PENDING — REFERENCE-QUALITY STATUS PILL
-   Compact sizing; glass in dark mode; clean in light mode.
+   REVIEW PENDING — COMPACT GLASS STATUS
+   Dark mode: transparent blue card glass.
+   Light mode: clean purple reference badge.
 ========================================================= */
 .user-task-app .task-card .task-card-top .task-review-pending {
     display: inline-flex !important;
@@ -2049,36 +2050,39 @@ html .user-task-app .task-card .task-card-top .task-review-pending {
     flex: 0 0 auto !important;
     width: auto !important;
     min-width: 0 !important;
-    height: 36px !important;
-    margin: 0 0 0 8px !important;
-    padding: 0 14px !important;
+    height: 28px !important;
+    margin: 0 0 0 7px !important;
+    padding: 0 10px !important;
     box-sizing: border-box !important;
     border-radius: 999px !important;
-    border: 1px solid rgba(177, 148, 255, .46) !important;
-    background: rgba(112, 68, 198, .16) !important;
-    color: #bfa7ff !important;
-    font-size: 14px !important;
+    border: 1px solid rgba(145, 177, 255, .34) !important;
+    background: rgba(74, 111, 180, .18) !important;
+    color: #d5c7ff !important;
+    font-size: 11px !important;
     font-weight: 750 !important;
     line-height: 1 !important;
-    letter-spacing: 0 !important;
+    letter-spacing: .01em !important;
     white-space: nowrap !important;
     text-align: center !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 18px rgba(0,0,0,.12) !important;
-    backdrop-filter: blur(12px) saturate(125%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 3px 10px rgba(0,0,0,.12) !important;
+    backdrop-filter: blur(10px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(135%) !important;
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 html.light-theme .user-task-app .task-card .task-card-top .task-review-pending {
-    height: 36px !important;
-    padding: 0 14px !important;
+    height: 34px !important;
+    padding: 0 13px !important;
     border: 1px solid #d7c9ef !important;
     background: #f0ebfa !important;
     color: #7044c6 !important;
+    font-size: 13px !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 @media (max-width: 700px) {
