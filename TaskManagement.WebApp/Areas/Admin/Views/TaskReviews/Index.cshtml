@@ -48,8 +48,6 @@
                     <div><span>Submitted</span><strong>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</strong></div>
                 </div>
 
-                <div class="review-scenario"><span>Scenario</span><p>@review.Scenario</p></div>
-
                 <div class="review-repository">
                     <span>Submitted Repository</span>
                     @if (!string.IsNullOrWhiteSpace(review.RepositoryUrl))
