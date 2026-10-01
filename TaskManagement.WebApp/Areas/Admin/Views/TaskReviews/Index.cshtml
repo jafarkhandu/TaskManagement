@@ -1,6 +1,11 @@
 @model List<TaskManagement.Application.DTOs.TaskReviewDto>
+@using System.Linq
 @{
     Layout = null;
+    var pendingPayments = ViewBag.PendingPayments as List<TaskManagement.Application.DTOs.TaskReviewDto>
+        ?? new List<TaskManagement.Application.DTOs.TaskReviewDto>();
+    var visibleReviews = Model.Take(3).ToList();
+    var visiblePayments = pendingPayments.Take(4).ToList();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -20,93 +25,157 @@
     <main class="admin-review-main">
         <form id="reviewAntiForgery">@Html.AntiForgeryToken()</form>
         @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminTopbar.cshtml")
+
         <section class="review-hero">
             <div>
                 <span>WORKFLOW</span>
                 <h1>Task Reviews</h1>
                 <p>Review submitted work before approving the task and settling its payment.</p>
             </div>
-            <div class="review-counter"><strong>@Model.Count</strong><span>Pending reviews</span></div>
-        </section>
-
-        <section class="review-list" id="reviewList">
-        @foreach (var review in Model)
-        {
-            <article class="review-card"
-                     data-review-id="@review.ReviewId"
-                     data-late="@(review.IsLate ? "true" : "false")">
-                <div class="review-card-head">
-                    <div>
-                        <span class="review-task-id">TASK-@review.TaskId</span>
-                        <h2>@review.TaskTitle</h2>
-                        <p>@review.ProjectTitle · @review.UserName</p>
-                    </div>
-                    <span class="review-pill">REVIEW PENDING</span>
-                </div>
-
-                <div class="review-grid">
-                    <div><span>Amount</span><strong>₹ @review.Amount.ToString("N2")</strong></div>
-                    <div><span>Priority</span><strong>@review.Priority</strong></div>
-                    <div><span>Submitted</span><strong>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</strong></div>
-                    <div>
-                        <span>Deadline</span>
-                        <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
-                            @(review.IsLate ? "Late · ₹0 payable" : "On time · Full payment")
-                        </strong>
-                    </div>
-                </div>
-<div class="review-repository">
-                    <span>Submitted Repository</span>
-                    @if (!string.IsNullOrWhiteSpace(review.RepositoryUrl))
-                    {
-                        <a href="@review.RepositoryUrl" target="_blank" rel="noopener noreferrer">Open Repository ↗</a>
-                    }
-                </div>
-
-                <div class="review-actions">
-                    <button type="button" class="btn btn-review-approve" data-action="approve">
-                        @(review.IsLate ? "✓ Approve · No Payment" : "✓ Approve")
-                    </button>
-                    <button type="button" class="btn btn-review-reject" data-action="reject">✕ Reject</button>
-                </div>
-            </article>
-        }
-        @if (!Model.Any())
-        {
-            <div class="review-empty">
-                <div>✓</div>
-                <h3>No pending reviews</h3>
-                <p>New task submissions will appear here automatically.</p>
+            <div class="review-counter">
+                <strong>@Model.Count</strong>
+                <span>Pending reviews</span>
             </div>
-        }
         </section>
 
-        @{
-            var pendingPayments = ViewBag.PendingPayments as List<TaskManagement.Application.DTOs.TaskReviewDto>
-                ?? new List<TaskManagement.Application.DTOs.TaskReviewDto>();
-        }
+        <section class="review-section" aria-labelledby="recentReviewsTitle">
+            <div class="section-heading review-section-heading">
+                <div>
+                    <span>RECENT SUBMISSIONS</span>
+                    <h2 id="recentReviewsTitle">Recent Task Submissions</h2>
+                    <p>Latest tasks submitted for your review <strong>(Showing @visibleReviews.Count of @Model.Count)</strong></p>
+                </div>
+                @if (Model.Count > visibleReviews.Count)
+                {
+                    <button type="button" class="review-view-all-btn" data-bs-toggle="modal" data-bs-target="#allReviewsModal">
+                        View All Tasks <span>→</span>
+                    </button>
+                }
+            </div>
+
+            <section class="review-list" id="reviewList">
+            @foreach (var review in visibleReviews)
+            {
+                <article class="review-card"
+                         data-review-id="@review.ReviewId"
+                         data-late="@(review.IsLate ? "true" : "false")">
+                    <div class="review-card-head">
+                        <div>
+                            <span class="review-task-id">TASK-@review.TaskId</span>
+                            <h2>@review.TaskTitle</h2>
+                            <p>@review.ProjectTitle · @review.UserName</p>
+                        </div>
+                        <span class="review-pill">REVIEW PENDING</span>
+                    </div>
+
+                    <div class="review-grid">
+                        <div>
+                            <span>Amount</span>
+                            <strong>₹ @review.Amount.ToString("N2")</strong>
+                        </div>
+                        <div>
+                            <span>Priority</span>
+                            <strong>@review.Priority</strong>
+                        </div>
+                        <div>
+                            <span>Submitted</span>
+                            <strong>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</strong>
+                        </div>
+                        <div>
+                            <span>Deadline</span>
+                            <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
+                                @if (review.DeadlineAtSubmission.HasValue)
+                                {
+                                    @review.DeadlineAtSubmission.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                                }
+                                else
+                                {
+                                    @:Not set
+                                }
+                            </strong>
+                            <small class="deadline-status @(review.IsLate ? "is-late" : "is-on-time")">
+                                @(review.IsLate ? "Late submission" : "Within deadline")
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="review-scenario-trigger">
+                        <button type="button"
+                                class="scenario-open-btn"
+                                data-scenario="@review.Scenario"
+                                data-task-title="@review.TaskTitle">
+                            <span class="scenario-icon">▣</span>
+                            <span>
+                                <small>SCENARIO</small>
+                                <strong>@(string.IsNullOrWhiteSpace(review.Scenario) ? "No scenario provided" : review.Scenario)</strong>
+                            </span>
+                            <span class="scenario-arrow">↗</span>
+                        </button>
+                    </div>
+
+                    <div class="review-repository">
+                        <span>Submitted Repository</span>
+                        @if (!string.IsNullOrWhiteSpace(review.RepositoryUrl))
+                        {
+                            <a href="@review.RepositoryUrl" target="_blank" rel="noopener noreferrer">Open Repository ↗</a>
+                        }
+                        else
+                        {
+                            <span class="repository-empty">Not provided</span>
+                        }
+                    </div>
+
+                    <div class="review-actions">
+                        <button type="button" class="btn btn-review-approve" data-action="approve">
+                            @(review.IsLate ? "✓ Approve · No Payment" : "✓ Approve")
+                        </button>
+                        <button type="button" class="btn btn-review-reject" data-action="reject">✕ Reject</button>
+                    </div>
+                </article>
+            }
+            @if (!visibleReviews.Any())
+            {
+                <div class="review-empty">
+                    <div>✓</div>
+                    <h3>No pending reviews</h3>
+                    <p>New task submissions will appear here automatically.</p>
+                </div>
+            }
+            </section>
+        </section>
+
         <section class="pending-payment-section" id="pendingPayments">
-            <div class="section-heading">
+            <div class="section-heading review-section-heading">
                 <div>
                     <span>PAYMENT QUEUE</span>
                     <h2>Payment Remaining</h2>
-                    <p>Approved tasks that were completed with payment deferred.</p>
+                    <p>Approved tasks that were completed with payment deferred. <strong>(Showing @visiblePayments.Count of @pendingPayments.Count)</strong></p>
                 </div>
-                <strong class="pending-payment-count">@pendingPayments.Count</strong>
+                @if (pendingPayments.Count > visiblePayments.Count)
+                {
+                    <button type="button" class="review-view-all-btn payment-view-all-btn" data-bs-toggle="modal" data-bs-target="#allPaymentsModal">
+                        View All Payments <span>→</span>
+                    </button>
+                }
             </div>
+
             <div class="pending-payment-list">
-            @foreach (var payment in pendingPayments)
+            @foreach (var payment in visiblePayments)
             {
                 <article class="pending-payment-card">
                     <div>
                         <span>TASK-@payment.TaskId · @payment.UserName</span>
                         <h3>@payment.TaskTitle</h3>
                     </div>
+                    <span class="pending-payment-date">
+                        <span>▣</span>
+                        @(payment.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy"))
+                    </span>
                     <strong>₹ @payment.Amount.ToString("N2")</strong>
                     <button type="button" class="btn btn-warning pending-pay-btn" data-review-id="@payment.ReviewId">Pay Now</button>
                 </article>
             }
-            @if (!pendingPayments.Any())
+            @if (!visiblePayments.Any())
             {
                 <div class="pending-payment-empty">No pending task payments.</div>
             }
@@ -115,6 +184,137 @@
     </main>
 </div>
 
+<!-- All Task Reviews -->
+<div class="modal fade" id="allReviewsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content all-review-modal">
+            <div class="modal-header">
+                <div>
+                    <span>REVIEW WORKSPACE</span>
+                    <h5>All Task Reviews</h5>
+                    <p>All submitted tasks for review (@Model.Count tasks)</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="all-review-toolbar">
+                <div class="all-review-search">
+                    <span>⌕</span>
+                    <input type="search" id="allReviewsSearch" placeholder="Search tasks..." autocomplete="off" />
+                </div>
+                <select id="allReviewsStatus">
+                    <option value="">All Status</option>
+                    <option value="late">Late</option>
+                    <option value="on-time">On Time</option>
+                </select>
+                <select id="allReviewsPriority">
+                    <option value="">All Priority</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div class="all-review-list" id="allReviewsList">
+            @foreach (var review in Model)
+            {
+                <article class="all-review-item"
+                         data-search="@($"{review.TaskId} {review.TaskTitle} {review.ProjectTitle} {review.UserName}".ToLowerInvariant())"
+                         data-status="@(review.IsLate ? "late" : "on-time")"
+                         data-priority="@review.Priority.ToLowerInvariant()">
+                    <div class="all-review-item-main">
+                        <span class="review-task-id">TASK-@review.TaskId</span>
+                        <strong>@review.TaskTitle</strong>
+                        <small>@review.ProjectTitle · @review.UserName</small>
+                    </div>
+                    <div class="all-review-item-meta">
+                        <span>₹ @review.Amount.ToString("N2")<small>Amount</small></span>
+                        <span>@review.Priority<small>Priority</small></span>
+                        <span>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")<small>Submitted</small></span>
+                        <span class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
+                            @(review.IsLate ? "Late" : "On time")
+                            <small>Deadline</small>
+                        </span>
+                    </div>
+                    <button type="button" class="scenario-open-btn scenario-open-btn-small"
+                            data-scenario="@review.Scenario" data-task-title="@review.TaskTitle">
+                        Scenario ↗
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(review.RepositoryUrl))
+                    {
+                        <a class="all-review-repo" href="@review.RepositoryUrl" target="_blank" rel="noopener noreferrer">Open Repo ↗</a>
+                    }
+                </article>
+            }
+            @if (!Model.Any())
+            {
+                <div class="all-review-empty">No task reviews available.</div>
+            }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Pending Payments -->
+<div class="modal fade" id="allPaymentsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content all-review-modal all-payment-modal">
+            <div class="modal-header">
+                <div>
+                    <span>PAYMENT QUEUE</span>
+                    <h5>All Pending Payments</h5>
+                    <p>All payments that are pending (@pendingPayments.Count tasks)</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="all-review-toolbar payment-search-toolbar">
+                <div class="all-review-search">
+                    <span>⌕</span>
+                    <input type="search" id="allPaymentsSearch" placeholder="Search payments..." autocomplete="off" />
+                </div>
+            </div>
+            <div class="all-payment-list" id="allPaymentsList">
+            @foreach (var payment in pendingPayments)
+            {
+                <article class="all-payment-item"
+                         data-search="@($"{payment.TaskId} {payment.TaskTitle} {payment.UserName}".ToLowerInvariant())">
+                    <div class="all-payment-icon">▤</div>
+                    <div class="all-payment-main">
+                        <span>TASK-@payment.TaskId · @payment.UserName</span>
+                        <strong>@payment.TaskTitle</strong>
+                    </div>
+                    <span class="all-payment-date">▣ @payment.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy")</span>
+                    <strong class="all-payment-amount">₹ @payment.Amount.ToString("N2")</strong>
+                    <button type="button" class="btn btn-warning pending-pay-btn" data-review-id="@payment.ReviewId">Pay Now</button>
+                </article>
+            }
+            @if (!pendingPayments.Any())
+            {
+                <div class="all-review-empty">No pending task payments.</div>
+            }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scenario -->
+<div class="modal fade" id="scenarioModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content scenario-modal">
+            <div class="modal-header">
+                <div>
+                    <span>TASK SCENARIO</span>
+                    <h5 id="scenarioModalTitle">Scenario</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="scenario-modal-label">Scenario details</div>
+                <div id="scenarioModalText" class="scenario-modal-text"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject -->
 <div class="modal fade" id="rejectReviewModal" tabindex="-1" aria-hidden="true">
  <div class="modal-dialog modal-dialog-centered">
   <div class="modal-content review-modal">
@@ -129,6 +329,7 @@
  </div>
 </div>
 
+<!-- Payment -->
 <div class="modal fade" id="paymentReviewModal" tabindex="-1" aria-hidden="true">
  <div class="modal-dialog modal-dialog-centered modal-lg">
   <div class="modal-content review-modal payment-review-modal">
