@@ -45,12 +45,9 @@
                     <h2 id="recentReviewsTitle">Recent Task Submissions</h2>
                     <p>Latest tasks submitted for your review <strong>(Showing @visibleReviews.Count of @Model.Count)</strong></p>
                 </div>
-                @if (Model.Count > visibleReviews.Count)
-                {
-                    <button type="button" class="review-view-all-btn" data-bs-toggle="modal" data-bs-target="#allReviewsModal">
-                        View All Tasks <span>→</span>
-                    </button>
-                }
+                <button type="button" class="review-view-all-btn" data-bs-toggle="modal" data-bs-target="#allReviewsModal">
+                    View All Tasks <span>→</span>
+                </button>
             </div>
 
             <section class="review-list" id="reviewList">
@@ -84,14 +81,7 @@
                         <div>
                             <span>Deadline</span>
                             <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
-                                @if (review.DeadlineAtSubmission.HasValue)
-                                {
-                                    @review.DeadlineAtSubmission.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
-                                }
-                                else
-                                {
-                                    @:Not set
-                                }
+                                @(review.IsLate ? "Late · ₹0 payable" : "On time · Full payment")
                             </strong>
                             <small class="deadline-status @(review.IsLate ? "is-late" : "is-on-time")">
                                 @(review.IsLate ? "Late submission" : "Within deadline")
@@ -104,12 +94,7 @@
                                 class="scenario-open-btn"
                                 data-scenario="@review.Scenario"
                                 data-task-title="@review.TaskTitle">
-                            <span class="scenario-icon">▣</span>
-                            <span>
-                                <small>SCENARIO</small>
-                                <strong>@(string.IsNullOrWhiteSpace(review.Scenario) ? "No scenario provided" : review.Scenario)</strong>
-                            </span>
-                            <span class="scenario-arrow">↗</span>
+                            Scenario <span>↗</span>
                         </button>
                     </div>
 
@@ -151,12 +136,9 @@
                     <h2>Payment Remaining</h2>
                     <p>Approved tasks that were completed with payment deferred. <strong>(Showing @visiblePayments.Count of @pendingPayments.Count)</strong></p>
                 </div>
-                @if (pendingPayments.Count > visiblePayments.Count)
-                {
-                    <button type="button" class="review-view-all-btn payment-view-all-btn" data-bs-toggle="modal" data-bs-target="#allPaymentsModal">
-                        View All Payments <span>→</span>
-                    </button>
-                }
+                <button type="button" class="review-view-all-btn payment-view-all-btn" data-bs-toggle="modal" data-bs-target="#allPaymentsModal">
+                    View All Payments <span>→</span>
+                </button>
             </div>
 
             <div class="pending-payment-list">
@@ -242,6 +224,12 @@
                     {
                         <a class="all-review-repo" href="@review.RepositoryUrl" target="_blank" rel="noopener noreferrer">Open Repo ↗</a>
                     }
+                    <div class="all-review-actions">
+                        <button type="button" class="btn btn-review-approve all-review-action" data-review-id="@review.ReviewId" data-late="@(review.IsLate ? "true" : "false")" data-action="approve">
+                            @(review.IsLate ? "✓ Approve · No Payment" : "✓ Approve")
+                        </button>
+                        <button type="button" class="btn btn-review-reject all-review-action" data-review-id="@review.ReviewId" data-action="reject">✕ Reject</button>
+                    </div>
                 </article>
             }
             @if (!Model.Any())
