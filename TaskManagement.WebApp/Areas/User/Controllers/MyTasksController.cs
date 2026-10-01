@@ -90,6 +90,12 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
+            var taskBeforeReview = await _context.TaskItems
+                .AsNoTracking()
+                .Where(t => t.Id == taskId)
+                .Select(t => new { t.Status, t.ProjectId })
+                .FirstOrDefaultAsync();
+
             var result = await _taskService.SubmitForReviewAsync(
                 taskId,
                 user.Id,
@@ -97,6 +103,35 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
             if (!result.Success)
                 return Json(new { success = false, message = result.Error });
+
+            // Submission moves the persisted task into Review Pending.
+            // Broadcast that transition so the admin board updates immediately.
+            if (taskBeforeReview != null)
+            {
+                try
+                {
+                    var reviewStatusPayload = new
+                    {
+                        TaskId = taskId,
+                        ProjectId = taskBeforeReview.ProjectId,
+                        OldStatus = taskBeforeReview.Status,
+                        NewStatus = "Review Pending",
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _notificationHub.Clients
+                        .Group($"project-{taskBeforeReview.ProjectId}")
+                        .SendAsync("TaskStatusChanged", reviewStatusPayload);
+
+                    await _notificationHub.Clients
+                        .User(user.Id)
+                        .SendAsync("TaskStatusChanged", reviewStatusPayload);
+                }
+                catch
+                {
+                    // Submission remains successful if live delivery fails.
+                }
+            }
 
             try
             {
