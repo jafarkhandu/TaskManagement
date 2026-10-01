@@ -5,12 +5,13 @@
     var isReviewApproved = notificationType == "TaskReviewApproved";
     var isReviewRejected = notificationType == "TaskReviewRejected";
     var isPaymentSettled = notificationType == "TaskPaymentSettled";
+    var isPaymentWithheld = notificationType == "TaskPaymentWithheld";
     var isReassignment = notificationType == "TaskAssignmentReassigned";
     var isDeadlineTomorrow = notificationType == "TaskDeadlineTomorrow";
     var isDeadlineToday = notificationType == "TaskDeadlineToday";
     var isDeadlineNotification = isDeadlineTomorrow || isDeadlineToday;
     var isTaskAssignment = notificationType == "TaskAssignment";
-    var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled || isReassignment;
+    var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled || isPaymentWithheld || isReassignment;
 
     var detailTitle = isDeadlineTomorrow
         ? "Deadline Tomorrow"
@@ -18,6 +19,8 @@
             ? "Deadline Today"
             : isPaymentSettled
                 ? "Payment Settled"
+                : isPaymentWithheld
+                    ? "Payment Withheld"
                 : isReviewApproved
                     ? "Task Review Approved"
                     : isReviewRejected
@@ -30,6 +33,8 @@
             ? "This task is due today."
             : isPaymentSettled
                 ? "Your task review is complete and the payment has been settled."
+                : isPaymentWithheld
+                    ? "This task was submitted after the deadline and is not eligible for payment."
                 : isReviewApproved
                     ? "Your submitted work has been reviewed and approved by the admin."
                     : isReviewRejected
@@ -227,7 +232,9 @@
                                                     ? "Your submitted work was approved by the admin."
                                                     : isPaymentSettled
                                                         ? "The task was completed and the payment was settled."
-                                                        : "This task notification contains the latest update.")
+                                                        : isPaymentWithheld
+                                                            ? "The task was completed, but no payment is due because the work was submitted after the deadline."
+                                                            : "This task notification contains the latest update.")
                                     </p>
                                 </div>
                             }
@@ -264,7 +271,13 @@
                             {
                                 <div class="action-info-box notification-update-box">
                                     <span class="action-info-icon">✦</span>
-                                    <p>@Model.NotificationTitle</p>
+                                    <p>
+                                        @(isDeadlineNotification
+                                            ? "⚠ Submit this task before the deadline. No payment will be made after the deadline."
+                                            : isPaymentWithheld
+                                                ? "⚠ This task was submitted after the deadline and is no longer eligible for payment."
+                                                : Model.NotificationTitle)
+                                    </p>
                                 </div>
                             }
 
@@ -298,6 +311,13 @@
                                     <div class="final-status accepted-status">
                                         <span>₹</span>
                                         Payment Settled
+                                    </div>
+                                }
+                                else if (isPaymentWithheld)
+                                {
+                                    <div class="final-status rejected-status">
+                                        <span>₹</span>
+                                        Payment Withheld
                                     </div>
                                 }
                                 else if (Model.AssignmentStatus == "Pending")
