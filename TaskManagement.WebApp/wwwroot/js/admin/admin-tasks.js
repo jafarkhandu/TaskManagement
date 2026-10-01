@@ -1396,7 +1396,7 @@
 
             adminNotificationConnection.on(
                 'TaskStatusChanged',
-                function (payload) {
+                async function (payload) {
 
                     console.log(
                         'ADMIN RECEIVED TaskStatusChanged:',
@@ -1481,6 +1481,37 @@
                         normalizeStatus(
                             newStatus
                         );
+
+                    if (
+                        movedTask.status === 'Completed' &&
+                        !movedTask.completedAtUtc
+                    ) {
+                        try {
+                            const response = await fetch(
+                                '/Admin/Tasks/Get?id=' + encodeURIComponent(taskId),
+                                {
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                }
+                            );
+
+                            if (response.ok) {
+                                const latestTask = await response.json();
+
+                                movedTask.completedAtUtc =
+                                    latestTask.completedAtUtc ??
+                                    latestTask.CompletedAtUtc ??
+                                    null;
+                            }
+                        }
+                        catch (error) {
+                            console.warn(
+                                'Unable to load completion timing:',
+                                error
+                            );
+                        }
+                    }
 
 
                     /*
