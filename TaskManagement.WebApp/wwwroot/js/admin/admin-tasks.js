@@ -186,6 +186,10 @@
                 return 'In Progress';
             }
 
+            if (value === 'review pending' || value === 'review') {
+                return 'Review Pending';
+            }
+
 
             if (
                 value === 'on hold' ||
@@ -464,8 +468,8 @@
             ).textContent =
                 normalized.filter(
                     x =>
-                        x.normalizedStatus ===
-                        'In Progress'
+                        x.normalizedStatus === 'In Progress' ||
+                        x.normalizedStatus === 'Review Pending'
                 ).length;
 
 
@@ -616,8 +620,8 @@
             },
 
             {
-                status: 'In Progress',
-                title: 'In Progress',
+                status: 'In Progress / Review',
+                title: 'In Progress / Review',
                 className: 'in-progress'
             },
 
@@ -1019,12 +1023,16 @@
                 function (column) {
 
                     const columnTasks =
-                        filtered.filter(
-                            task =>
-                                normalizeStatus(
-                                    task.status
-                                ) === column.status
-                        );
+                        filtered.filter(task => {
+                            const status = normalizeStatus(task.status);
+
+                            if (column.status === 'In Progress / Review') {
+                                return status === 'In Progress' ||
+                                       status === 'Review Pending';
+                            }
+
+                            return status === column.status;
+                        });
 
 
                     const columnElement =
@@ -1624,6 +1632,12 @@
             addAssignedToOptions
         );
 
+        setupUserAutocomplete(
+            document.getElementById('editAssignedToSearch'),
+            document.getElementById('editAssignedTo'),
+            document.getElementById('editAssignedToOptions')
+        );
+
         document.getElementById(
             'addTaskModal'
         )?.addEventListener(
@@ -1805,12 +1819,6 @@
 
 
                     document.getElementById(
-                        'editStatus'
-                    ).value =
-                        task.status || 'Pending';
-
-
-                    document.getElementById(
                         'editStartDate'
                     ).value =
                         formatInputDate(
@@ -1832,20 +1840,54 @@
                         task.amount ?? '';
 
 
-                    const select =
-                        document.getElementById(
-                            'editAssignedTo'
-                        );
+                    const editAssignedTo =
+                        document.getElementById('editAssignedTo');
 
+                    const editAssignedToSearch =
+                        document.getElementById('editAssignedToSearch');
 
-                    await loadMembers(
-                        select
-                    );
+                    const editAssignedToOptions =
+                        document.getElementById('editAssignedToOptions');
 
+                    await fetchAssignableUsers().then(users => {
+                        assignableUsers = users;
+                    });
 
-                    select.value =
-                        task.assignedToUserId ||
+                    const assignedUserId =
+                        task.assignedToUserId || '';
+
+                    const assignedUserName =
+                        task.assignedToUserName ||
+                        assignableUsers.find(u => getUserId(u) === assignedUserId)?.fullName ||
+                        assignableUsers.find(u => getUserId(u) === assignedUserId)?.email ||
                         '';
+
+                    if (editAssignedTo) {
+                        editAssignedTo.value = assignedUserId;
+                    }
+
+                    if (editAssignedToSearch) {
+                        editAssignedToSearch.value = assignedUserName;
+                    }
+
+                    editAssignedToSearch.dataset.originalUserId = assignedUserId;
+                    editAssignedToSearch.dataset.originalUserName = assignedUserName;
+                    editAssignedToSearch.dataset.assignmentStatus =
+                        task.assignmentStatus || '';
+
+                    if (editAssignedToOptions) {
+                        editAssignedToOptions.classList.remove('show');
+                    }
+
+                    const lockMessage =
+                        document.getElementById('editAssignedToLockMessage');
+
+                    if (lockMessage) {
+                        lockMessage.style.display =
+                            String(task.assignmentStatus || '').toLowerCase() === 'accepted'
+                                ? 'block'
+                                : 'none';
+                    }
 
 
                     bootstrap.Modal
@@ -1887,11 +1929,62 @@
                 event.preventDefault();
 
 
+                const editSearch =
+                    document.getElementById('editAssignedToSearch');
+
+                const editHidden =
+                    document.getElementById('editAssignedTo');
+
+                const editError =
+                    document.getElementById('editTaskError');
+
+                const assignmentStatus =
+                    String(editSearch?.dataset.assignmentStatus || '').toLowerCase();
+
+                const originalUserId =
+                    editSearch?.dataset.originalUserId || '';
+
+                const originalUserName =
+                    (editSearch?.dataset.originalUserName || '').trim().toLowerCase();
+
+                const currentUserName =
+                    (editSearch?.value || '').trim().toLowerCase();
+
+                if (assignmentStatus === 'accepted' &&
+                    (editHidden?.value || '') !== originalUserId &&
+                    currentUserName !== originalUserName) {
+
+                    if (editError) {
+                        editError.textContent =
+                            "User can't be changed once the task has been accepted.";
+                        editError.style.display = 'block';
+                    }
+
+                    if (editHidden) editHidden.value = originalUserId;
+                    if (editSearch) editSearch.value = editSearch.dataset.originalUserName || '';
+                    return;
+                }
+
+                if (assignmentStatus === 'accepted' &&
+                    currentUserName === originalUserName) {
+                    if (editHidden) editHidden.value = originalUserId;
+                }
+
+                if (!editHidden?.value) {
+                    if (editError) {
+                        editError.textContent = 'Please select a user from the list.';
+                        editError.style.display = 'block';
+                    }
+                    return;
+                }
+
                 const formData =
                     new FormData(
                         this
                     );
 
+                // Status is intentionally absent from the edit form.
+                // The backend preserves the current task status.
 
                 try {
 
