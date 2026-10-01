@@ -226,14 +226,10 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                // Admin project boards listen on the project group.
-                await _notificationHub.Clients
-                    .Group($"project-{result.ProjectId}")
-                    .SendAsync("TaskStatusChanged", statusPayload);
-
-                // Also address every admin directly. This makes the sync
-                // independent of whether the admin board has successfully
-                // rejoined the project group after a SignalR reconnect.
+                // Address every admin directly. A user status change must
+                // update every open admin project board even if that board
+                // recently reconnected and has not rejoined its project group.
+                // SignalR User() targets all connections belonging to that admin.
                 var admins = await _userManager.GetUsersInRoleAsync("Admin");
                 foreach (var admin in admins)
                 {
