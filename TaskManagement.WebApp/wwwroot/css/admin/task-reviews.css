@@ -259,3 +259,17 @@
         grid-template-columns:1fr;
     }
 }
+
+.payment-review-summary .payment-eligible {
+    color: #16875b;
+}
+
+.payment-review-summary .payment-withheld {
+    color: #c63f49;
+}
+
+.payment-review-warning-late {
+    border: 1px solid rgba(198, 63, 73, .24);
+    background: linear-gradient(135deg, #fff0f1, #ffe7e9);
+    color: #b52f3b;
+}
