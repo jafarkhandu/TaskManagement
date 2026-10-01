@@ -319,7 +319,7 @@
                 </strong>
 
                 <small>
-                    No new task assignments.
+                    No new notifications.
                 </small>
 
             </div>
