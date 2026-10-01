@@ -1,6 +1,11 @@
 (function () {
     'use strict';
 
+    if (window.__taskDeadlineIndicatorInitialized)
+        return;
+
+    window.__taskDeadlineIndicatorInitialized = true;
+
     const DAY_MS = 24 * 60 * 60 * 1000;
     const INDICATOR_WINDOW_MS = 2 * DAY_MS;
 
