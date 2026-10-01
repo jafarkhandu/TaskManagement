@@ -153,8 +153,14 @@ namespace TaskManagement.Infrastructure.Services
 
         public async Task<(bool Success, string Error)> SettlePaymentAsync(int reviewId, string adminId, bool payNow)
         {
-            var review = await _db.TaskReviews.FirstOrDefaultAsync(x => x.Id == reviewId && x.Status == "Approved");
-            if (review == null) return (false, "Approved review not found.");
+            // Payment decision is the final approval action. A pending review
+            // becomes Approved only when Pay Now or Later is explicitly selected.
+            var review = await _db.TaskReviews.FirstOrDefaultAsync(x =>
+                x.Id == reviewId &&
+                (x.Status == "Pending" || x.Status == "Approved"));
+
+            if (review == null)
+                return (false, "Review request is no longer available.");
 
             var payment = await _db.TaskPayments.FirstOrDefaultAsync(x => x.TaskAssignmentId == review.TaskAssignmentId);
             if (payment == null) return (false, "Payment record not found.");
@@ -176,6 +182,14 @@ namespace TaskManagement.Infrastructure.Services
             payment.Status = payNow ? "Paid" : "Pending";
             payment.PaidAt = payNow ? DateTime.UtcNow : null;
             payment.SettledByAdminId = payNow ? adminId : null;
+
+            review.Status = "Approved";
+            review.ReviewedByAdminId = adminId;
+            review.ReviewedAt = DateTime.UtcNow;
+
+            // The task is considered finished after the admin makes the
+            // explicit payment decision. Pay Later means payment is pending,
+            // not that the review action was cancelled.
             task.Status = "Completed";
 
             // A completed task must not retain an active chat session.
@@ -187,19 +201,18 @@ namespace TaskManagement.Infrastructure.Services
             if (taskChats.Count > 0)
                 _db.ChatSessions.RemoveRange(taskChats);
 
-            if (payNow)
+            _db.Notifications.Add(new Notification
             {
-                _db.Notifications.Add(new Notification
-                {
-                    UserId = assignment.UserId,
-                    TaskAssignmentId = assignment.Id,
-                    Type = "TaskPaymentSettled",
-                    Title = $"Payment Settled: {task.Title}",
-                    IsRead = false,
-                    IsDelivered = false,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
+                UserId = assignment.UserId,
+                TaskAssignmentId = assignment.Id,
+                Type = payNow ? "TaskPaymentSettled" : "TaskReviewApproved",
+                Title = payNow
+                    ? $"Payment Settled: {task.Title}"
+                    : $"Task Approved: {task.Title}",
+                IsRead = false,
+                IsDelivered = false,
+                CreatedAt = DateTime.UtcNow
+            });
 
             await _db.SaveChangesAsync();
             return (true, string.Empty);
