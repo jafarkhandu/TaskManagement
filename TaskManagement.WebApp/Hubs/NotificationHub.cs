@@ -123,10 +123,12 @@ namespace TaskManagement.WebApp.Hubs
                                 type = x.Notification.Type,
                                 title = x.Notification.Title,
                                 message = x.Notification.Type == "TaskDeadlineTomorrow"
-                                    ? (t.Title + " is due tomorrow.")
+                                    ? (t.Title + " is due tomorrow. ⚠ Complete and submit it by the deadline; no payment will be made after the deadline.")
                                     : x.Notification.Type == "TaskDeadlineToday"
-                                        ? (t.Title + " is due today.")
-                                        : x.Notification.Title,
+                                        ? (t.Title + " is due today. ⚠ Complete and submit it by the deadline; no payment will be made after the deadline.")
+                                        : x.Notification.Type == "TaskPaymentWithheld"
+                                            ? "Your task was submitted after the deadline. No payment will be made for this task."
+                                            : x.Notification.Title,
                                 scenario = t.Scenario,
                                 priority = t.Priority,
                                 startDate = t.StartDate,
