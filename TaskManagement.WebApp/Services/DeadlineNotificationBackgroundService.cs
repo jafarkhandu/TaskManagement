@@ -127,7 +127,7 @@ namespace TaskManagement.WebApp.Services
                 .Select(n => n.TaskAssignmentId + ":" + n.Type)
                 .ToListAsync(cancellationToken);
 
-            var created = new List<(int NotificationId, string UserId, string TaskTitle, string Type, int TaskId)>();
+            var created = new List<(TaskManagement.Domain.Entities.Notification Notification, string TaskTitle, int TaskId)>();
 
             foreach (var task in candidateTasks)
             {
@@ -173,10 +173,8 @@ namespace TaskManagement.WebApp.Services
                 existingNotificationKeys.Add(key);
 
                 created.Add((
-                    0,
-                    assignment.UserId,
+                    notification,
                     task.TaskTitle,
-                    notificationType,
                     task.TaskId));
             }
 
@@ -185,36 +183,10 @@ namespace TaskManagement.WebApp.Services
 
             await context.SaveChangesAsync(cancellationToken);
 
-            var createdNotifications = await context.Notifications
-                .AsNoTracking()
-                .Where(n =>
-                    n.TaskAssignmentId != 0 &&
-                    created.Select(x => x.UserId).Contains(n.UserId) &&
-                    (n.Type == "TaskDeadlineTomorrow" || n.Type == "TaskDeadlineToday") &&
-                    n.CreatedAt >= now.ToUniversalTime().AddMinutes(-2))
-                .Join(
-                    context.TaskAssignments.AsNoTracking(),
-                    n => n.TaskAssignmentId,
-                    a => a.Id,
-                    (n, a) => new { Notification = n, Assignment = a })
-                .Join(
-                    context.TaskItems.AsNoTracking(),
-                    x => x.Assignment.TaskId,
-                    t => t.Id,
-                    (x, t) => new
-                    {
-                        NotificationId = x.Notification.Id,
-                        UserId = x.Notification.UserId,
-                        Type = x.Notification.Type,
-                        Title = x.Notification.Title,
-                        TaskId = t.Id,
-                        TaskTitle = t.Title,
-                        CreatedAt = x.Notification.CreatedAt
-                    })
-                .ToListAsync(cancellationToken);
-
-            foreach (var notification in createdNotifications)
+            foreach (var createdNotification in created)
             {
+                var notification = createdNotification.Notification;
+
                 if (!NotificationHub.IsUserOnline(notification.UserId))
                     continue;
 
@@ -224,15 +196,18 @@ namespace TaskManagement.WebApp.Services
                         "UserDeadlineNotificationReceived",
                         new
                         {
-                            notificationId = notification.NotificationId,
+                            notificationId = notification.Id,
                             type = notification.Type,
                             title = notification.Title,
                             message = notification.Type == "TaskDeadlineTomorrow"
-                                ? $"{notification.TaskTitle} is due tomorrow."
-                                : $"{notification.TaskTitle} is due today.",
-                            taskId = notification.TaskId,
+                                ? $"{createdNotification.TaskTitle} is due tomorrow."
+                                : $"{createdNotification.TaskTitle} is due today.",
+                            taskId = createdNotification.TaskId,
                             createdAt = notification.CreatedAt
                         },
+                        cancellationToken);
+            }
+
                         cancellationToken);
             }
         }
