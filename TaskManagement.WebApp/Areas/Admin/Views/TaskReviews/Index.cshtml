@@ -46,6 +46,12 @@
                     <div><span>Amount</span><strong>₹ @review.Amount.ToString("N2")</strong></div>
                     <div><span>Priority</span><strong>@review.Priority</strong></div>
                     <div><span>Submitted</span><strong>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</strong></div>
+                    <div>
+                        <span>Deadline</span>
+                        <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
+                            @(review.IsLate ? "Late · ₹0 payable" : "On time · Full payment")
+                        </strong>
+                    </div>
                 </div>
 
                 <div class="review-scenario"><span>Scenario</span><p>@review.Scenario</p></div>
