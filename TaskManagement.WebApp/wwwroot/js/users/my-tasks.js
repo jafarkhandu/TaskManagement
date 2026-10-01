@@ -572,6 +572,111 @@
         }
     );
 
+    /* ================= LIVE TASK STATUS SYNC ================= */
+
+    (function initLiveTaskStatusSync() {
+        if (!window.signalR) return;
+
+        let connection = null;
+
+        function normalizeLiveStatus(status) {
+            const value = String(status || '').trim().toLowerCase().replace(/[_-]/g, ' ').replace(/\\s+/g, ' ');
+            if (['pending', 'todo', 'to do', 'not started', 'new'].includes(value)) return 'Pending';
+            if (['in progress', 'inprogress', 'working', 'started'].includes(value)) return 'In Progress';
+            if (['on hold', 'onhold', 'hold', 'paused'].includes(value)) return 'On Hold';
+            if (['completed', 'complete', 'done', 'finished'].includes(value)) return 'Completed';
+            if (value === 'review pending') return 'Review Pending';
+            return status || 'Pending';
+        }
+
+        function moveCardToStatus(taskId, status) {
+            const card = document.querySelector('.task-card[data-task-id="' + taskId + '"]');
+            if (!card) return;
+
+            const normalized = normalizeLiveStatus(status);
+            const targetMap = {
+                'Pending': 'todoList',
+                'In Progress': 'progressList',
+                'Review Pending': 'progressList',
+                'On Hold': 'holdList',
+                'Completed': 'completedList'
+            };
+
+            const target = document.getElementById(targetMap[normalized]);
+            if (!target) return;
+
+            const oldStatus = card.dataset.status || '';
+            card.dataset.status = normalized;
+
+            if (target.firstElementChild) target.insertBefore(card, target.firstElementChild);
+            else target.appendChild(card);
+
+            const isCompleted = normalized === 'Completed' || normalized === 'Review Pending';
+            card.draggable = !isCompleted;
+
+            if (isCompleted) {
+                const chatButton = card.querySelector('.task-chat-btn');
+                if (chatButton) chatButton.remove();
+            }
+
+            const countMap = {
+                'Pending': 'todoCount',
+                'In Progress': 'progressCount',
+                'Review Pending': 'progressCount',
+                'On Hold': 'holdCount',
+                'Completed': 'completedCount'
+            };
+
+            if (oldStatus !== normalized) {
+                const oldCountId = countMap[oldStatus];
+                const newCountId = countMap[normalized];
+
+                if (oldCountId && oldCountId !== newCountId) {
+                    const el = document.getElementById(oldCountId);
+                    if (el) el.textContent = Math.max(0, Number(el.textContent || 0) - 1);
+                }
+
+                if (newCountId && oldCountId !== newCountId) {
+                    const el = document.getElementById(newCountId);
+                    if (el) el.textContent = Number(el.textContent || 0) + 1;
+                }
+            }
+
+            applyFilters();
+        }
+
+        async function startLiveSync() {
+            try {
+                if (!window.signalR) return;
+
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl('/notificationHub')
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('TaskStatusChanged', function (payload) {
+                    if (!payload) return;
+
+                    const taskId = Number(payload.taskId ?? payload.TaskId ?? 0);
+                    if (!taskId) return;
+
+                    moveCardToStatus(
+                        taskId,
+                        payload.newStatus ?? payload.NewStatus ?? 'Pending'
+                    );
+                });
+
+                await connection.start();
+                window.__myTasksStatusConnection = connection;
+            }
+            catch (error) {
+                console.warn('User live task status sync failed:', error);
+            }
+        }
+
+        startLiveSync();
+    })();
+
     /* ================= DRAG & DROP STATUS WORKFLOW ================= */
 
 
