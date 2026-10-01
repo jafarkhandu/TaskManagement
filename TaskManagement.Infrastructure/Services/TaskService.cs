@@ -551,6 +551,11 @@ namespace TaskManagement.Infrastructure.Services
 
             assignment.CompletionRepositoryUrl = completionRepositoryUrl.Trim();
             assignment.RespondedAt = DateTime.UtcNow;
+
+            // Capture the user's actual completion/submission moment.
+            // The admin review/payment decision happens later and should not
+            // affect the user's early/on-time/late completion measurement.
+            task.CompletedAtUtc = DateTime.UtcNow;
             task.Status = "Review Pending";
 
             var review = new TaskReview
