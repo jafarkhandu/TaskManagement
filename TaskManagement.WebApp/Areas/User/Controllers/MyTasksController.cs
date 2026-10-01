@@ -182,15 +182,25 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             // Notify project listeners about the status change.
             try
             {
-                await _notificationHub.Clients.Group($"project-{result.ProjectId}")
-                    .SendAsync("TaskStatusChanged", new
-                    {
-                        TaskId = result.TaskId,
-                        ProjectId = result.ProjectId,
-                        OldStatus = result.OldStatus,
-                        NewStatus = result.NewStatus,
-                        UpdatedAt = DateTime.UtcNow
-                    });
+                var statusPayload = new
+                {
+                    TaskId = result.TaskId,
+                    ProjectId = result.ProjectId,
+                    OldStatus = result.OldStatus,
+                    NewStatus = result.NewStatus,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                // Admin project boards listen on the project group.
+                await _notificationHub.Clients
+                    .Group($"project-{result.ProjectId}")
+                    .SendAsync("TaskStatusChanged", statusPayload);
+
+                // The assigned user also receives the same event directly so
+                // every open My Tasks board stays live without requiring a refresh.
+                await _notificationHub.Clients
+                    .User(user.Id)
+                    .SendAsync("TaskStatusChanged", statusPayload);
             }
             catch
             {
