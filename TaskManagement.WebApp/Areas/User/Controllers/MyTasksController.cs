@@ -194,14 +194,23 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (user == null)
                 return Challenge();
 
-            var chatSessionsToDelete =
-                string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)
-                    ? await _context.ChatSessions
-                        .AsNoTracking()
-                        .Where(x => x.TaskId == taskId && x.IsActive)
-                        .Select(x => new ValueTuple<int, string, string>(x.Id, x.UserId, x.AdminId))
-                        .ToListAsync()
-                    : new List<(int Id, string UserId, string AdminId)>();
+            var chatSessionsQuery = _context.ChatSessions
+                .AsNoTracking()
+                .Where(x => x.IsActive);
+
+            if (!string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                chatSessionsQuery = chatSessionsQuery.Where(x => false);
+            else
+                chatSessionsQuery = chatSessionsQuery.Where(x => x.TaskId == taskId);
+
+            var chatSessionsToDelete = await chatSessionsQuery
+                .Select(x => new
+                {
+                    x.Id,
+                    x.UserId,
+                    x.AdminId
+                })
+                .ToListAsync();
 
             var result = await _taskService.ChangeStatusAsync(
                 taskId,
