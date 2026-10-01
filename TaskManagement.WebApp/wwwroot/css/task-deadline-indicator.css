@@ -1,0 +1,103 @@
+.task-deadline-indicator {
+    width: 100%;
+    min-height: 34px;
+    margin-top: 9px;
+    padding: 6px 9px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid rgba(86,126,180,.14);
+    border-radius: 8px;
+    background: rgba(7,24,43,.42);
+    box-sizing: border-box;
+    transition: border-color .25s ease, background .25s ease, box-shadow .25s ease;
+}
+
+.task-deadline-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    font-size: 10px;
+    background: rgba(87,132,205,.13);
+}
+
+.task-deadline-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.task-deadline-copy strong {
+    font-size: 7px;
+    line-height: 1.2;
+    letter-spacing: .65px;
+    font-weight: 800;
+    color: #9db6d7;
+}
+
+.task-deadline-copy small {
+    font-size: 7px;
+    line-height: 1.2;
+    color: #738ba9;
+}
+
+.task-deadline-indicator.is-tomorrow {
+    border-color: rgba(255,193,92,.24);
+    background: rgba(123,82,10,.12);
+}
+
+.task-deadline-indicator.is-tomorrow .task-deadline-icon {
+    background: rgba(255,193,92,.14);
+}
+
+.task-deadline-indicator.is-tomorrow .task-deadline-copy strong {
+    color: #ffc15c;
+}
+
+.task-deadline-indicator.is-today {
+    border-color: rgba(255,155,73,.28);
+    background: rgba(154,77,15,.13);
+}
+
+.task-deadline-indicator.is-today .task-deadline-icon {
+    background: rgba(255,155,73,.15);
+}
+
+.task-deadline-indicator.is-today .task-deadline-copy strong {
+    color: #ffb35f;
+}
+
+.task-deadline-indicator.is-overdue {
+    border-color: rgba(255,85,112,.35);
+    background: rgba(122,23,44,.16);
+    box-shadow: 0 0 15px rgba(255,75,105,.06);
+}
+
+.task-deadline-indicator.is-overdue .task-deadline-icon {
+    background: rgba(255,85,112,.16);
+}
+
+.task-deadline-indicator.is-overdue .task-deadline-copy strong {
+    color: #ff6a83;
+}
+
+.task-deadline-indicator.is-overdue .task-deadline-copy small {
+    color: #c98a98;
+}
+
+@media (max-width: 640px) {
+    .task-deadline-indicator {
+        min-height: 32px;
+        margin-top: 8px;
+        padding: 5px 8px;
+    }
+
+    .task-deadline-copy strong,
+    .task-deadline-copy small {
+        font-size: 6.5px;
+    }
+}
