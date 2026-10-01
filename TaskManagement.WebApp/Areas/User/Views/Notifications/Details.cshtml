@@ -269,7 +269,7 @@
                             }
                             else
                             {
-                                <div class="action-info-box notification-update-box">
+                                <div class="action-info-box notification-update-box @(isDeadlineNotification || isPaymentWithheld ? "payment-deadline-warning" : "")">
                                     <span class="action-info-icon">✦</span>
                                     <p>
                                         @(isDeadlineNotification
