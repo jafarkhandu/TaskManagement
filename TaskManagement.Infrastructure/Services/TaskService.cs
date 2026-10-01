@@ -45,10 +45,18 @@ namespace TaskManagement.Infrastructure.Services
                     ProjectId = t.ProjectId,
                     Title = t.Title,
                     Scenario = t.Scenario,
-                    AssignedToUserId = t.AssignedToUserId ?? string.Empty,
+                    AssignedToUserId = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.UserId)
+                        .FirstOrDefault() ?? t.AssignedToUserId ?? string.Empty,
                     // Project to the user's display name (FullName or Email)
                     AssignedToUserName = _db.Users
-                        .Where(u => u.Id == t.AssignedToUserId)
+                        .Where(u => u.Id == (_db.TaskAssignments
+                            .Where(a => a.TaskId == t.Id)
+                            .OrderByDescending(a => a.Id)
+                            .Select(a => a.UserId)
+                            .FirstOrDefault() ?? t.AssignedToUserId))
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
                         .FirstOrDefault() ?? string.Empty,
                     AssignmentStatus = _db.TaskAssignments
@@ -81,9 +89,17 @@ namespace TaskManagement.Infrastructure.Services
                     ProjectId = t.ProjectId,
                     Title = t.Title,
                     Scenario = t.Scenario,
-                    AssignedToUserId = t.AssignedToUserId ?? string.Empty,
+                    AssignedToUserId = _db.TaskAssignments
+                        .Where(a => a.TaskId == t.Id)
+                        .OrderByDescending(a => a.Id)
+                        .Select(a => a.UserId)
+                        .FirstOrDefault() ?? t.AssignedToUserId ?? string.Empty,
                     AssignedToUserName = _db.Users
-                        .Where(u => u.Id == t.AssignedToUserId)
+                        .Where(u => u.Id == (_db.TaskAssignments
+                            .Where(a => a.TaskId == t.Id)
+                            .OrderByDescending(a => a.Id)
+                            .Select(a => a.UserId)
+                            .FirstOrDefault() ?? t.AssignedToUserId))
                         .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
                         .FirstOrDefault() ?? string.Empty,
                     AssignmentStatus = _db.TaskAssignments
@@ -559,8 +575,8 @@ namespace TaskManagement.Infrastructure.Services
             var task = await _db.TaskItems.FirstOrDefaultAsync(t => t.Id == model.Id);
             if (task == null) return (false, "Task not found.");
 
-            // Ensure task belongs to the project specified
-            if (task.ProjectId != model.ProjectId) return (false, "Task does not belong to the specified project.");
+            if (task.ProjectId != model.ProjectId)
+                return (false, "Task does not belong to the specified project.");
 
             var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == model.ProjectId);
             if (project == null) return (false, "Project not found.");
@@ -584,26 +600,91 @@ namespace TaskManagement.Infrastructure.Services
             if (model.ExpectedEndDate > project.EndDate)
                 return (false, "Task expected end date cannot be after project end date.");
 
-            // Assigned user must exist and must be in the 'User' role.
             var assignedUser = await _userManager.FindByIdAsync(model.AssignedToUserId);
             if (assignedUser == null) return (false, "Assigned user not found.");
 
-            // Ensure the user is not an Admin even if they also have the User role
+            if (!assignedUser.IsActive)
+                return (false, "The selected user is not active.");
+
             if (await _userManager.IsInRoleAsync(assignedUser, "Admin"))
                 return (false, "Assigned user cannot be an administrator.");
 
             if (!await _userManager.IsInRoleAsync(assignedUser, "User"))
                 return (false, "Only users can be assigned to tasks.");
 
+            var latestAssignment = await _db.TaskAssignments
+                .Where(a => a.TaskId == task.Id)
+                .OrderByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            var pendingReassignment =
+                latestAssignment != null &&
+                string.Equals(latestAssignment.Status, "Pending", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(latestAssignment.UserId, assignedUser.Id, StringComparison.Ordinal);
+
+            var oldPendingUserId = pendingReassignment
+                ? latestAssignment!.UserId
+                : null;
+
+            // A pending assignment is a request, not an accepted assignment.
+            // When admin changes the assignee while it is still pending, invalidate
+            // the old request and create a fresh pending request for the new user.
+            if (pendingReassignment)
+            {
+                latestAssignment!.Status = "Reassigned";
+                latestAssignment.RespondedAt = DateTime.UtcNow;
+
+                var newAssignment = new TaskAssignment
+                {
+                    TaskId = task.Id,
+                    UserId = assignedUser.Id,
+                    Status = "Pending",
+                    AssignedAt = DateTime.UtcNow
+                };
+
+                _db.TaskAssignments.Add(newAssignment);
+                await _db.SaveChangesAsync();
+
+                _db.Notifications.Add(new Notification
+                {
+                    UserId = oldPendingUserId!,
+                    TaskAssignmentId = latestAssignment.Id,
+                    Type = "TaskAssignmentReassigned",
+                    Title = "Task Assignment Changed",
+                    IsRead = false,
+                    IsDelivered = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                _db.Notifications.Add(new Notification
+                {
+                    UserId = assignedUser.Id,
+                    TaskAssignmentId = newAssignment.Id,
+                    Type = "TaskAssignment",
+                    Title = "New Task Assignment",
+                    IsRead = false,
+                    IsDelivered = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                // Do not mark the task as accepted/directly assigned.
+                task.AssignedToUserId = null;
+                task.Status = "Pending";
+            }
+            else
+            {
+                task.AssignedToUserId = model.AssignedToUserId;
+                task.Status = model.Status;
+            }
+
             task.Title = model.Title;
             task.Scenario = model.Scenario;
-            task.AssignedToUserId = model.AssignedToUserId;
             task.Priority = model.Priority;
-            task.Status = model.Status;
+            task.StartDate = model.StartDate;
+            task.ExpectedEndDate = model.ExpectedEndDate;
+            task.Amount = model.Amount;
 
-            // Keep the same cleanup rule when an admin changes a task
-            // directly to Completed through the task editor.
-            if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
                 var taskChats = await _db.ChatSessions
                     .Where(x => x.TaskId == task.Id)
@@ -612,10 +693,6 @@ namespace TaskManagement.Infrastructure.Services
                 if (taskChats.Count > 0)
                     _db.ChatSessions.RemoveRange(taskChats);
             }
-
-            task.StartDate = model.StartDate;
-            task.ExpectedEndDate = model.ExpectedEndDate;
-            task.Amount = model.Amount;
 
             await _db.SaveChangesAsync();
 
