@@ -119,12 +119,16 @@ namespace TaskManagement.WebApp.Services
                 .Select(x => latestAssignmentByTask[x.TaskId].Id)
                 .ToList();
 
-            var existingNotificationKeys = await context.Notifications
+            var existingNotifications = await context.Notifications
                 .AsNoTracking()
                 .Where(n =>
                     assignmentIds.Contains(n.TaskAssignmentId) &&
                     (n.Type == "TaskDeadlineTomorrow" || n.Type == "TaskDeadlineToday"))
-                .Select(n => n.TaskAssignmentId + ":" + n.Type)
+                .Select(n => new
+                {
+                    n.TaskAssignmentId,
+                    n.Type
+                })
                 .ToListAsync(cancellationToken);
 
             var created = new List<(TaskManagement.Domain.Entities.Notification Notification, string TaskTitle, int TaskId)>();
@@ -149,9 +153,11 @@ namespace TaskManagement.WebApp.Services
                 if (notificationType == null)
                     continue;
 
-                var key = assignment.Id + ":" + notificationType;
+                var alreadyCreated = existingNotifications.Any(x =>
+                    x.TaskAssignmentId == assignment.Id &&
+                    x.Type == notificationType);
 
-                if (existingNotificationKeys.Contains(key))
+                if (alreadyCreated)
                     continue;
 
                 var notification = new TaskManagement.Domain.Entities.Notification
@@ -166,7 +172,11 @@ namespace TaskManagement.WebApp.Services
                 };
 
                 context.Notifications.Add(notification);
-                existingNotificationKeys.Add(key);
+                existingNotifications.Add(new
+                {
+                    TaskAssignmentId = assignment.Id,
+                    Type = notificationType
+                });
 
                 created.Add((
                     notification,
