@@ -713,6 +713,32 @@
         );
 
         notificationConnection.on(
+            "UserDeadlineNotificationReceived",
+            async function (payload) {
+                if (!payload || !payload.notificationId) return;
+
+                showLiveToast({
+                    notificationId: payload.notificationId,
+                    type: payload.type,
+                    title: payload.title || "Task Deadline Update",
+                    message: payload.message || "",
+                    taskId: payload.taskId,
+                    createdAt: payload.createdAt
+                });
+
+                try {
+                    await notificationConnection.invoke(
+                        "AcknowledgeNotification",
+                        Number(payload.notificationId)
+                    );
+                }
+                catch (error) {
+                    console.warn("Deadline notification acknowledgement failed:", error);
+                }
+            }
+        );
+
+        notificationConnection.on(
             "MissedNotificationsReceived",
             (notifications) => {
 
