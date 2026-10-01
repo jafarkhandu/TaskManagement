@@ -73,6 +73,7 @@ namespace TaskManagement.Infrastructure.Services
                     Status = t.Status,
                     StartDate = t.StartDate,
                     ExpectedEndDate = t.ExpectedEndDate,
+                    CompletedAtUtc = t.CompletedAtUtc,
                     Amount = t.Amount
                 })
                 .ToListAsync();
@@ -116,6 +117,7 @@ namespace TaskManagement.Infrastructure.Services
                     Status = t.Status,
                     StartDate = t.StartDate,
                     ExpectedEndDate = t.ExpectedEndDate,
+                    CompletedAtUtc = t.CompletedAtUtc,
                     Amount = t.Amount
                 })
                 .FirstOrDefaultAsync();
