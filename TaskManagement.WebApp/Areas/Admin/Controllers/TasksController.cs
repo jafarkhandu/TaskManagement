@@ -146,14 +146,22 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return BadRequest(new { success = false, message = string.Join(" | ", errors) });
             }
 
-            var chatSessionsToDelete =
-                string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase)
-                    ? await _context.ChatSessions
-                        .AsNoTracking()
-                        .Where(x => x.TaskId == model.Id && x.IsActive)
-                        .Select(x => new ValueTuple<int, string>(x.Id, x.UserId))
-                        .ToListAsync()
-                    : new List<(int Id, string UserId)>();
+            var chatSessionsQuery = _context.ChatSessions
+                .AsNoTracking()
+                .Where(x => x.IsActive);
+
+            if (!string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                chatSessionsQuery = chatSessionsQuery.Where(x => false);
+            else
+                chatSessionsQuery = chatSessionsQuery.Where(x => x.TaskId == model.Id);
+
+            var chatSessionsToDelete = await chatSessionsQuery
+                .Select(x => new
+                {
+                    x.Id,
+                    x.UserId
+                })
+                .ToListAsync();
 
             // Capture a still-pending assignment before the update so a reassignment
             // can be delivered live to both the old and new users.
