@@ -340,6 +340,11 @@
                                     @task.Priority
                                 </span>
 
+                                @if (string.Equals(task.Status, "Review Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="review-status-badge">Review Pending</span>
+                                }
+
                             </div>
 
                             <h3>@task.Title</h3>
