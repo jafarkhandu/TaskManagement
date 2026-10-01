@@ -676,6 +676,9 @@
                 ${String(task.assignmentStatus || '').toLowerCase() === 'rejected'
                     ? '<span class="task-assignment-rejected">Rejected</span>'
                     : ''}
+                ${normalizeStatus(task.status) === 'Review Pending'
+                    ? '<span class="task-review-pending">Review Pending</span>'
+                    : ''}
             </div>
 
         </div>
