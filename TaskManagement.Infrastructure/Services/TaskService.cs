@@ -492,6 +492,18 @@ namespace TaskManagement.Infrastructure.Services
             }
         }
 
+        private static TimeZoneInfo GetApplicationLocalTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
+        }
+
         private static bool IsValidGitHubRepositoryUrl(string? value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -552,10 +564,21 @@ namespace TaskManagement.Infrastructure.Services
             assignment.CompletionRepositoryUrl = completionRepositoryUrl.Trim();
             assignment.RespondedAt = DateTime.UtcNow;
 
-            // Capture the user's actual completion/submission moment.
-            // The admin review/payment decision happens later and should not
-            // affect the user's early/on-time/late completion measurement.
-            task.CompletedAtUtc = DateTime.UtcNow;
+            // Capture the user's exact submission moment once. The admin
+            // review/payment decision happens later and must not change it.
+            var submittedAt = DateTime.UtcNow;
+
+            // ExpectedEndDate is date-only in the UI. The task remains valid
+            // through the entire selected local calendar day, so the payment
+            // cutoff is the following local midnight converted to UTC.
+            var localDeadlineBoundary = task.ExpectedEndDate.Date.AddDays(1);
+            var deadlineAtSubmission = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(
+                    localDeadlineBoundary,
+                    DateTimeKind.Unspecified),
+                GetApplicationLocalTimeZone());
+
+            task.CompletedAtUtc = submittedAt;
             task.Status = "Review Pending";
 
             var review = new TaskReview
@@ -563,7 +586,8 @@ namespace TaskManagement.Infrastructure.Services
                 TaskId = taskId,
                 TaskAssignmentId = assignment.Id,
                 SubmittedByUserId = userId,
-                SubmittedAt = DateTime.UtcNow,
+                SubmittedAt = submittedAt,
+                DeadlineAtSubmission = deadlineAtSubmission,
                 Status = "Pending"
             };
 
