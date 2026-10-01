@@ -199,9 +199,9 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     ? await _context.ChatSessions
                         .AsNoTracking()
                         .Where(x => x.TaskId == taskId && x.IsActive)
-                        .Select(x => new { x.Id, x.UserId })
+                        .Select(x => new ValueTuple<int, string>(x.Id, x.UserId))
                         .ToListAsync()
-                    : new List<dynamic>();
+                    : new List<(int Id, string UserId)>();
 
             var result = await _taskService.ChangeStatusAsync(
                 taskId,
@@ -309,7 +309,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     {
                         await _chatHub.Clients
                             .Group($"chat-{chat.Id}")
-                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+                             .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
 
                         // The user may only have the conversation drawer open,
                         // not the individual SignalR chat group. Notify the user
