@@ -1785,3 +1785,20 @@ body {
     background: #c3cede;
     border-radius: 10px;
 }
+
+
+/* Review-pending badge */
+.task-review-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #6f42c1;
+    background: rgba(111, 66, 193, .10);
+    border: 1px solid rgba(111, 66, 193, .20);
+}
