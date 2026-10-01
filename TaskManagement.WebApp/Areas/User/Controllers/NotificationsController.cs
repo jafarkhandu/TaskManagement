@@ -447,6 +447,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     .Where(n =>
                         n.UserId == user.Id &&
                         (n.Type == "TaskAssignment" ||
+                         n.Type == "TaskAssignmentReassigned" ||
                          n.Type == "TaskReviewApproved" ||
                          n.Type == "TaskReviewRejected" ||
                          n.Type == "TaskPaymentSettled") &&
