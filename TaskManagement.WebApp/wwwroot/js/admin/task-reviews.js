@@ -219,4 +219,15 @@ document.querySelectorAll('.pending-pay-btn').forEach(button => {
         }
     });
 });
+
+// Dashboard "Pay Now" can land directly on the payment modal.
+const dashboardPaymentId = Number(
+    new URLSearchParams(window.location.search).get('paymentId') || 0
+);
+
+if (dashboardPaymentId) {
+    openPaymentModal(dashboardPaymentId).catch(error => {
+        alert(error.message);
+    });
+}
 })();
