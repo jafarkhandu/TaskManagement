@@ -1828,6 +1828,32 @@ html.light-theme .modal-info {
         color: #7b8da5;
     }
 
+/* Review Pending — isolated reference-style badge. */
+.user-task-app .task-card .task-card-top .task-review-pending {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    min-width: 220px !important;
+    width: 220px !important;
+    height: 52px !important;
+    margin: 0 0 0 8px !important;
+    padding: 0 22px !important;
+    box-sizing: border-box !important;
+    border-radius: 999px !important;
+    border: 3px solid #d7c9ef !important;
+    background: #f0ebfa !important;
+    color: #7044c6 !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
     html.light-theme .modal-info strong {
         color: #24324b;
         /* =========================================================
