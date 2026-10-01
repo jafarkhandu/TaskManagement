@@ -231,3 +231,54 @@ if (dashboardPaymentId) {
     });
 }
 })();
+
+// Reference-style scenario and full-queue interactions.
+function openScenarioModal(button) {
+    const title = button.dataset.taskTitle || 'Scenario';
+    const scenario = button.dataset.scenario || 'No scenario provided.';
+    const titleEl = document.getElementById('scenarioModalTitle');
+    const textEl = document.getElementById('scenarioModalText');
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = scenario.trim() || 'No scenario provided.';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('scenarioModal')).show();
+}
+
+document.addEventListener('click', event => {
+    const scenarioButton = event.target.closest('.scenario-open-btn');
+    if (scenarioButton) {
+        openScenarioModal(scenarioButton);
+        return;
+    }
+
+    const payButton = event.target.closest('.pending-pay-btn');
+    if (payButton) {
+        const id = Number(payButton.dataset.reviewId || 0);
+        if (!id) return;
+        openPaymentModal(id).catch(error => alert(error.message));
+    }
+});
+
+function filterReviewQueue() {
+    const query = (document.getElementById('allReviewsSearch')?.value || '').trim().toLowerCase();
+    const status = document.getElementById('allReviewsStatus')?.value || '';
+    const priority = document.getElementById('allReviewsPriority')?.value || '';
+
+    document.querySelectorAll('#allReviewsList .all-review-item').forEach(item => {
+        const matchesQuery = !query || item.dataset.search.includes(query);
+        const matchesStatus = !status || item.dataset.status === status;
+        const matchesPriority = !priority || item.dataset.priority.includes(priority);
+        item.style.display = matchesQuery && matchesStatus && matchesPriority ? '' : 'none';
+    });
+}
+
+function filterPaymentQueue() {
+    const query = (document.getElementById('allPaymentsSearch')?.value || '').trim().toLowerCase();
+    document.querySelectorAll('#allPaymentsList .all-payment-item').forEach(item => {
+        item.style.display = !query || item.dataset.search.includes(query) ? '' : 'none';
+    });
+}
+
+document.getElementById('allReviewsSearch')?.addEventListener('input', filterReviewQueue);
+document.getElementById('allReviewsStatus')?.addEventListener('change', filterReviewQueue);
+document.getElementById('allReviewsPriority')?.addEventListener('change', filterReviewQueue);
+document.getElementById('allPaymentsSearch')?.addEventListener('input', filterPaymentQueue);
