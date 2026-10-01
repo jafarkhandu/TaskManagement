@@ -218,3 +218,10 @@
     .review-grid{grid-template-columns:1fr}
     .review-card{padding:14px}
 }
+
+/* Payment method panels: only the configured method is visible. */
+.payment-review-method{display:contents}
+.payment-review-qr .payment-method-value{margin-top:10px;text-align:left;width:100%;padding:9px 10px;border-radius:10px;background:#fff;border:1px solid #e3e8f2}
+.payment-review-qr .payment-method-value span{display:block;font-size:9px;color:#8994a8;margin-bottom:3px}
+.payment-review-qr .payment-method-value strong{display:block;font-size:12px;color:#1e2d48;word-break:break-all}
+#paymentBankPanel:empty{display:none!important}
