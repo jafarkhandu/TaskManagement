@@ -1,43 +1,97 @@
 document.addEventListener("DOMContentLoaded", () => {
     const range = document.getElementById("reportRange");
+    const exportButton = document.getElementById("exportReport");
+    const exportModal = document.getElementById("exportReportModal");
+    const printMeta = document.getElementById("reportPrintMeta");
 
-    if (range?.dataset.currentRange) {
-        range.value = range.dataset.currentRange;
-    }
+    if (range?.dataset.currentRange) range.value = range.dataset.currentRange;
+
+    const getPeriodLabel = () => range?.selectedOptions?.[0]?.textContent?.trim() || "All Time";
+    if (printMeta) printMeta.textContent = "Report period: " + getPeriodLabel();
 
     range?.addEventListener("change", () => {
-        const value = range.value || "all";
         const url = new URL(window.location.href);
-        url.searchParams.set("range", value);
+        url.searchParams.set("range", range.value || "all");
         window.location.href = url.toString();
     });
 
-    document.getElementById("printReport")?.addEventListener("click", () => {
-        window.print();
+    const openExportModal = () => {
+        if (!exportModal) return;
+        exportModal.hidden = false;
+        exportModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("report-export-open");
+        exportModal.querySelector("[data-export-format]")?.focus();
+    };
+
+    const closeExportModal = () => {
+        if (!exportModal) return;
+        exportModal.hidden = true;
+        exportModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("report-export-open");
+        exportButton?.focus();
+    };
+
+    exportButton?.addEventListener("click", openExportModal);
+
+    exportModal?.addEventListener("click", event => {
+        if (event.target.closest("[data-export-close]")) {
+            closeExportModal();
+            return;
+        }
+        const option = event.target.closest("[data-export-format]");
+        if (!option) return;
+
+        if (option.dataset.exportFormat === "pdf") {
+            closeExportModal();
+            window.requestAnimationFrame(() => window.print());
+        } else {
+            exportCsv();
+            closeExportModal();
+        }
     });
 
-    document.getElementById("exportExcel")?.addEventListener("click", () => {
-        const projectRows = [...document.querySelectorAll("#projectReportTable tbody tr")]
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && exportModal && !exportModal.hidden) closeExportModal();
+    });
+
+    function csvCell(value) {
+        const text = String(value ?? "").replace(/\s+/g, " ").trim().replace(/"/g, '""');
+        return '"' + text + '"';
+    }
+
+    function tableData(selector) {
+        return [...document.querySelectorAll(selector + " tbody tr")]
+            .filter(row => !row.querySelector(".report-empty"))
             .map(row => [...row.children].map(cell => cell.innerText.trim()));
+    }
 
-        const studentRows = [...document.querySelectorAll("#studentReportTable tbody tr")]
-            .map(row => [...row.children].map(cell => cell.innerText.trim()));
+    function exportCsv() {
+        const projectRows = tableData("#projectReportTable");
+        const studentRows = tableData("#studentReportTable");
+        const statusRows = [...document.querySelectorAll(".status-legend-item")].map(item => [
+            item.querySelector(".status-legend-label span")?.textContent?.trim() || "",
+            item.querySelector(".status-legend-value strong")?.textContent?.trim() || "",
+            item.querySelector(".status-legend-value small")?.textContent?.trim() || ""
+        ]);
+        const breakdownRows = [...document.querySelectorAll(".breakdown-row")].map(row => [
+            row.querySelector("span")?.innerText?.trim() || "",
+            row.querySelector("strong")?.textContent?.trim() || ""
+        ]);
+        const summaryRows = [...document.querySelectorAll(".report-summary-card")].map(card => [
+            card.querySelector(".summary-label span:last-child")?.textContent?.trim() || "",
+            card.querySelector(":scope > strong")?.textContent?.trim() || ""
+        ]);
 
-        const csv = [
-            ["CIIT TaskHub Report"],
-            [],
-            ["Project-wise Report"],
-            ["Project", "Tasks", "Completed", "In Progress", "Overdue"],
-            ...projectRows,
-            [],
-            ["Student Workload"],
-            ["Student", "Assigned", "Completed", "Pending / Active"],
-            ...studentRows
-        ].map(row => row.map(value => {
-            const text = String(value ?? "").replace(/"/g, '""');
-            return '"' + text + '"';
-        }).join(",")).join("\r\n");
+        const rows = [
+            ["CIIT TaskHub Report"], ["Period", getPeriodLabel()], [],
+            ["Summary"], ["Metric", "Value"], ...summaryRows, [],
+            ["Task Status"], ["Status", "Count", "Percentage"], ...statusRows, [],
+            ["Task Breakdown"], ["Status", "Count"], ...breakdownRows, [],
+            ["Project Performance"], ["Project", "Tasks", "Progress", "Completed", "In Progress", "Overdue"], ...projectRows, [],
+            ["Student Workload"], ["Student", "Assigned", "Completion", "Completed", "Pending / Active"], ...studentRows
+        ];
 
+        const csv = rows.map(row => row.map(csvCell).join(",")).join("\r\n");
         const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -46,6 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(link);
         link.click();
         link.remove();
-        URL.revokeObjectURL(url);
-    });
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
 });
