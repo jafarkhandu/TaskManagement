@@ -45,6 +45,10 @@
 <link rel="stylesheet"
       href="~/css/theme.css"
       asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/task-deadline-indicator.css"
+      asp-append-version="true" />
 </head>
 
 <body>
@@ -243,7 +247,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -328,7 +332,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -412,7 +416,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -501,7 +505,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -707,6 +711,9 @@
         asp-append-version="true"></script>
 
 <script src="~/js/users/my-tasks.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/task-deadline-indicator.js"
         asp-append-version="true"></script>
 
 
