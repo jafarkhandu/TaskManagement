@@ -259,3 +259,8 @@
         grid-template-columns:1fr;
     }
 }
+
+
+#pendingPayments {
+    scroll-margin-top: 18px;
+}
