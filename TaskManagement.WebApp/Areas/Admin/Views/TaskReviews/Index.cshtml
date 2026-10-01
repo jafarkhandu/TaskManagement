@@ -32,7 +32,9 @@
         <section class="review-list" id="reviewList">
         @foreach (var review in Model)
         {
-            <article class="review-card" data-review-id="@review.ReviewId">
+            <article class="review-card"
+                     data-review-id="@review.ReviewId"
+                     data-late="@(review.IsLate ? "true" : "false")">
                 <div class="review-card-head">
                     <div>
                         <span class="review-task-id">TASK-@review.TaskId</span>
@@ -65,7 +67,9 @@
                 </div>
 
                 <div class="review-actions">
-                    <button type="button" class="btn btn-review-approve" data-action="approve">✓ Approve</button>
+                    <button type="button" class="btn btn-review-approve" data-action="approve">
+                        @(review.IsLate ? "✓ Approve · No Payment" : "✓ Approve")
+                    </button>
                     <button type="button" class="btn btn-review-reject" data-action="reject">✕ Reject</button>
                 </div>
             </article>
