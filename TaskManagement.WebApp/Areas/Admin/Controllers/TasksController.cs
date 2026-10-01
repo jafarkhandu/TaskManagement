@@ -157,6 +157,12 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
             // Capture a still-pending assignment before the update so a reassignment
             // can be delivered live to both the old and new users.
+            var taskBeforeUpdate = await _context.TaskItems
+                .AsNoTracking()
+                .Where(t => t.Id == model.Id)
+                .Select(t => new { t.Status, t.ProjectId, t.AssignedToUserId })
+                .FirstOrDefaultAsync();
+
             var previousPendingAssignment = await _context.TaskAssignments
                 .AsNoTracking()
                 .Where(a => a.TaskId == model.Id && a.Status == "Pending")
@@ -173,6 +179,30 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             var result = await _taskService.UpdateAsync(model);
             if (!result.Success)
                 return Json(new { success = false, message = result.Error });
+
+            if (taskBeforeUpdate != null &&
+                !string.Equals(taskBeforeUpdate.Status, model.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                var statusPayload = new
+                {
+                    TaskId = model.Id,
+                    ProjectId = model.ProjectId,
+                    OldStatus = taskBeforeUpdate.Status,
+                    NewStatus = model.Status,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                await _notificationHub.Clients
+                    .Group($"project-{model.ProjectId}")
+                    .SendAsync("TaskStatusChanged", statusPayload);
+
+                if (!string.IsNullOrWhiteSpace(taskBeforeUpdate.AssignedToUserId))
+                {
+                    await _notificationHub.Clients
+                        .User(taskBeforeUpdate.AssignedToUserId)
+                        .SendAsync("TaskStatusChanged", statusPayload);
+                }
+            }
 
             if (assignmentChangedWhilePending && previousPendingAssignment != null)
             {
