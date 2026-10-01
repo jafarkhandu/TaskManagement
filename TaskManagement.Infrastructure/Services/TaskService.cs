@@ -140,7 +140,6 @@ namespace TaskManagement.Infrastructure.Services
             // Status is intentionally not accepted from the create form.
             // Every newly created task starts in Pending until the assigned
             // user accepts it and later changes the workflow status.
-            const string initialTaskStatus = "Pending";
 
             if (model.StartDate > model.ExpectedEndDate)
                 return (false, "Task start date cannot be after expected end date.", 0);
