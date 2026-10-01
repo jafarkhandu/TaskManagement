@@ -225,3 +225,37 @@
 .payment-review-qr .payment-method-value span{display:block;font-size:9px;color:#8994a8;margin-bottom:3px}
 .payment-review-qr .payment-method-value strong{display:block;font-size:12px;color:#1e2d48;word-break:break-all}
 #paymentBankPanel:empty{display:none!important}
+
+
+/* Payment modal — keep the selected payment method centered and balanced. */
+.payment-review-grid{
+    grid-template-columns:190px minmax(300px, 420px);
+    justify-content:center;
+    align-items:stretch;
+    gap:14px;
+}
+.payment-review-summary{
+    min-height:100%;
+}
+.payment-review-method{
+    display:block;
+    min-width:0;
+}
+.payment-review-qr{
+    width:100%;
+    min-height:100%;
+}
+.payment-review-details{
+    width:100%;
+    align-content:start;
+}
+.payment-review-warning{
+    max-width:624px;
+    margin-left:auto;
+    margin-right:auto;
+}
+@media(max-width:800px){
+    .payment-review-grid{
+        grid-template-columns:1fr;
+    }
+}
