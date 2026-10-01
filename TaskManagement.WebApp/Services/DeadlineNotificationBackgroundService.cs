@@ -206,8 +206,8 @@ namespace TaskManagement.WebApp.Services
                             type = notification.Type,
                             title = notification.Title,
                             message = notification.Type == "TaskDeadlineTomorrow"
-                                ? $"{createdNotification.TaskTitle} is due tomorrow."
-                                : $"{createdNotification.TaskTitle} is due today.",
+                                ? $"{createdNotification.TaskTitle} is due tomorrow. ⚠ Complete and submit it by the deadline; no payment will be made after the deadline."
+                                : $"{createdNotification.TaskTitle} is due today. ⚠ Complete and submit it by the deadline; no payment will be made after the deadline.",
                             taskId = createdNotification.TaskId,
                             createdAt = notification.CreatedAt
                         },
