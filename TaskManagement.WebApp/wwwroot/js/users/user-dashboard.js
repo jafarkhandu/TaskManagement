@@ -336,22 +336,34 @@
             return;
         }
 
-        // Compact entries only: icon + heading + chevron
-        const items = notifications.map(n => `
-            <div class="notification-item compact-notification"
-                 data-notification-id="${n.notificationId}">
+        // Compact entries keep the event title from the database.
+        // Only the initial TaskAssignment notification uses the
+        // "New assignment for you" wording.
+        const items = notifications.map(n => {
+            const type = String(
+                n.notificationType || n.type || ""
+            ).trim();
 
-                <span>\uD83D\uDD14</span>
+            const title = type === "TaskAssignment"
+                ? "New assignment for you"
+                : (n.notificationTitle || n.title || "Task update");
 
-                <div class="notification-compact-content">
-                    <strong>New assignment for you</strong>
-                    <small>${formatDate(n.createdAt)}</small>
+            return `
+                <div class="notification-item compact-notification"
+                     data-notification-id="${n.notificationId}">
+
+                    <span>\uD83D\uDD14</span>
+
+                    <div class="notification-compact-content">
+                        <strong>${escapeHtml(title)}</strong>
+                        <small>${formatDate(n.createdAt)}</small>
+                    </div>
+
+                    <div class="notification-chevron">›</div>
+
                 </div>
-
-                <div class="notification-chevron">›</div>
-
-            </div>
-        `).join("");
+            `;
+        }).join("");
 
 
         notificationPopup.innerHTML = title + items;
