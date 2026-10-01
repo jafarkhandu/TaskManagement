@@ -307,6 +307,7 @@
             @{
                 var pendingPayments = ViewBag.PendingPayments as List<TaskManagement.Application.DTOs.TaskReviewDto>
                     ?? new List<TaskManagement.Application.DTOs.TaskReviewDto>();
+                var pendingPaymentTotal = pendingPayments.Sum(x => x.Amount);
             }
             <section class="dashboard-card admin-pending-payment-card">
                 <div class="card-header">
@@ -314,14 +315,18 @@
                         <span class="title-icon payment-title-icon">₹</span>
                         <h2>Pending Payments</h2>
                     </div>
-                    <a href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })">View Queue</a>
+                    <a href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })#pendingPayments">View Queue</a>
                 </div>
                 <div class="admin-pending-payment-body">
                     <div class="admin-pending-payment-summary">
                         <div class="admin-pending-payment-count">@pendingPayments.Count</div>
-                        <div>
+                        <div class="admin-pending-payment-summary-copy">
                             <strong>Payment remaining</strong>
                             <span>Approved tasks waiting for settlement.</span>
+                        </div>
+                        <div class="admin-pending-payment-total">
+                            <small>Total amount</small>
+                            <strong>₹ @pendingPaymentTotal.ToString("N2")</strong>
                         </div>
                     </div>
                     @if (pendingPayments.Any())
@@ -337,7 +342,7 @@
                                     </div>
                                     <strong class="admin-pending-payment-amount">₹ @payment.Amount.ToString("N2")</strong>
                                     <a class="admin-pending-payment-action"
-                                       href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })">Pay Now</a>
+                                       href="@Url.Action("Index", "TaskReviews", new { area = "Admin", paymentId = payment.ReviewId })#pendingPayments">Pay Now</a>
                                 </div>
                             }
                         </div>
