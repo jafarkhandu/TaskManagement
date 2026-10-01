@@ -140,7 +140,7 @@ namespace TaskManagement.Infrastructure.Services
                     UserId = assignment.UserId,
                     TaskAssignmentId = assignment.Id,
                     Type = "TaskReviewRejected",
-                    Title = $"Task Review Rejected: {task.Title} — Reason: {reason.Trim()}",
+                    Title = $"Task Review Rejected: {task.Title}",
                     IsRead = false,
                     IsDelivered = false,
                     CreatedAt = DateTime.UtcNow
