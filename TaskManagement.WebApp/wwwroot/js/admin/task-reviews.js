@@ -206,20 +206,6 @@ async function settle(payNow, closePaymentModal = true) {
 document.getElementById('payNow')?.addEventListener('click', () => settle(true));
 document.getElementById('payLater')?.addEventListener('click', () => settle(false));
 
-document.querySelectorAll('.pending-pay-btn').forEach(button => {
-    button.addEventListener('click', async () => {
-        const id = Number(button.dataset.reviewId || 0);
-        if (!id) return;
-
-        try {
-            await openPaymentModal(id);
-        }
-        catch (error) {
-            alert(error.message);
-        }
-    });
-});
-
 // Dashboard "Pay Now" can land directly on the payment modal.
 const dashboardPaymentId = Number(
     new URLSearchParams(window.location.search).get('paymentId') || 0
