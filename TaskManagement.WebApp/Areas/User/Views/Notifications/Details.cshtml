@@ -119,10 +119,13 @@
                                     </span>
                                 </div>
 
-                                <span class="priority-badge">
-                                    <span class="priority-dot"></span>
-                                    @Model.Priority Priority
-                                </span>
+                                @if (isTaskAssignment)
+                                {
+                                    <span class="priority-badge">
+                                        <span class="priority-dot"></span>
+                                        @Model.Priority Priority
+                                    </span>
+                                }
 
                             </div>
 
@@ -224,10 +227,12 @@
                                 📄
                             </div>
 
-                            <h3>Task Details</h3>
+                            <h3>@(isTaskAssignment ? "Task Details" : "Update Details")</h3>
 
                             <p class="action-panel-subtitle">
-                                Please review all the information before taking action.
+                                @(isTaskAssignment
+                                    ? "Please review all the information before taking action."
+                                    : "Here is the latest update for this task.")
                             </p>
 
                             @if (isTaskAssignment)
@@ -316,14 +321,6 @@
                                     <div class="final-status rejected-status">
                                         <span>↗</span>
                                         Assignment Reassigned
-                                    </div>
-                                }
-                                @* Keep all non-assignment notifications informational only. *@
-                                else if (false && Model.AssignmentStatus == "Rejected")
-                                {
-                                    <div class="final-status rejected-status">
-                                        <span>✕</span>
-                                        Task Rejected
                                     </div>
                                 }
 
