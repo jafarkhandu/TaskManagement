@@ -702,16 +702,6 @@
             </div>
 
         </div>
-
-
-        <p class="task-card-scenario">
-            ${escapeHtml(
-                task.scenario ||
-                'No scenario provided.'
-            )}
-        </p>
-
-
         <div class="task-card-info">
 
             <div>
