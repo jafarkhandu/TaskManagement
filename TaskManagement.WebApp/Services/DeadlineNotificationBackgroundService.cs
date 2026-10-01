@@ -1,0 +1,256 @@
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using TaskManagement.Infrastructure.Data;
+using TaskManagement.WebApp.Hubs;
+
+namespace TaskManagement.WebApp.Services
+{
+    /// <summary>
+    /// Creates one deadline notification on the calendar day before a task's
+    /// end date and one on the end-date calendar day.
+    /// </summary>
+    public sealed class DeadlineNotificationBackgroundService : BackgroundService
+    {
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<DeadlineNotificationBackgroundService> _logger;
+
+        public DeadlineNotificationBackgroundService(
+            IServiceScopeFactory scopeFactory,
+            ILogger<DeadlineNotificationBackgroundService> logger)
+        {
+            _scopeFactory = scopeFactory;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            try
+            {
+                await ProcessDeadlineNotificationsAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Initial deadline notification processing failed.");
+            }
+
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
+
+            try
+            {
+                while (await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    try
+                    {
+                        await ProcessDeadlineNotificationsAsync(stoppingToken);
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Deadline notification processing failed.");
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Normal application shutdown.
+            }
+        }
+
+        private async Task ProcessDeadlineNotificationsAsync(CancellationToken cancellationToken)
+        {
+            using var scope = _scopeFactory.CreateScope();
+
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var notificationHub = scope.ServiceProvider.GetRequiredService<IHubContext<NotificationHub>>();
+
+            var now = GetApplicationLocalNow();
+            var today = now.Date;
+            var tomorrow = today.AddDays(1);
+
+            var tasks = await context.TaskItems
+                .AsNoTracking()
+                .Where(t =>
+                    t.Status != "Completed" &&
+                    t.AssignedToUserId != null &&
+                    t.ExpectedEndDate >= today &&
+                    t.ExpectedEndDate < tomorrow.AddDays(1))
+                .Select(t => new
+                {
+                    TaskId = t.Id,
+                    TaskTitle = t.Title,
+                    TaskEndDate = t.ExpectedEndDate,
+                    AssignedToUserId = t.AssignedToUserId!
+                })
+                .ToListAsync(cancellationToken);
+
+            if (tasks.Count == 0)
+                return;
+
+            var taskIds = tasks.Select(x => x.TaskId).ToList();
+
+            var assignments = await context.TaskAssignments
+                .AsNoTracking()
+                .Where(a => taskIds.Contains(a.TaskId))
+                .OrderByDescending(a => a.Id)
+                .ToListAsync(cancellationToken);
+
+            var latestAssignmentByTask = assignments
+                .GroupBy(a => a.TaskId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var candidateTasks = tasks
+                .Where(task =>
+                    latestAssignmentByTask.TryGetValue(task.TaskId, out var assignment) &&
+                    string.Equals(assignment.UserId, task.AssignedToUserId, StringComparison.Ordinal) &&
+                    string.Equals(assignment.Status, "Accepted", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (candidateTasks.Count == 0)
+                return;
+
+            var assignmentIds = candidateTasks
+                .Select(x => latestAssignmentByTask[x.TaskId].Id)
+                .ToList();
+
+            var existingNotificationKeys = await context.Notifications
+                .AsNoTracking()
+                .Where(n =>
+                    assignmentIds.Contains(n.TaskAssignmentId) &&
+                    (n.Type == "TaskDeadlineTomorrow" || n.Type == "TaskDeadlineToday"))
+                .Select(n => n.TaskAssignmentId + ":" + n.Type)
+                .ToListAsync(cancellationToken);
+
+            var created = new List<(int NotificationId, string UserId, string TaskTitle, string Type, int TaskId)>();
+
+            foreach (var task in candidateTasks)
+            {
+                var assignment = latestAssignmentByTask[task.TaskId];
+
+                string? notificationType = null;
+                string? title = null;
+                string? message = null;
+
+                if (task.TaskEndDate.Date == today.AddDays(1))
+                {
+                    notificationType = "TaskDeadlineTomorrow";
+                    title = $"Deadline Tomorrow: {task.TaskTitle}";
+                    message = $"{task.TaskTitle} is due tomorrow.";
+                }
+                else if (task.TaskEndDate.Date == today)
+                {
+                    notificationType = "TaskDeadlineToday";
+                    title = $"Deadline Today: {task.TaskTitle}";
+                    message = $"{task.TaskTitle} is due today.";
+                }
+
+                if (notificationType == null)
+                    continue;
+
+                var key = assignment.Id + ":" + notificationType;
+
+                if (existingNotificationKeys.Contains(key))
+                    continue;
+
+                var notification = new TaskManagement.Domain.Entities.Notification
+                {
+                    UserId = assignment.UserId,
+                    TaskAssignmentId = assignment.Id,
+                    Type = notificationType,
+                    Title = title!,
+                    IsRead = false,
+                    IsDelivered = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.Notifications.Add(notification);
+                existingNotificationKeys.Add(key);
+
+                created.Add((
+                    0,
+                    assignment.UserId,
+                    task.TaskTitle,
+                    notificationType,
+                    task.TaskId));
+            }
+
+            if (created.Count == 0)
+                return;
+
+            await context.SaveChangesAsync(cancellationToken);
+
+            var createdNotifications = await context.Notifications
+                .AsNoTracking()
+                .Where(n =>
+                    n.TaskAssignmentId != 0 &&
+                    created.Select(x => x.UserId).Contains(n.UserId) &&
+                    (n.Type == "TaskDeadlineTomorrow" || n.Type == "TaskDeadlineToday") &&
+                    n.CreatedAt >= now.ToUniversalTime().AddMinutes(-2))
+                .Join(
+                    context.TaskAssignments.AsNoTracking(),
+                    n => n.TaskAssignmentId,
+                    a => a.Id,
+                    (n, a) => new { Notification = n, Assignment = a })
+                .Join(
+                    context.TaskItems.AsNoTracking(),
+                    x => x.Assignment.TaskId,
+                    t => t.Id,
+                    (x, t) => new
+                    {
+                        NotificationId = x.Notification.Id,
+                        UserId = x.Notification.UserId,
+                        Type = x.Notification.Type,
+                        Title = x.Notification.Title,
+                        TaskId = t.Id,
+                        TaskTitle = t.Title,
+                        CreatedAt = x.Notification.CreatedAt
+                    })
+                .ToListAsync(cancellationToken);
+
+            foreach (var notification in createdNotifications)
+            {
+                if (!NotificationHub.IsUserOnline(notification.UserId))
+                    continue;
+
+                await notificationHub.Clients
+                    .User(notification.UserId)
+                    .SendAsync(
+                        "UserDeadlineNotificationReceived",
+                        new
+                        {
+                            notificationId = notification.NotificationId,
+                            type = notification.Type,
+                            title = notification.Title,
+                            message = notification.Type == "TaskDeadlineTomorrow"
+                                ? $"{notification.TaskTitle} is due tomorrow."
+                                : $"{notification.TaskTitle} is due today.",
+                            taskId = notification.TaskId,
+                            createdAt = notification.CreatedAt
+                        },
+                        cancellationToken);
+            }
+        }
+
+        private static DateTime GetApplicationLocalNow()
+        {
+            TimeZoneInfo timezone;
+
+            try
+            {
+                timezone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
+
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timezone);
+        }
+    }
+}
