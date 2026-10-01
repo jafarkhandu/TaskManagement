@@ -1932,3 +1932,92 @@ body {
         font-size: 7px;
     }
 }
+
+/* =========================================================
+   DEADLINE DATE STATE
+========================================================= */
+
+.task-card:not([data-status="Completed"]) .task-card-info > div:last-child > span:last-child {
+    color: #dc4f5a;
+    font-weight: 700;
+}
+
+.task-card[data-status="Completed"] .task-card-info > div:last-child > span:last-child {
+    color: #20a36f;
+    font-weight: 700;
+}
+
+.task-completion-timing {
+    width: 100%;
+    min-height: 28px;
+    margin-top: 7px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-sizing: border-box;
+    border-radius: 7px;
+    background: #f7f9fc;
+    border: 1px solid #e8edf4;
+}
+
+.task-completion-timing > span {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.task-completion-timing strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.task-completion-timing.is-early {
+    border-color: rgba(32,163,111,.16);
+    background: #f1fbf6;
+}
+
+.task-completion-timing.is-early > span {
+    color: #159566;
+    background: #ddf6ea;
+}
+
+.task-completion-timing.is-early strong {
+    color: #16845c;
+}
+
+.task-completion-timing.is-on-time {
+    border-color: rgba(56,115,214,.16);
+    background: #f3f7fd;
+}
+
+.task-completion-timing.is-on-time > span {
+    color: #3974d6;
+    background: #e4edfc;
+}
+
+.task-completion-timing.is-on-time strong {
+    color: #3569bc;
+}
+
+.task-completion-timing.is-late {
+    border-color: rgba(220,79,90,.18);
+    background: #fff5f5;
+}
+
+.task-completion-timing.is-late > span {
+    color: #d84755;
+    background: #ffe4e6;
+}
+
+.task-completion-timing.is-late strong {
+    color: #c93f4c;
+}
