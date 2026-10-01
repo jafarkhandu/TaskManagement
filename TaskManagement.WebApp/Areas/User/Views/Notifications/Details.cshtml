@@ -208,7 +208,9 @@
                                         @(isReassignment
                                             ? "This assignment is no longer available for you. You cannot accept or reject this task."
                                             : isReviewRejected
-                                                ? "Your submitted work was rejected. Review the message above for the admin's decision."
+                                                ? (string.IsNullOrWhiteSpace(Model.ReviewReason)
+                                                    ? "Your submitted work was rejected by the admin."
+                                                    : Model.ReviewReason)
                                                 : isReviewApproved
                                                     ? "Your submitted work was approved by the admin."
                                                     : isPaymentSettled
