@@ -77,8 +77,8 @@
                 <div class="live-toast-icon">🔔</div>
 
                 <div class="live-toast-body">
-                    <strong>New assignment for you</strong>
-                    <div class="live-toast-sub">Click to view</div>
+                    <strong>${payload.title || "Task Review Update"}</strong>
+                    <div class="live-toast-sub">${payload.message || "Click to view"}</div>
 
                     <div class="live-toast-progress">
                         <div></div>
@@ -319,7 +319,7 @@
                 </strong>
 
                 <small>
-                    No new task assignments.
+                    No new notifications.
                 </small>
 
             </div>
@@ -336,22 +336,34 @@
             return;
         }
 
-        // Compact entries only: icon + heading + chevron
-        const items = notifications.map(n => `
-            <div class="notification-item compact-notification"
-                 data-notification-id="${n.notificationId}">
+        // Compact entries keep the event title from the database.
+        // Only the initial TaskAssignment notification uses the
+        // "New assignment for you" wording.
+        const items = notifications.map(n => {
+            const type = String(
+                n.notificationType || n.type || ""
+            ).trim();
 
-                <span>\uD83D\uDD14</span>
+            const title = type === "TaskAssignment"
+                ? "New assignment for you"
+                : (n.notificationTitle || n.title || "Task update");
 
-                <div class="notification-compact-content">
-                    <strong>New assignment for you</strong>
-                    <small>${formatDate(n.createdAt)}</small>
+            return `
+                <div class="notification-item compact-notification"
+                     data-notification-id="${n.notificationId}">
+
+                    <span>\uD83D\uDD14</span>
+
+                    <div class="notification-compact-content">
+                        <strong>${escapeHtml(title)}</strong>
+                        <small>${formatDate(n.createdAt)}</small>
+                    </div>
+
+                    <div class="notification-chevron">›</div>
+
                 </div>
-
-                <div class="notification-chevron">›</div>
-
-            </div>
-        `).join("");
+            `;
+        }).join("");
 
 
         notificationPopup.innerHTML = title + items;
@@ -674,6 +686,33 @@
 
 
         notificationConnection.on(
+            "UserReviewNotificationReceived",
+            async function (payload) {
+                if (!payload || !payload.notificationId) return;
+
+                showLiveToast({
+                    notificationId: payload.notificationId,
+                    type: payload.type,
+                    title: payload.title || "Task Review Update",
+                    message: payload.message || "",
+                    taskId: payload.taskId,
+                    projectId: payload.projectId,
+                    createdAt: payload.createdAt
+                });
+
+                try {
+                    await notificationConnection.invoke(
+                        "AcknowledgeNotification",
+                        Number(payload.notificationId)
+                    );
+                }
+                catch (error) {
+                    console.warn("Review notification acknowledgement failed:", error);
+                }
+            }
+        );
+
+        notificationConnection.on(
             "MissedNotificationsReceived",
             (notifications) => {
 
@@ -730,6 +769,51 @@
             }
         );
 
+
+        // Live task status sync. My Tasks listens to this browser event
+        // and moves the affected card without a refresh.
+        notificationConnection.on(
+            "TaskStatusChanged",
+            (payload) => {
+                if (!payload) return;
+                window.dispatchEvent(
+                    new CustomEvent("taskmanager:task-status-changed", {
+                        detail: payload
+                    })
+                );
+            }
+        );
+
+        notificationConnection.on(
+            "TaskAssignmentReassigned",
+            async (payload) => {
+                if (!payload) return;
+
+                try {
+                    await loadAssignmentNotifications();
+                }
+                catch (error) {
+                    console.warn("Unable to refresh reassignment notification:", error);
+                }
+
+                if (payload.notificationId) {
+                    showLiveToast({
+                        notificationId: payload.notificationId,
+                        type: payload.type || "TaskAssignmentReassigned",
+                        title: payload.title || "Task Assignment Changed",
+                        message: payload.message || "This task has been reassigned and can no longer be accepted or rejected.",
+                        taskId: payload.taskId,
+                        projectId: payload.projectId,
+                        createdAt: payload.createdAt
+                    });
+
+                    notificationConnection.invoke(
+                        "AcknowledgeNotification",
+                        Number(payload.notificationId)
+                    ).catch(() => {});
+                }
+            }
+        );
 
         notificationConnection.on(
             "TaskAssignmentReceived",

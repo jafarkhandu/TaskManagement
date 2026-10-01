@@ -4,7 +4,7 @@
     Layout = null;
 
     var totalTasks = Model?.Count ?? 0;
-    var inProgress = Model?.Count(x => x.Status == "In Progress") ?? 0;
+    var inProgress = Model?.Count(x => x.Status == "In Progress" || x.Status == "Review Pending") ?? 0;
     var onHold = Model?.Count(x => x.Status == "On Hold") ?? 0;
     var completed = Model?.Count(x => x.Status == "Completed") ?? 0;
 
@@ -13,7 +13,7 @@
         .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
 
     var progressTasks = Model?
-        .Where(x => x.Status == "In Progress")
+        .Where(x => x.Status == "In Progress" || x.Status == "Review Pending")
         .ToList() ?? new List<TaskManagement.Domain.Entities.TaskItem>();
 
     var holdTasks = Model?
@@ -136,7 +136,7 @@
                 </div>
 
                 <div>
-                    <span>In Progress</span>
+                    <span>In Progress / Review</span>
                     <strong>@inProgress</strong>
                     <small>Currently working</small>
                 </div>
@@ -194,6 +194,7 @@
                 <option value="all">All Status</option>
                 <option value="Pending">To Do</option>
                 <option value="In Progress">In Progress</option>
+                <option value="Review Pending">Review Pending</option>
                 <option value="On Hold">On Hold</option>
                 <option value="Completed">Completed</option>
             </select>
@@ -255,6 +256,11 @@
                                     @task.Priority
                                 </span>
 
+                                @if (string.Equals(task.Status, "Review Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="review-status-badge">Review Pending</span>
+                                }
+
                             </div>
 
                             <h3>@task.Title</h3>
@@ -305,7 +311,7 @@
 
                     <div>
                         <span class="column-dot progress-dot"></span>
-                        <strong>In Progress</strong>
+                        <strong>In Progress / Review</strong>
                         <b id="progressCount">@progressTasks.Count</b>
                     </div>
 
@@ -334,6 +340,11 @@
                                 <span class="priority-badge @task.Priority?.ToLower()">
                                     @task.Priority
                                 </span>
+
+                                @if (string.Equals(task.Status, "Review Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="review-status-badge">Review Pending</span>
+                                }
 
                             </div>
 

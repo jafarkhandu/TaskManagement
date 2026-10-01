@@ -26,5 +26,7 @@ namespace TaskManagement.Application.Interfaces
         // Change the status of a task on behalf of a user.
         // A repository URL is mandatory when moving a task to Completed.
         Task<(bool Success, string Error, int TaskId, int ProjectId, int AssignmentId, int NotificationId, string OldStatus, string NewStatus)> ChangeStatusAsync(int taskId, string userId, string newStatus, string? completionRepositoryUrl = null);
+
+        Task<(bool Success, string Error, int ReviewId)> SubmitForReviewAsync(int taskId, string userId, string completionRepositoryUrl);
     }
 }

@@ -59,6 +59,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     (x, t) => new
                     {
                         NotificationId = x.Notification.Id,
+                        NotificationType = x.Notification.Type,
+                        NotificationTitle = x.Notification.Title,
                         AssignmentId = x.Assignment.Id,
                         AssignmentStatus = x.Assignment.Status,
 
@@ -69,6 +71,11 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                         StartDate = t.StartDate,
                         ExpectedEndDate = t.ExpectedEndDate,
                         Amount = t.Amount,
+                        ReviewReason = _context.TaskReviews
+                            .Where(r => r.TaskAssignmentId == x.Assignment.Id && r.Status == "Rejected")
+                            .OrderByDescending(r => r.Id)
+                            .Select(r => r.RejectionReason)
+                            .FirstOrDefault(),
 
                         IsRead = x.Notification.IsRead,
                         CreatedAt = x.Notification.CreatedAt
@@ -95,7 +102,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 .AsNoTracking()
                 .Where(n =>
                     n.UserId == user.Id &&
-                    n.Type == "TaskAssignment")
+                    (n.Type == "TaskAssignment" || n.Type == "TaskAssignmentReassigned" || n.Type == "TaskReviewApproved" || n.Type == "TaskReviewRejected" || n.Type == "TaskPaymentSettled"))
                 .Join(
                     _context.TaskAssignments,
                     n => n.TaskAssignmentId,
@@ -109,6 +116,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     (x, t) => new
                     {
                         NotificationId = x.Notification.Id,
+                        NotificationType = x.Notification.Type,
+                        NotificationTitle = x.Notification.Title,
                         AssignmentId = x.Assignment.Id,
                         AssignmentStatus = x.Assignment.Status,
 
@@ -306,7 +315,7 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                     message = "Task assignment rejected."
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, new
                 {
@@ -395,6 +404,26 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (notification == null)
                 return NotFound(new { success = false, message = "Notification not found." });
 
+            // A fresh task-assignment notification is protected until the
+            // user explicitly accepts or rejects the assignment.
+            if (notification.Type == "TaskAssignment")
+            {
+                var assignmentPending = await _context.TaskAssignments
+                    .AnyAsync(a =>
+                        a.Id == notification.TaskAssignmentId &&
+                        a.UserId == user.Id &&
+                        a.Status == "Pending");
+
+                if (assignmentPending)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "This task notification cannot be deleted until you accept or reject the task."
+                    });
+                }
+            }
+
             try
             {
                 _context.Notifications.Remove(notification);
@@ -422,7 +451,15 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 var notifications = await _context.Notifications
                     .Where(n =>
                         n.UserId == user.Id &&
-                        n.Type == "TaskAssignment")
+                        (n.Type == "TaskAssignment" ||
+                         n.Type == "TaskAssignmentReassigned" ||
+                         n.Type == "TaskReviewApproved" ||
+                         n.Type == "TaskReviewRejected" ||
+                         n.Type == "TaskPaymentSettled") &&
+                        !(n.Type == "TaskAssignment" &&
+                          _context.TaskAssignments.Any(a =>
+                              a.Id == n.TaskAssignmentId &&
+                              a.Status == "Pending")))
                     .ToListAsync();
 
                 if (notifications.Count > 0)

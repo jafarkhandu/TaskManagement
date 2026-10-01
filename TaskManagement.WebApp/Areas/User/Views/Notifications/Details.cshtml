@@ -1,7 +1,29 @@
-@model dynamic
-
 @{
     Layout = null;
+
+    var notificationType = Model.NotificationType?.ToString() ?? "TaskAssignment";
+    var isReviewApproved = notificationType == "TaskReviewApproved";
+    var isReviewRejected = notificationType == "TaskReviewRejected";
+    var isPaymentSettled = notificationType == "TaskPaymentSettled";
+    var isReassignment = notificationType == "TaskAssignmentReassigned";
+    var isTaskAssignment = notificationType == "TaskAssignment";
+    var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled || isReassignment;
+
+    var detailTitle = isPaymentSettled
+        ? "Payment Settled"
+        : isReviewApproved
+            ? "Task Review Approved"
+            : isReviewRejected
+                ? "Task Review Rejected"
+                : "New Task Assignment";
+
+    var detailDescription = isPaymentSettled
+        ? "Your task review is complete and the payment has been settled."
+        : isReviewApproved
+            ? "Your submitted work has been reviewed and approved by the admin."
+            : isReviewRejected
+                ? "Your submitted work was rejected and the task has been placed on hold."
+                : "Review the task details below and choose to accept or reject.";
 }
 
 <head>
@@ -64,15 +86,15 @@
                         <div class="task-header-text">
 
                             <span class="task-eyebrow">
-                                TASK ASSIGNMENT
+                                @(isTaskAssignment ? "TASK ASSIGNMENT" : "TASK UPDATE")
                             </span>
 
                             <h1>
-                                New Task Assignment
+                                @detailTitle
                             </h1>
 
                             <p>
-                                Review the task details below and choose to accept or reject.
+                                @detailDescription
                             </p>
 
                         </div>
@@ -98,80 +120,106 @@
                                     </span>
                                 </div>
 
-                                <span class="priority-badge">
-                                    <span class="priority-dot"></span>
-                                    @Model.Priority Priority
-                                </span>
+                                @if (isTaskAssignment)
+                                {
+                                    <span class="priority-badge">
+                                        <span class="priority-dot"></span>
+                                        @Model.Priority Priority
+                                    </span>
+                                }
 
                             </div>
 
 
-                            <div class="task-scenario">
+                            @if (isTaskAssignment)
+                            {
+                                <div class="task-scenario">
 
-                                <span class="detail-label">
-                                    Scenario
-                                </span>
+                                    <span class="detail-label">
+                                        Scenario
+                                    </span>
 
-                                <div class="scenario-box">
-                                    @Model.Scenario
-                                </div>
-
-                            </div>
-
-
-                            <div class="task-info-grid">
-
-                                <div class="info-tile">
-                                    <div class="info-icon">📅</div>
-                                    <div>
-                                        <span class="detail-label">Start Date</span>
-                                        <strong>
-                                            @(((DateTime)Model.StartDate).ToString("dd MMM yyyy"))
-                                        </strong>
+                                    <div class="scenario-box">
+                                        @Model.Scenario
                                     </div>
+
                                 </div>
 
-                                <div class="info-tile">
-                                    <div class="info-icon">📅</div>
-                                    <div>
-                                        <span class="detail-label">Expected End Date</span>
-                                        <strong>
-                                            @(((DateTime)Model.ExpectedEndDate).ToString("dd MMM yyyy"))
-                                        </strong>
+
+                                <div class="task-info-grid">
+
+                                    <div class="info-tile">
+                                        <div class="info-icon">📅</div>
+                                        <div>
+                                            <span class="detail-label">Start Date</span>
+                                            <strong>
+                                                @(((DateTime)Model.StartDate).ToString("dd MMM yyyy"))
+                                            </strong>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="info-tile">
-                                    <div class="info-icon">₹</div>
-                                    <div>
-                                        <span class="detail-label">Amount</span>
-                                        <strong>
-                                            ₹@String.Format(
-                                                System.Globalization.CultureInfo.GetCultureInfo("en-IN"),
-                                                "{0:N2}",
-                                                Model.Amount
-                                            )
-                                        </strong>
+                                    <div class="info-tile">
+                                        <div class="info-icon">📅</div>
+                                        <div>
+                                            <span class="detail-label">Expected End Date</span>
+                                            <strong>
+                                                @(((DateTime)Model.ExpectedEndDate).ToString("dd MMM yyyy"))
+                                            </strong>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="info-tile">
-                                    <div class="info-icon">⚑</div>
-                                    <div>
-                                        <span class="detail-label">Priority</span>
-                                        <strong>@Model.Priority</strong>
+                                    <div class="info-tile">
+                                        <div class="info-icon">₹</div>
+                                        <div>
+                                            <span class="detail-label">Amount</span>
+                                            <strong>
+                                                ₹@String.Format(
+                                                    System.Globalization.CultureInfo.GetCultureInfo("en-IN"),
+                                                    "{0:N2}",
+                                                    Model.Amount
+                                                )
+                                            </strong>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="info-tile">
-                                    <div class="info-icon">👤</div>
-                                    <div>
-                                        <span class="detail-label">Assigned By</span>
-                                        <strong>Admin</strong>
+                                    <div class="info-tile">
+                                        <div class="info-icon">⚑</div>
+                                        <div>
+                                            <span class="detail-label">Priority</span>
+                                            <strong>@Model.Priority</strong>
+                                        </div>
                                     </div>
-                                </div>
 
-                            </div>
+                                    <div class="info-tile">
+                                        <div class="info-icon">👤</div>
+                                        <div>
+                                            <span class="detail-label">Assigned By</span>
+                                            <strong>Admin</strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="notification-event-panel">
+                                    <span class="detail-label">UPDATE</span>
+                                    <h3>@Model.NotificationTitle</h3>
+                                    <p>
+                                        @(isReassignment
+                                            ? "This assignment is no longer available for you. You cannot accept or reject this task."
+                                            : isReviewRejected
+                                                ? (string.IsNullOrWhiteSpace(Model.ReviewReason)
+                                                    ? "Your submitted work was rejected by the admin."
+                                                    : Model.ReviewReason)
+                                                : isReviewApproved
+                                                    ? "Your submitted work was approved by the admin."
+                                                    : isPaymentSettled
+                                                        ? "The task was completed and the payment was settled."
+                                                        : "This task notification contains the latest update.")
+                                    </p>
+                                </div>
+                            }
 
                         </div>
 
@@ -182,25 +230,32 @@
                                 📄
                             </div>
 
-                            <h3>Task Details</h3>
+                            <h3>@(isTaskAssignment ? "Task Details" : "Update Details")</h3>
 
                             <p class="action-panel-subtitle">
-                                Please review all the information before taking action.
+                                @(isTaskAssignment
+                                    ? "Please review all the information before taking action."
+                                    : "Here is the latest update for this task.")
                             </p>
 
-                            <div class="action-info-box">
-
-                                <span class="action-info-icon">
-                                    ⓘ
-                                </span>
-
-                                <p>
-                                    By accepting this task, it will be added to your
-                                    active tasks and you will be responsible for
-                                    completing it within the expected date.
-                                </p>
-
-                            </div>
+                            @if (isTaskAssignment)
+                            {
+                                <div class="action-info-box">
+                                    <span class="action-info-icon">ⓘ</span>
+                                    <p>
+                                        By accepting this task, it will be added to your
+                                        active tasks and you will be responsible for
+                                        completing it within the expected date.
+                                    </p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="action-info-box notification-update-box">
+                                    <span class="action-info-icon">✦</span>
+                                    <p>@Model.NotificationTitle</p>
+                                </div>
+                            }
 
 
                             <div class="task-actions">
@@ -209,7 +264,32 @@
                                     @Html.AntiForgeryToken()
                                 </form>
 
-                                @if (Model.AssignmentStatus == "Pending")
+                                @if (isReviewRejected)
+                                {
+                                    <div class="final-status rejected-status">
+                                        <span>✕</span>
+                                        Task On Hold
+                                    </div>
+                                    <div class="action-info-box">
+                                        <span class="action-info-icon">ⓘ</span>
+                                        <p>@Model.NotificationTitle</p>
+                                    </div>
+                                }
+                                else if (isReviewApproved)
+                                {
+                                    <div class="final-status accepted-status">
+                                        <span>✓</span>
+                                        Task Review Approved
+                                    </div>
+                                }
+                                else if (isPaymentSettled)
+                                {
+                                    <div class="final-status accepted-status">
+                                        <span>₹</span>
+                                        Payment Settled
+                                    </div>
+                                }
+                                else if (Model.AssignmentStatus == "Pending")
                                 {
                                     <button type="button"
                                             id="rejectButton"
@@ -237,6 +317,13 @@
                                     <div class="final-status rejected-status">
                                         <span>✕</span>
                                         Task Rejected
+                                    </div>
+                                }
+                                else if (Model.AssignmentStatus == "Reassigned")
+                                {
+                                    <div class="final-status rejected-status">
+                                        <span>↗</span>
+                                        Assignment Reassigned
                                     </div>
                                 }
 

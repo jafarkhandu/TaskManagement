@@ -27,6 +27,7 @@ namespace TaskManagement.Infrastructure.Services
             var sessions = await (from s in _context.ChatSessions.AsNoTracking()
                                   where s.IsActive
                                   join t in _context.TaskItems.AsNoTracking() on s.TaskId equals t.Id
+                                  where t.Status != "Completed"
                                   join p in _context.Projects.AsNoTracking() on t.ProjectId equals p.Id
                                   join u in _context.Users.AsNoTracking() on s.UserId equals u.Id
                                   join m in _context.ChatMessages.AsNoTracking() on s.Id equals m.ChatSessionId into mg
@@ -295,6 +296,7 @@ namespace TaskManagement.Infrastructure.Services
             var sessions = await (from s in _context.ChatSessions.AsNoTracking()
                                   where s.IsActive && s.UserId == userId
                                   join t in _context.TaskItems.AsNoTracking() on s.TaskId equals t.Id
+                                  where t.Status != "Completed"
                                   join m in _context.ChatMessages.AsNoTracking() on s.Id equals m.ChatSessionId into mg
                                   select new UserChatSessionDto
                                   {

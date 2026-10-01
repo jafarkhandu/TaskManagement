@@ -68,7 +68,11 @@
 
             const matchesStatus =
                 statusValue === "all" ||
-                status === statusValue;
+                (
+                    statusValue === "In Progress"
+                        ? (status === "In Progress" || status === "Review Pending")
+                        : status === statusValue
+                );
 
             const matchesPriority =
                 priorityValue === "all" ||
@@ -398,7 +402,7 @@
 
         if (submitCompletion) {
             submitCompletion.disabled = false;
-            submitCompletion.innerHTML = '<span class="completion-submit-icon">✓</span><span>Submit &amp; Complete</span>';
+            submitCompletion.innerHTML = '<span class="completion-submit-icon">✓</span><span>Submit for Review</span>';
         }
 
         completionModal.classList.add('show');
@@ -436,7 +440,7 @@
         const card = pending.card;
         const taskId = pending.taskId;
         const oldStatus = pending.oldStatus;
-        const targetList = document.getElementById('completedList');
+        const targetList = document.getElementById('progressList');
 
         if (!targetList) {
             if (completionRepositoryError) {
@@ -460,12 +464,11 @@
         try {
             const body = new URLSearchParams({
                 taskId: taskId,
-                newStatus: 'Completed',
                 completionRepositoryUrl: repositoryUrl,
                 __RequestVerificationToken: token
             });
 
-            const response = await fetch('/User/MyTasks/ChangeStatus', {
+            const response = await fetch('/User/MyTasks/SubmitForReview', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -478,10 +481,10 @@
             const json = await response.json();
 
             if (!response.ok || !json?.success) {
-                throw new Error(json?.message || 'Unable to complete the task.');
+                throw new Error(json?.message || 'Unable to submit the task for review.');
             }
 
-            card.dataset.status = 'Completed';
+            card.dataset.status = 'Review Pending';
             card.draggable = false;
 
             const chatButton = card.querySelector('.task-chat-btn');
@@ -489,13 +492,12 @@
                 chatButton.remove();
             }
 
+            card.classList.add('review-pending-card');
             targetList.querySelector('.empty-column')?.remove();
 
-            if (targetList.firstElementChild) {
-                targetList.insertBefore(card, targetList.firstElementChild);
-            }
-            else {
-                targetList.appendChild(card);
+            const reviewBadge = card.querySelector('.review-status-badge');
+            if (reviewBadge) {
+                reviewBadge.textContent = 'Review Pending';
             }
 
             const map = {
@@ -506,8 +508,6 @@
             };
 
             const oldCount = document.getElementById(map[oldStatus]);
-            const completedCount = document.getElementById(map.Completed);
-
             if (oldCount) {
                 oldCount.textContent = Math.max(
                     0,
@@ -515,9 +515,10 @@
                 );
             }
 
-            if (completedCount) {
-                completedCount.textContent =
-                    parseInt(completedCount.textContent || '0', 10) + 1;
+            const newCount = document.getElementById('progressCount');
+            if (newCount) {
+                newCount.textContent =
+                    Number(newCount.textContent || 0) + 1;
             }
 
             try {
@@ -534,7 +535,7 @@
             }
 
             closeCompletionSubmissionModal();
-            showStatusToast('Task completed and GitHub repository submitted.');
+            showStatusToast('Task submitted for admin review.');
         }
         catch (error) {
             console.error('Task completion error:', error);
@@ -580,6 +581,95 @@
             }
         }
     );
+
+    /* ================= LIVE TASK STATUS SYNC ================= */
+
+    (function initLiveTaskStatusSync() {
+        function normalizeLiveStatus(status) {
+            const value = String(status || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[_-]/g, ' ')
+                .replace(/\s+/g, ' ');
+
+            if (['pending', 'todo', 'to do', 'not started', 'new'].includes(value)) return 'Pending';
+            if (['in progress', 'inprogress', 'working', 'started'].includes(value)) return 'In Progress';
+            if (['on hold', 'onhold', 'hold', 'paused'].includes(value)) return 'On Hold';
+            if (['completed', 'complete', 'done', 'finished'].includes(value)) return 'Completed';
+            if (value === 'review pending') return 'Review Pending';
+            return status || 'Pending';
+        }
+
+        function moveCardToStatus(taskId, status) {
+            const card = document.querySelector('.task-card[data-task-id="' + taskId + '"]');
+            if (!card) return;
+
+            const normalized = normalizeLiveStatus(status);
+            const targetMap = {
+                Pending: 'todoList',
+                'In Progress': 'progressList',
+                'Review Pending': 'progressList',
+                'On Hold': 'holdList',
+                Completed: 'completedList'
+            };
+
+            const target = document.getElementById(targetMap[normalized]);
+            if (!target) return;
+
+            const oldStatus = card.dataset.status || '';
+            if (oldStatus === normalized) return;
+
+            card.dataset.status = normalized;
+            if (target.firstElementChild) target.insertBefore(card, target.firstElementChild);
+            else target.appendChild(card);
+
+            const countMap = {
+                Pending: 'todoCount',
+                'In Progress': 'progressCount',
+                'Review Pending': 'progressCount',
+                'On Hold': 'holdCount',
+                Completed: 'completedCount'
+            };
+
+            const oldCountId = countMap[oldStatus];
+            const newCountId = countMap[normalized];
+
+            if (oldCountId && oldCountId !== newCountId) {
+                const el = document.getElementById(oldCountId);
+                if (el) el.textContent = Math.max(0, Number(el.textContent || 0) - 1);
+            }
+
+            if (newCountId && oldCountId !== newCountId) {
+                const el = document.getElementById(newCountId);
+                if (el) el.textContent = Number(el.textContent || 0) + 1;
+            }
+
+            const isCompleted = normalized === 'Completed' || normalized === 'Review Pending';
+            card.draggable = !isCompleted;
+
+            if (isCompleted) {
+                card.querySelector('.task-chat-btn')?.remove();
+            }
+
+            applyFilters();
+        }
+
+        window.addEventListener(
+            'taskmanager:task-status-changed',
+            function (event) {
+                const payload = event.detail;
+                if (!payload) return;
+
+                const taskId = Number(payload.taskId ?? payload.TaskId ?? 0);
+                if (!taskId) return;
+
+                moveCardToStatus(
+                    taskId,
+                    payload.newStatus ?? payload.NewStatus ?? 'Pending'
+                );
+            }
+        );
+    })();
 
     /* ================= DRAG & DROP STATUS WORKFLOW ================= */
 

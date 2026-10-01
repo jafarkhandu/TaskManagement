@@ -77,6 +77,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ITaskReviewService, TaskReviewService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<EmailService>();
 

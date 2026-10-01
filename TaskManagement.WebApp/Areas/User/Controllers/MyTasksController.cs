@@ -85,6 +85,105 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitForReview(int taskId, string completionRepositoryUrl)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var taskBeforeReview = await _context.TaskItems
+                .AsNoTracking()
+                .Where(t => t.Id == taskId)
+                .Select(t => new { t.Status, t.ProjectId })
+                .FirstOrDefaultAsync();
+
+            var result = await _taskService.SubmitForReviewAsync(
+                taskId,
+                user.Id,
+                completionRepositoryUrl);
+
+            if (!result.Success)
+                return Json(new { success = false, message = result.Error });
+
+            // Submission moves the persisted task into Review Pending.
+            // Broadcast that transition so the admin board updates immediately.
+            if (taskBeforeReview != null)
+            {
+                try
+                {
+                    var reviewStatusPayload = new
+                    {
+                        TaskId = taskId,
+                        ProjectId = taskBeforeReview.ProjectId,
+                        OldStatus = taskBeforeReview.Status,
+                        NewStatus = "Review Pending",
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _notificationHub.Clients
+                        .Group($"project-{taskBeforeReview.ProjectId}")
+                        .SendAsync("TaskStatusChanged", reviewStatusPayload);
+
+                    await _notificationHub.Clients
+                        .User(user.Id)
+                        .SendAsync("TaskStatusChanged", reviewStatusPayload);
+                }
+                catch
+                {
+                    // Submission remains successful if live delivery fails.
+                }
+            }
+
+            try
+            {
+                var assignmentId = await _context.TaskReviews
+                    .Where(r => r.Id == result.ReviewId)
+                    .Select(r => r.TaskAssignmentId)
+                    .FirstOrDefaultAsync();
+
+                var reviewNotification = await _context.Notifications
+                    .AsNoTracking()
+                    .Where(n => n.TaskAssignmentId == assignmentId && n.Type == "AdminTaskReviewRequested")
+                    .OrderByDescending(n => n.Id)
+                    .FirstOrDefaultAsync();
+
+                var task = await _context.TaskItems
+                    .AsNoTracking()
+                    .Where(t => t.Id == taskId)
+                    .Select(t => new { t.Id, t.Title, t.ProjectId })
+                    .FirstOrDefaultAsync();
+
+                if (reviewNotification != null && task != null &&
+                    NotificationHub.IsUserOnline(reviewNotification.UserId))
+                {
+                    await _notificationHub.Clients.User(reviewNotification.UserId)
+                        .SendAsync("AdminLiveNotification", new
+                        {
+                            notificationId = reviewNotification.Id,
+                            type = reviewNotification.Type,
+                            title = reviewNotification.Title,
+                            message = $"{user.FullName ?? user.UserName ?? "User"} submitted {task.Title} for review.",
+                            userName = user.FullName ?? user.UserName ?? "User",
+                            taskId = task.Id,
+                            projectId = task.ProjectId,
+                            createdAt = reviewNotification.CreatedAt
+                        });
+                }
+            }
+            catch
+            {
+                // Database submission remains successful if live delivery fails.
+            }
+
+            return Json(new
+            {
+                success = true,
+                reviewId = result.ReviewId,
+                message = "Task submitted for admin review."
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(
             int taskId,
             string newStatus,
@@ -95,14 +194,23 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (user == null)
                 return Challenge();
 
-            var chatSessionIdsToDelete =
-                string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)
-                    ? await _context.ChatSessions
-                        .AsNoTracking()
-                        .Where(x => x.TaskId == taskId && x.IsActive)
-                        .Select(x => x.Id)
-                        .ToListAsync()
-                    : new List<int>();
+            var chatSessionsQuery = _context.ChatSessions
+                .AsNoTracking()
+                .Where(x => x.IsActive);
+
+            if (!string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                chatSessionsQuery = chatSessionsQuery.Where(x => false);
+            else
+                chatSessionsQuery = chatSessionsQuery.Where(x => x.TaskId == taskId);
+
+            var chatSessionsToDelete = await chatSessionsQuery
+                .Select(x => new
+                {
+                    x.Id,
+                    x.UserId,
+                    x.AdminId
+                })
+                .ToListAsync();
 
             var result = await _taskService.ChangeStatusAsync(
                 taskId,
@@ -118,15 +226,32 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             // Notify project listeners about the status change.
             try
             {
-                await _notificationHub.Clients.Group($"project-{result.ProjectId}")
-                    .SendAsync("TaskStatusChanged", new
-                    {
-                        TaskId = result.TaskId,
-                        ProjectId = result.ProjectId,
-                        OldStatus = result.OldStatus,
-                        NewStatus = result.NewStatus,
-                        UpdatedAt = DateTime.UtcNow
-                    });
+                var statusPayload = new
+                {
+                    TaskId = result.TaskId,
+                    ProjectId = result.ProjectId,
+                    OldStatus = result.OldStatus,
+                    NewStatus = result.NewStatus,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                // Address every admin directly. A user status change must
+                // update every open admin project board even if that board
+                // recently reconnected and has not rejoined its project group.
+                // SignalR User() targets all connections belonging to that admin.
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                foreach (var admin in admins)
+                {
+                    await _notificationHub.Clients
+                        .User(admin.Id)
+                        .SendAsync("TaskStatusChanged", statusPayload);
+                }
+
+                // The assigned user also receives the same event directly so
+                // every open My Tasks board stays live without requiring a refresh.
+                await _notificationHub.Clients
+                    .User(user.Id)
+                    .SendAsync("TaskStatusChanged", statusPayload);
             }
             catch
             {
@@ -183,13 +308,24 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 // Completed tasks no longer keep their task chat. The service already
                 // removed the database records; notify connected chat clients using the
                 // session IDs captured before deletion.
-                foreach (var chatSessionId in chatSessionIdsToDelete)
+                foreach (var chat in chatSessionsToDelete)
                 {
                     try
                     {
                         await _chatHub.Clients
-                            .Group($"chat-{chatSessionId}")
-                            .SendAsync("ChatDeleted", new { chatSessionId });
+                            .Group($"chat-{chat.Id}")
+                             .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        // The user may only have the conversation drawer open,
+                        // not the individual SignalR chat group. Notify the user
+                        // directly so the stale conversation disappears there too.
+                        await _chatHub.Clients
+                            .User(chat.UserId)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        await _chatHub.Clients
+                            .User(chat.AdminId)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
                     }
                     catch
                     {
