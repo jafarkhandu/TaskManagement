@@ -993,8 +993,12 @@
 
                         const matchesStatus =
                             !selectedStatus ||
-                            normalizedStatus ===
-                            selectedStatus;
+                            (
+                                selectedStatus === 'In Progress'
+                                    ? (normalizedStatus === 'In Progress' ||
+                                       normalizedStatus === 'Review Pending')
+                                    : normalizedStatus === selectedStatus
+                            );
 
 
                         const matchesPriority =
