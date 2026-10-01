@@ -73,7 +73,12 @@ namespace TaskManagement.Infrastructure.Services
                     Status = t.Status,
                     StartDate = t.StartDate,
                     ExpectedEndDate = t.ExpectedEndDate,
-                    CompletedAtUtc = t.CompletedAtUtc,
+                    CompletedAtUtc = t.CompletedAtUtc ??
+                        _db.TaskReviews
+                            .Where(r => r.TaskId == t.Id)
+                            .OrderByDescending(r => r.Id)
+                            .Select(r => (DateTime?)r.SubmittedAt)
+                            .FirstOrDefault(),
                     Amount = t.Amount
                 })
                 .ToListAsync();
@@ -117,7 +122,12 @@ namespace TaskManagement.Infrastructure.Services
                     Status = t.Status,
                     StartDate = t.StartDate,
                     ExpectedEndDate = t.ExpectedEndDate,
-                    CompletedAtUtc = t.CompletedAtUtc,
+                    CompletedAtUtc = t.CompletedAtUtc ??
+                        _db.TaskReviews
+                            .Where(r => r.TaskId == t.Id)
+                            .OrderByDescending(r => r.Id)
+                            .Select(r => (DateTime?)r.SubmittedAt)
+                            .FirstOrDefault(),
                     Amount = t.Amount
                 })
                 .FirstOrDefaultAsync();
