@@ -235,13 +235,27 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (!NotificationHub.IsUserOnline(notification.UserId))
                 return;
 
+            var reviewReason = type == "TaskReviewRejected"
+                ? await _context.TaskReviews
+                    .Where(r => r.Id == reviewId)
+                    .Select(r => r.RejectionReason)
+                    .FirstOrDefaultAsync()
+                : null;
+
+            var liveMessage = type == "TaskReviewRejected" &&
+                              !string.IsNullOrWhiteSpace(reviewReason)
+                ? reviewReason
+                : type == "TaskPaymentSettled"
+                    ? "Payment for your task has been settled."
+                    : "Your submitted task has been approved by the admin.";
+
             await _notificationHub.Clients.User(notification.UserId)
                 .SendAsync("UserReviewNotificationReceived", new
                 {
                     notificationId = notification.Id,
                     type = notification.Type,
                     title = notification.Title,
-                    message = notification.Title,
+                    message = liveMessage,
                     createdAt = notification.CreatedAt
                 });
 
