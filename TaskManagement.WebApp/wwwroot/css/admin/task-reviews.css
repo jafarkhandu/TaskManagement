@@ -73,3 +73,148 @@
 .payment-review-qr img{width:170px;height:170px;border-radius:14px;padding:9px;box-shadow:0 10px 24px rgba(31,49,82,.08)}
 .payment-review-details div{border:1px solid #e9edf4;background:#fff}
 .payment-review-warning{border:1px solid #f2dfb1;background:linear-gradient(135deg,#fff9e9,#fff4d8)}
+
+
+/* Refined compact Task Reviews workspace */
+.review-hero{
+    margin-top:22px;
+    margin-bottom:16px;
+    padding:22px 24px;
+    border-radius:20px;
+}
+.review-hero h1{
+    font-size:27px;
+    letter-spacing:-.6px;
+}
+.review-hero p{
+    font-size:12px;
+}
+.review-counter{
+    min-width:112px;
+    padding:11px 14px;
+    border-radius:15px;
+}
+.review-counter strong{
+    font-size:24px;
+}
+.review-list{
+    gap:11px;
+}
+.review-card{
+    padding:16px 18px;
+    border-radius:16px;
+    box-shadow:0 7px 22px rgba(31,49,82,.045);
+}
+.review-card:hover{
+    transform:translateY(-1px);
+    box-shadow:0 11px 28px rgba(31,49,82,.075);
+}
+.review-card h2{
+    margin:4px 0 2px;
+    font-size:17px;
+}
+.review-card-head p{
+    font-size:11px;
+}
+.review-task-id{
+    padding:4px 7px;
+    font-size:9px;
+}
+.review-pill{
+    padding:5px 9px;
+    font-size:9px!important;
+}
+.review-grid{
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin:11px 0;
+}
+.review-grid div{
+    padding:9px 11px;
+    border-radius:10px;
+}
+.review-grid span{
+    font-size:8px;
+}
+.review-grid strong{
+    font-size:11px;
+}
+.review-scenario{
+    min-height:0;
+    padding:10px 0;
+}
+.review-scenario>span,
+.review-repository>span{
+    font-size:8px;
+}
+.review-scenario p{
+    margin:3px 0 0;
+    font-size:11px;
+    line-height:1.45;
+}
+.review-repository{
+    padding:9px 10px;
+    margin-top:0;
+    border-radius:9px;
+}
+.review-repository a{
+    padding:6px 9px;
+    font-size:10px;
+}
+.review-actions{
+    margin-top:9px;
+    padding-top:9px;
+}
+.review-actions .btn{
+    padding:7px 12px;
+    font-size:10px;
+    border-radius:8px;
+}
+.pending-payment-section{
+    margin-top:18px;
+}
+.section-heading{
+    margin-bottom:8px;
+}
+.section-heading h2{
+    font-size:18px;
+}
+.section-heading p{
+    font-size:10px;
+}
+.pending-payment-count{
+    min-width:36px;
+    height:36px;
+    border-radius:10px;
+}
+.pending-payment-list{
+    gap:7px;
+}
+.pending-payment-card{
+    grid-template-columns:1fr auto auto;
+    gap:12px;
+    padding:11px 13px;
+    border-radius:12px;
+}
+.pending-payment-card>div>span{
+    font-size:8px;
+}
+.pending-payment-card h3{
+    font-size:12px;
+}
+.pending-payment-card>strong{
+    font-size:12px;
+}
+.pending-pay-btn{
+    padding:6px 10px;
+    font-size:9px;
+    border-radius:7px;
+}
+.review-empty{
+    padding:50px 18px;
+    border-radius:16px;
+}
+@media(max-width:800px){
+    .review-grid{grid-template-columns:1fr}
+    .review-card{padding:14px}
+}
