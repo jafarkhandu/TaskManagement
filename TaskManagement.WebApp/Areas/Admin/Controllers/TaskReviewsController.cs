@@ -64,13 +64,28 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             var admin = await _userManager.GetUserAsync(User);
             if (admin == null) return Challenge();
 
-            var result = await _reviewService.ApproveAsync(id, admin.Id);
-            if (!result.Success)
-                return BadRequest(new { success = false, message = result.Error });
+            var review = await _context.TaskReviews
+                .AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Status
+                })
+                .FirstOrDefaultAsync();
 
-            await SendLatestUserNotificationAsync(id, "TaskReviewApproved");
+            if (review == null || !string.Equals(review.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { success = false, message = "Review request is no longer pending." });
 
-            return Json(new { success = true, message = "Task approved. Payment details are ready." });
+            // Approve only opens the payment decision UI. No database state is
+            // changed until the admin explicitly chooses Pay Now or Later.
+            return Json(new
+            {
+                success = true,
+                requiresPaymentDecision = true,
+                reviewId = id,
+                message = "Choose Pay Now or Later to approve this task."
+            });
         }
 
         [HttpPost]
@@ -111,8 +126,14 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
 
-            await SendLatestUserNotificationAsync(id, payNow ? "TaskPaymentSettled" : "TaskReviewApproved");
-            await BroadcastTaskStatusAsync(taskBeforeSettlement?.Id ?? 0, taskBeforeSettlement?.Status, taskBeforeSettlement?.ProjectId);
+            await SendLatestUserNotificationAsync(
+                id,
+                payNow ? "TaskPaymentSettled" : "TaskReviewApproved");
+
+            await BroadcastTaskStatusAsync(
+                taskBeforeSettlement?.Id ?? 0,
+                taskBeforeSettlement?.Status,
+                taskBeforeSettlement?.ProjectId);
 
             return Json(new
             {
@@ -120,7 +141,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 paymentStatus = payNow ? "Paid" : "Pending",
                 message = payNow
                     ? "Payment settled and task completed."
-                    : "Task completed. Payment remains pending."
+                    : "Task approved. Payment remains pending."
             });
         }
 
