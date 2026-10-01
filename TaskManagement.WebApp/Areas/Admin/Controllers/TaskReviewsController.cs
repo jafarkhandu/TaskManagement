@@ -80,11 +80,17 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             var admin = await _userManager.GetUserAsync(User);
             if (admin == null) return Challenge();
 
+            var taskBeforeReject = await _context.TaskReviews
+                .Where(r => r.Id == id)
+                .Join(_context.TaskItems, r => r.TaskId, t => t.Id, (r, t) => new { t.Id, t.Status, t.ProjectId })
+                .FirstOrDefaultAsync();
+
             var result = await _reviewService.RejectAsync(id, admin.Id, reason);
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
 
             await SendLatestUserNotificationAsync(id, "TaskReviewRejected");
+            await BroadcastTaskStatusAsync(taskBeforeReject?.Id ?? 0, taskBeforeReject?.Status, taskBeforeReject?.ProjectId);
 
             return Json(new { success = true, message = "Task rejected and placed on hold." });
         }
@@ -96,11 +102,17 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             var admin = await _userManager.GetUserAsync(User);
             if (admin == null) return Challenge();
 
+            var taskBeforeSettlement = await _context.TaskReviews
+                .Where(r => r.Id == id)
+                .Join(_context.TaskItems, r => r.TaskId, t => t.Id, (r, t) => new { t.Id, t.Status, t.ProjectId })
+                .FirstOrDefaultAsync();
+
             var result = await _reviewService.SettlePaymentAsync(id, admin.Id, payNow);
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
 
             await SendLatestUserNotificationAsync(id, payNow ? "TaskPaymentSettled" : "TaskReviewApproved");
+            await BroadcastTaskStatusAsync(taskBeforeSettlement?.Id ?? 0, taskBeforeSettlement?.Status, taskBeforeSettlement?.ProjectId);
 
             return Json(new
             {
@@ -110,6 +122,42 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     ? "Payment settled and task completed."
                     : "Task completed. Payment remains pending."
             });
+        }
+
+        private async Task BroadcastTaskStatusAsync(int taskId, string? oldStatus, int? projectId)
+        {
+            if (taskId <= 0 || projectId == null || string.IsNullOrWhiteSpace(oldStatus))
+                return;
+
+            var task = await _context.TaskItems
+                .AsNoTracking()
+                .Where(t => t.Id == taskId)
+                .Select(t => new { t.Status, t.AssignedToUserId })
+                .FirstOrDefaultAsync();
+
+            if (task == null ||
+                string.Equals(oldStatus, task.Status, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var payload = new
+            {
+                TaskId = taskId,
+                ProjectId = projectId.Value,
+                OldStatus = oldStatus,
+                NewStatus = task.Status,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _notificationHub.Clients
+                .Group($"project-{projectId.Value}")
+                .SendAsync("TaskStatusChanged", payload);
+
+            if (!string.IsNullOrWhiteSpace(task.AssignedToUserId))
+            {
+                await _notificationHub.Clients
+                    .User(task.AssignedToUserId)
+                    .SendAsync("TaskStatusChanged", payload);
+            }
         }
 
         private async Task SendLatestUserNotificationAsync(int reviewId, string type)
