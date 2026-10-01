@@ -664,6 +664,93 @@
            CREATE TASK CARD
         ===================================================== */
 
+        function getTaskDeadlineMoment(value) {
+            if (!value) return null;
+
+            const raw = String(value).trim();
+            const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+
+            if (dateOnly) {
+                return new Date(
+                    Number(dateOnly[1]),
+                    Number(dateOnly[2]) - 1,
+                    Number(dateOnly[3]) + 1,
+                    0, 0, 0, 0
+                );
+            }
+
+            const parsed = new Date(raw);
+
+            if (Number.isNaN(parsed.getTime()))
+                return null;
+
+            return new Date(
+                parsed.getFullYear(),
+                parsed.getMonth(),
+                parsed.getDate() + 1,
+                0, 0, 0, 0
+            );
+        }
+
+        function formatCompletionDuration(milliseconds) {
+            const totalMinutes = Math.max(
+                0,
+                Math.round(milliseconds / 60000)
+            );
+
+            const days = Math.floor(totalMinutes / 1440);
+            const hours = Math.floor((totalMinutes % 1440) / 60);
+            const minutes = totalMinutes % 60;
+
+            if (days > 0)
+                return days + 'd ' + hours + 'h';
+
+            if (hours > 0)
+                return hours + 'h ' + minutes + 'm';
+
+            return minutes + 'm';
+        }
+
+        function renderCompletionTiming(task) {
+            if (normalizeStatus(task.status) !== 'Completed')
+                return '';
+
+            const deadline = getTaskDeadlineMoment(task.expectedEndDate);
+            const completedAt = task.completedAtUtc
+                ? new Date(task.completedAtUtc)
+                : null;
+
+            if (!deadline || !completedAt || Number.isNaN(completedAt.getTime()))
+                return '';
+
+            const difference = completedAt.getTime() - deadline.getTime();
+
+            if (difference < 0) {
+                return `
+                    <div class="task-completion-timing is-early">
+                        <span>✓</span>
+                        <strong>Completed ${formatCompletionDuration(Math.abs(difference))} early</strong>
+                    </div>
+                `;
+            }
+
+            if (difference > 0) {
+                return `
+                    <div class="task-completion-timing is-late">
+                        <span>⚠</span>
+                        <strong>Completed ${formatCompletionDuration(difference)} late</strong>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="task-completion-timing is-on-time">
+                    <span>✓</span>
+                    <strong>Completed on time</strong>
+                </div>
+            `;
+        }
+
         function createTaskCard(task) {
 
             const card = document.createElement('article');
@@ -674,6 +761,10 @@
                 'Unassigned';
 
             card.className = 'task-card';
+            card.dataset.taskId = task.id;
+            card.dataset.status = task.status || '';
+            card.dataset.endDate = task.expectedEndDate || '';
+            card.dataset.completedAt = task.completedAtUtc || '';
 
             card.innerHTML = `
         
@@ -741,6 +832,8 @@
 
         </div>
 
+
+        ${renderCompletionTiming(task)}
 
         <div class="task-card-bottom">
 
