@@ -16,6 +16,9 @@ namespace TaskManagement.Application.DTOs
         public int DueSoonTasks { get; set; }
         public int ActiveProjects { get; set; }
 
+        // Current health of non-completed task deadlines.
+        public int DeadlineHealthPercent { get; set; }
+
         public List<UserTaskSummaryDto> FocusTasks { get; set; } = new();
         public List<UserTaskSummaryDto> RecentTasks { get; set; } = new();
         public List<UserProjectSummaryDto> Projects { get; set; } = new();
