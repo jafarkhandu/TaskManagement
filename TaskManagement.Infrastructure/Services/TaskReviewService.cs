@@ -162,8 +162,8 @@ namespace TaskManagement.Infrastructure.Services
             if (review == null)
                 return (false, "Review request is no longer available.");
 
-            var payment = await _db.TaskPayments.FirstOrDefaultAsync(x => x.TaskAssignmentId == review.TaskAssignmentId);
-            if (payment == null) return (false, "Payment record not found.");
+            var payment = await _db.TaskPayments
+                .FirstOrDefaultAsync(x => x.TaskAssignmentId == review.TaskAssignmentId);
 
             var task = await _db.TaskItems.FirstOrDefaultAsync(x => x.Id == review.TaskId);
             var assignment = await _db.TaskAssignments.FirstOrDefaultAsync(x => x.Id == review.TaskAssignmentId);
@@ -177,6 +177,25 @@ namespace TaskManagement.Infrastructure.Services
 
                 if (paymentDetails == null)
                     return (false, "The user has not submitted payment details yet.");
+            }
+
+            if (payment == null)
+            {
+                payment = new TaskPayment
+                {
+                    TaskAssignmentId = assignment.Id,
+                    TaskId = task.Id,
+                    UserId = assignment.UserId,
+                    Amount = task.Amount,
+                    ApprovedAt = DateTime.UtcNow
+                };
+
+                _db.TaskPayments.Add(payment);
+            }
+            else
+            {
+                payment.Amount = task.Amount;
+                payment.ApprovedAt ??= DateTime.UtcNow;
             }
 
             payment.Status = payNow ? "Paid" : "Pending";
