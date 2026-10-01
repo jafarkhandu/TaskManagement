@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.dataset.protected = 'true';
             }
 
+            const isDeadlineNotification =
+                n.notificationType === 'TaskDeadlineTomorrow' ||
+                n.notificationType === 'TaskDeadlineToday';
+
             card.innerHTML = `
                 <div class="notification-card-inner">
                     <div class="notification-icon">\uD83D\uDD14</div>
@@ -58,9 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <div class="notification-action">
-                        ${n.assignmentStatus === "Accepted"
+                        ${!isDeadlineNotification && n.assignmentStatus === "Accepted"
                                         ? '<span class="notification-status accepted">✓ Accepted</span>'
-                                        : n.assignmentStatus === "Rejected"
+                                        : !isDeadlineNotification && n.assignmentStatus === "Rejected"
                                             ? '<span class="notification-status rejected">✕ Rejected</span>'
                                             : '›'
                         }
