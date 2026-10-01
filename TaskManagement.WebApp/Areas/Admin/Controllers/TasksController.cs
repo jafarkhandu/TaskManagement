@@ -271,7 +271,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                                 notificationId = oldNotification.Id,
                                 type = oldNotification.Type,
                                 title = oldNotification.Title,
-                                message = $"Task "{task.Title}" has been reassigned. You can no longer accept or reject this task.",
+                                message = $"Task '{task.Title}' has been reassigned. You can no longer accept or reject this task.",
                                 taskId = task.Id,
                                 projectId = task.ProjectId,
                                 createdAt = oldNotification.CreatedAt
@@ -287,7 +287,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                                 notificationId = newNotification.Id,
                                 type = newNotification.Type,
                                 title = newNotification.Title,
-                                message = $"Task "{task.Title}" has been assigned to you. Please accept or reject it.",
+                                message = $"Task '{task.Title}' has been assigned to you. Please accept or reject it.",
                                 scenario = task.Scenario,
                                 priority = task.Priority,
                                 startDate = task.StartDate,
