@@ -17,17 +17,20 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         private readonly ITaskReviewService _reviewService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<NotificationHub> _notificationHub;
+        private readonly IHubContext<ChatHub> _chatHub;
         private readonly ApplicationDbContext _context;
 
         public TaskReviewsController(
             ITaskReviewService reviewService,
             UserManager<ApplicationUser> userManager,
             IHubContext<NotificationHub> notificationHub,
+            IHubContext<ChatHub> chatHub,
             ApplicationDbContext context)
         {
             _reviewService = reviewService;
             _userManager = userManager;
             _notificationHub = notificationHub;
+            _chatHub = chatHub;
             _context = context;
         }
 
@@ -122,6 +125,14 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 .Join(_context.TaskItems, r => r.TaskId, t => t.Id, (r, t) => new { t.Id, t.Status, t.ProjectId })
                 .FirstOrDefaultAsync();
 
+            var chatSessionsToDelete = taskBeforeSettlement == null
+                ? new List<(int Id, string UserId)>()
+                : await _context.ChatSessions
+                    .AsNoTracking()
+                    .Where(x => x.TaskId == taskBeforeSettlement.Id && x.IsActive)
+                    .Select(x => new ValueTuple<int, string>(x.Id, x.UserId))
+                    .ToListAsync();
+
             var result = await _reviewService.SettlePaymentAsync(id, admin.Id, payNow);
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
@@ -134,6 +145,27 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 taskBeforeSettlement?.Id ?? 0,
                 taskBeforeSettlement?.Status,
                 taskBeforeSettlement?.ProjectId);
+
+            if (taskBeforeSettlement != null)
+            {
+                foreach (var chat in chatSessionsToDelete)
+                {
+                    try
+                    {
+                        await _chatHub.Clients
+                            .Group($"chat-{chat.Id}")
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        await _chatHub.Clients
+                            .User(chat.UserId)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+                    }
+                    catch
+                    {
+                        // Chat cleanup must not undo a successful review settlement.
+                    }
+                }
+            }
 
             return Json(new
             {
