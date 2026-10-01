@@ -655,6 +655,17 @@ namespace TaskManagement.Infrastructure.Services
                 latestAssignment!.Status = "Reassigned";
                 latestAssignment.RespondedAt = DateTime.UtcNow;
 
+                // An old assignee must not receive deadline reminders after
+                // the task is reassigned to someone else.
+                var oldDeadlineNotifications = await _db.Notifications
+                    .Where(n =>
+                        n.TaskAssignmentId == latestAssignment.Id &&
+                        (n.Type == "TaskDeadlineTomorrow" || n.Type == "TaskDeadlineToday"))
+                    .ToListAsync();
+
+                if (oldDeadlineNotifications.Count > 0)
+                    _db.Notifications.RemoveRange(oldDeadlineNotifications);
+
                 var newAssignment = new TaskAssignment
                 {
                     TaskId = task.Id,
