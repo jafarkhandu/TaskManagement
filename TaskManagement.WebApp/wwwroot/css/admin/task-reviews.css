@@ -273,3 +273,11 @@
     background: linear-gradient(135deg, #fff0f1, #ffe7e9);
     color: #b52f3b;
 }
+
+.review-grid .deadline-late {
+    color: #c63f49;
+}
+
+.review-grid .deadline-on-time {
+    color: #16875b;
+}
