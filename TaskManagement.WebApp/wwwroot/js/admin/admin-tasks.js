@@ -301,6 +301,26 @@
                         project.endDate
                     );
 
+                const addTaskProjectStart =
+                    document.getElementById(
+                        'addTaskProjectStart'
+                    );
+
+                const addTaskProjectEnd =
+                    document.getElementById(
+                        'addTaskProjectEnd'
+                    );
+
+                if (addTaskProjectStart) {
+                    addTaskProjectStart.textContent =
+                        formatDate(project.startDate);
+                }
+
+                if (addTaskProjectEnd) {
+                    addTaskProjectEnd.textContent =
+                        formatDate(project.endDate);
+                }
+
 
                 document.getElementById(
                     'projectTech'
