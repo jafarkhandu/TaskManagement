@@ -2009,19 +2009,21 @@ html.light-theme .task-card .task-chat-btn:hover span {
 }
 
 
-/* Match Admin Project Tasks review-pending badge */
+/* Review Pending badge — reference style */
 .task-review-pending {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    min-height: 42px;
+    padding: 8px 22px;
     margin-left: 6px;
-    padding: 4px 8px;
     border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .02em;
-    color: #6f42c1 !important;
-    background: rgba(111, 66, 193, .10) !important;
-    border: 1px solid rgba(111, 66, 193, .20) !important;
-    line-height: 1.2;
+    color: #7044c6 !important;
+    background: #f0ebfa !important;
+    border: 2px solid #d7c9ef !important;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.15;
+    white-space: nowrap;
 }
