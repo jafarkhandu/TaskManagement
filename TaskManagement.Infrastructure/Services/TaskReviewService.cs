@@ -130,6 +130,10 @@ namespace TaskManagement.Infrastructure.Services
             review.ReviewedByAdminId = adminId;
             review.ReviewedAt = DateTime.UtcNow;
             review.RejectionReason = reason.Trim();
+
+            // A rejected review means the task was not completed. Clear the
+            // prior submission time so a later resubmission becomes authoritative.
+            task.CompletedAtUtc = null;
             task.Status = "On Hold";
 
             var assignment = await _db.TaskAssignments.FirstOrDefaultAsync(x => x.Id == review.TaskAssignmentId);
