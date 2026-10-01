@@ -435,3 +435,86 @@
     .all-payment-amount{grid-column:3;grid-row:1}
     .all-payment-item .pending-pay-btn{grid-column:3;grid-row:2}
 }
+
+
+ /* Final compact review-card layout correction */
+.admin-review-main{
+    box-sizing:border-box;
+    overflow-x:hidden;
+}
+.review-section,
+.review-list,
+.review-card{
+    min-width:0;
+}
+.review-card{
+    overflow:hidden;
+}
+.review-card .review-grid{
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    width:100%;
+    min-width:0;
+}
+.review-card .review-grid > div{
+    min-width:0;
+    width:auto;
+}
+.review-card .review-grid strong{
+    display:block;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.review-card .review-grid .deadline-status{
+    overflow:visible;
+    text-overflow:clip;
+    white-space:normal;
+}
+.review-scenario-trigger{
+    width:100%;
+    min-width:0;
+}
+.scenario-open-btn{
+    min-width:0;
+    max-width:100%;
+    height:46px;
+}
+.scenario-open-btn > span:nth-child(2){
+    min-width:0;
+    flex:1;
+    overflow:hidden;
+}
+.scenario-open-btn strong{
+    max-width:100%;
+}
+.review-repository{
+    min-width:0;
+}
+.review-actions{
+    min-width:0;
+}
+@media(max-width:900px){
+    .review-card .review-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    }
+}
+@media(max-width:600px){
+    .review-card .review-grid{
+        grid-template-columns:1fr !important;
+    }
+}
+
+/* Keep the full-queue modals scrollable without widening the page. */
+.all-review-modal,
+.all-review-modal .modal-body,
+.all-review-list,
+.all-payment-list{
+    min-width:0;
+    max-width:100%;
+}
+.all-review-item,
+.all-payment-item{
+    min-width:0;
+}
