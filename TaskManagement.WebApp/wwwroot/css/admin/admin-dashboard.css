@@ -1964,3 +1964,106 @@ html:not(.light-theme) .admin-dashboard .admin-notification-view-all {
         border-top:1px solid #eee5d2;
     }
 }
+
+
+/* Pending payments — compact warning card */
+.admin-pending-payment-card{
+    border-color:#f1d6d6;
+    background:linear-gradient(145deg,#fff,#fffafa);
+}
+.payment-title-icon{
+    background:#ffeded!important;
+    color:#e24b4b!important;
+}
+.admin-pending-payment-body{
+    padding:10px 16px 12px;
+}
+.admin-pending-payment-alert{
+    display:grid;
+    grid-template-columns:38px minmax(0,1fr) auto auto;
+    align-items:center;
+    gap:10px;
+    min-height:52px;
+}
+.admin-pending-payment-alert-icon{
+    width:36px;
+    height:36px;
+    display:grid;
+    place-items:center;
+    border-radius:10px;
+    background:#ffeded;
+    color:#e34b4b;
+    font-size:16px;
+    font-weight:900;
+}
+.admin-pending-payment-alert-copy{
+    min-width:0;
+}
+.admin-pending-payment-alert-copy strong,
+.admin-pending-payment-alert-copy span{
+    display:block;
+}
+.admin-pending-payment-alert-copy strong{
+    color:#26344f;
+    font-size:11px;
+}
+.admin-pending-payment-alert-copy span{
+    margin-top:2px;
+    color:#8b95a8;
+    font-size:9px;
+}
+.admin-pending-payment-total{
+    margin-left:0;
+    padding-left:12px;
+    text-align:right;
+    border-left:1px solid #f0dddd;
+}
+.admin-pending-payment-total small,
+.admin-pending-payment-total strong{
+    display:block;
+}
+.admin-pending-payment-total small{
+    color:#9a8790;
+    font-size:8px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.admin-pending-payment-total strong{
+    margin-top:2px;
+    color:#c13f3f;
+    font-size:12px;
+}
+.admin-pending-payment-action{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:7px 10px;
+    border-radius:8px;
+    background:#e95656;
+    color:#fff;
+    text-decoration:none;
+    font-size:9px;
+    font-weight:800;
+    box-shadow:0 5px 12px rgba(229,86,86,.16);
+}
+.admin-pending-payment-action:hover{
+    background:#d94747;
+    color:#fff;
+}
+@media(max-width:700px){
+    .admin-pending-payment-alert{
+        grid-template-columns:36px minmax(0,1fr);
+    }
+    .admin-pending-payment-total{
+        grid-column:2;
+        margin:0;
+        padding:7px 0 0;
+        text-align:left;
+        border-left:0;
+        border-top:1px solid #f0dddd;
+    }
+    .admin-pending-payment-action{
+        grid-column:2;
+        justify-self:start;
+    }
+}
