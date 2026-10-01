@@ -27,15 +27,36 @@ function fillPaymentModal(x) {
     document.getElementById('paymentIfsc').textContent = x.ifscCode || '-';
 
     const qr = document.getElementById('paymentQrImage');
-    const isUpi = x.upiId && String(x.paymentMethod || '').toUpperCase() === 'UPI';
+    const upiPanel = document.getElementById('paymentUpiPanel');
+    const bankPanel = document.getElementById('paymentBankPanel');
 
-    if (qr && isUpi) {
-        qr.src = '/Admin/Users/PaymentQr?upiId=' + encodeURIComponent(x.upiId) + '&v=' + Date.now();
-        qr.style.display = 'block';
-        qr.alt = 'UPI payment QR for ' + x.upiId;
-    } else if (qr) {
-        qr.removeAttribute('src');
-        qr.style.display = 'none';
+    const method = String(x.paymentMethod || '').trim().toUpperCase();
+    const isUpi = method === 'UPI' && !!x.upiId;
+    const hasBankDetails =
+        !!x.accountHolderName ||
+        !!x.bankName ||
+        !!x.accountNumber ||
+        !!x.ifscCode;
+
+    // Show only the payment method the user has actually configured.
+    // UPI: QR + UPI ID only. Bank: bank details only.
+    if (isUpi) {
+        if (upiPanel) upiPanel.style.display = 'flex';
+        if (bankPanel) bankPanel.style.display = 'none';
+
+        if (qr) {
+            qr.src = '/Admin/Users/PaymentQr?upiId=' + encodeURIComponent(x.upiId) + '&v=' + Date.now();
+            qr.style.display = 'block';
+            qr.alt = 'UPI payment QR for ' + x.upiId;
+        }
+    } else {
+        if (upiPanel) upiPanel.style.display = 'none';
+        if (bankPanel) bankPanel.style.display = hasBankDetails ? 'grid' : 'none';
+
+        if (qr) {
+            qr.removeAttribute('src');
+            qr.style.display = 'none';
+        }
     }
 }
 
