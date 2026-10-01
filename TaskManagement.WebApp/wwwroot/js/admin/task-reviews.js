@@ -125,7 +125,12 @@ document.querySelectorAll('.review-card').forEach(card => {
             // Late submissions never enter the payment modal. The existing
             // settlement endpoint already converts them to Completed + ₹0 +
             // Withheld, so this keeps the new path centralized on the backend.
-            await settle(false, false);
+            const settled = await settle(false, false);
+
+            if (!settled && actionButton) {
+                actionButton.disabled = false;
+            }
+
             return;
         }
 
@@ -171,7 +176,7 @@ document.getElementById('confirmReject')?.addEventListener('click', async () => 
 });
 
 async function settle(payNow, closePaymentModal = true) {
-    if (!activeReview?.reviewId) return;
+    if (!activeReview?.reviewId) return false;
 
     try {
         const response = await post(cfg.settleUrl, {
@@ -190,9 +195,11 @@ async function settle(payNow, closePaymentModal = true) {
         }
 
         location.reload();
+        return true;
     }
     catch (error) {
         alert(error.message);
+        return false;
     }
 }
 
