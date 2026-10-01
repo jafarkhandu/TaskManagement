@@ -372,6 +372,9 @@ namespace TaskManagement.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("ExpectedEndDate")
                         .HasColumnType("datetime2");
 
