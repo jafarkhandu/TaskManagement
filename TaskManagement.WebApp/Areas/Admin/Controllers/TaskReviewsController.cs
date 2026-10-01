@@ -159,6 +159,10 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                         await _chatHub.Clients
                             .User(chat.UserId)
                             .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        await _chatHub.Clients
+                            .User(admin.Id)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
                     }
                     catch
                     {
