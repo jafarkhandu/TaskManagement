@@ -6,24 +6,35 @@
     var isReviewRejected = notificationType == "TaskReviewRejected";
     var isPaymentSettled = notificationType == "TaskPaymentSettled";
     var isReassignment = notificationType == "TaskAssignmentReassigned";
+    var isDeadlineTomorrow = notificationType == "TaskDeadlineTomorrow";
+    var isDeadlineToday = notificationType == "TaskDeadlineToday";
+    var isDeadlineNotification = isDeadlineTomorrow || isDeadlineToday;
     var isTaskAssignment = notificationType == "TaskAssignment";
     var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled || isReassignment;
 
-    var detailTitle = isPaymentSettled
-        ? "Payment Settled"
-        : isReviewApproved
-            ? "Task Review Approved"
-            : isReviewRejected
-                ? "Task Review Rejected"
-                : "New Task Assignment";
+    var detailTitle = isDeadlineTomorrow
+        ? "Deadline Tomorrow"
+        : isDeadlineToday
+            ? "Deadline Today"
+            : isPaymentSettled
+                ? "Payment Settled"
+                : isReviewApproved
+                    ? "Task Review Approved"
+                    : isReviewRejected
+                        ? "Task Review Rejected"
+                        : "New Task Assignment";
 
-    var detailDescription = isPaymentSettled
-        ? "Your task review is complete and the payment has been settled."
-        : isReviewApproved
-            ? "Your submitted work has been reviewed and approved by the admin."
-            : isReviewRejected
-                ? "Your submitted work was rejected and the task has been placed on hold."
-                : "Review the task details below and choose to accept or reject.";
+    var detailDescription = isDeadlineTomorrow
+        ? "This task is due tomorrow."
+        : isDeadlineToday
+            ? "This task is due today."
+            : isPaymentSettled
+                ? "Your task review is complete and the payment has been settled."
+                : isReviewApproved
+                    ? "Your submitted work has been reviewed and approved by the admin."
+                    : isReviewRejected
+                        ? "Your submitted work was rejected and the task has been placed on hold."
+                        : "Review the task details below and choose to accept or reject.";
 }
 
 <head>
@@ -86,7 +97,7 @@
                         <div class="task-header-text">
 
                             <span class="task-eyebrow">
-                                @(isTaskAssignment ? "TASK ASSIGNMENT" : "TASK UPDATE")
+                                @(isTaskAssignment ? "TASK ASSIGNMENT" : isDeadlineNotification ? "DEADLINE ALERT" : "TASK UPDATE")
                             </span>
 
                             <h1>
@@ -203,7 +214,7 @@
                             else
                             {
                                 <div class="notification-event-panel">
-                                    <span class="detail-label">UPDATE</span>
+                                    <span class="detail-label">@(isDeadlineNotification ? "DEADLINE" : "UPDATE")</span>
                                     <h3>@Model.NotificationTitle</h3>
                                     <p>
                                         @(isReassignment
