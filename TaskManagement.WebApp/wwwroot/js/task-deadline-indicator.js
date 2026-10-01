@@ -110,31 +110,32 @@
             return;
         }
 
+        // parseDeadline returns the first instant after the selected
+        // calendar end-date. The selected date itself remains valid all day.
+        const dueDate = new Date(
+            deadline.getFullYear(),
+            deadline.getMonth(),
+            deadline.getDate() - 1,
+            0, 0, 0, 0
+        );
+
+        const currentDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            0, 0, 0, 0
+        );
+
+        const daysUntilDue = Math.round(
+            (dueDate.getTime() - currentDate.getTime()) / DAY_MS
+        );
+
         const remaining = deadline.getTime() - now.getTime();
 
         if (remaining <= 0) {
-            // Overdue streak is calendar-day based, not a rolling 24-hour count.
-            // Example: due Oct 1 -> Oct 2 = 1 day overdue, Oct 3 = 2 days.
-            const dueDate = new Date(
-                deadline.getFullYear(),
-                deadline.getMonth(),
-                deadline.getDate() - 1,
-                0, 0, 0, 0
-            );
-
-            const currentDate = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate(),
-                0, 0, 0, 0
-            );
-
-            const overdueDays = Math.max(
-                1,
-                Math.round(
-                    (currentDate.getTime() - dueDate.getTime()) / DAY_MS
-                )
-            );
+            // Overdue is calendar-day based: the day after the selected
+            // end date is always 1 day overdue, then 2, 3, etc.
+            const overdueDays = Math.max(1, -daysUntilDue);
 
             const indicator = ensureIndicator(card);
             indicator.className = 'task-deadline-indicator is-overdue';
@@ -152,20 +153,16 @@
             return;
         }
 
-        if (remaining > INDICATOR_WINDOW_MS) {
+        // Show only on the selected end-date itself or one calendar day
+        // before it. Tasks further away remain visually quiet.
+        if (daysUntilDue < 0 || daysUntilDue > 1) {
             removeIndicator(card);
             return;
         }
 
+        const dueToday = daysUntilDue === 0;
+
         const indicator = ensureIndicator(card);
-        const endDate = deadline;
-        const currentDate = now;
-
-        const dueToday =
-            endDate.getFullYear() === currentDate.getFullYear() &&
-            endDate.getMonth() === currentDate.getMonth() &&
-            endDate.getDate() === currentDate.getDate();
-
         indicator.className =
             'task-deadline-indicator ' +
             (dueToday ? 'is-today' : 'is-tomorrow');
