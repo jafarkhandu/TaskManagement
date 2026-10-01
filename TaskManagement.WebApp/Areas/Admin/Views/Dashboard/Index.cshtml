@@ -312,39 +312,26 @@
             <section class="dashboard-card admin-pending-payment-card">
                 <div class="card-header">
                     <div class="card-title">
-                        <span class="title-icon payment-title-icon">₹</span>
+                        <span class="title-icon payment-title-icon">!</span>
                         <h2>Pending Payments</h2>
                     </div>
                     <a href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })#pendingPayments">View Queue</a>
                 </div>
                 <div class="admin-pending-payment-body">
-                    <div class="admin-pending-payment-summary">
-                        <div class="admin-pending-payment-count">@pendingPayments.Count</div>
-                        <div class="admin-pending-payment-summary-copy">
-                            <strong>Payment remaining</strong>
-                            <span>Approved tasks waiting for settlement.</span>
-                        </div>
-                        <div class="admin-pending-payment-total">
-                            <small>Total amount</small>
-                            <strong>₹ @pendingPaymentTotal.ToString("N2")</strong>
-                        </div>
-                    </div>
                     @if (pendingPayments.Any())
                     {
-                        <div class="admin-pending-payment-list">
-                            @foreach (var payment in pendingPayments.Take(4))
-                            {
-                                <div class="admin-pending-payment-row">
-                                    <div class="admin-pending-payment-avatar">₹</div>
-                                    <div class="admin-pending-payment-info">
-                                        <strong>@payment.TaskTitle</strong>
-                                        <span>@payment.UserName · TASK-@payment.TaskId</span>
-                                    </div>
-                                    <strong class="admin-pending-payment-amount">₹ @payment.Amount.ToString("N2")</strong>
-                                    <a class="admin-pending-payment-action"
-                                       href="@Url.Action("Index", "TaskReviews", new { area = "Admin", paymentId = payment.ReviewId })#pendingPayments">Pay Now</a>
-                                </div>
-                            }
+                        <div class="admin-pending-payment-alert">
+                            <div class="admin-pending-payment-alert-icon">!</div>
+                            <div class="admin-pending-payment-alert-copy">
+                                <strong>@pendingPayments.Count Payment@(pendingPayments.Count == 1 ? "" : "s") remaining</strong>
+                                <span>Approved tasks are waiting for settlement.</span>
+                            </div>
+                            <div class="admin-pending-payment-total">
+                                <small>Total amount</small>
+                                <strong>₹ @pendingPaymentTotal.ToString("N2")</strong>
+                            </div>
+                            <a class="admin-pending-payment-action"
+                               href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })#pendingPayments">Review Payments</a>
                         </div>
                     }
                     else
