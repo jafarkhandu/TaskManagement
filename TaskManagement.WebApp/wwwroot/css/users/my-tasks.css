@@ -2007,3 +2007,17 @@ html.light-theme .task-card .task-chat-btn:hover span {
 .review-pending-card {
     border-color:rgba(245,158,11,.28);
 }
+
+/* =========================================================
+   DEADLINE DATE STATE
+========================================================= */
+
+.task-card:not([data-status="Completed"]) .task-meta > span:first-child {
+    color: #dc4f5a;
+    font-weight: 700;
+}
+
+.task-card[data-status="Completed"] .task-meta > span:first-child {
+    color: #20a36f;
+    font-weight: 700;
+}
