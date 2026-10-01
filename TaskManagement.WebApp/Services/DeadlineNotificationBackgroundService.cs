@@ -135,19 +135,15 @@ namespace TaskManagement.WebApp.Services
 
                 string? notificationType = null;
                 string? title = null;
-                string? message = null;
-
                 if (task.TaskEndDate.Date == today.AddDays(1))
                 {
                     notificationType = "TaskDeadlineTomorrow";
                     title = $"Deadline Tomorrow: {task.TaskTitle}";
-                    message = $"{task.TaskTitle} is due tomorrow.";
                 }
                 else if (task.TaskEndDate.Date == today)
                 {
                     notificationType = "TaskDeadlineToday";
                     title = $"Deadline Today: {task.TaskTitle}";
-                    message = $"{task.TaskTitle} is due today.";
                 }
 
                 if (notificationType == null)
@@ -205,9 +201,6 @@ namespace TaskManagement.WebApp.Services
                             taskId = createdNotification.TaskId,
                             createdAt = notification.CreatedAt
                         },
-                        cancellationToken);
-            }
-
                         cancellationToken);
             }
         }
