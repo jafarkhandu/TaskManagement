@@ -209,6 +209,7 @@ namespace TaskManagement.Infrastructure.Services
             // The task is considered finished after the admin makes the
             // explicit payment decision. Pay Later means payment is pending,
             // not that the review action was cancelled.
+            task.CompletedAtUtc ??= DateTime.UtcNow;
             task.Status = "Completed";
 
             // A completed task must not retain an active chat session.
