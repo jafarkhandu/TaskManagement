@@ -6,7 +6,23 @@
     var completedPercent = Model.TotalTasks > 0
         ? Math.Round((double)Model.CompletedTasks / Model.TotalTasks * 100)
         : 0;
-    var activeTasks = Model.PendingTasks + Model.InProgressTasks + Model.OnHoldTasks;
+
+    var donutStops = new List<string>();
+    var cumulativePercent = 0d;
+    var donutColors = new[] { "20b987", "3164f4", "ef5350", "f5a623", "7856ed" };
+    for (var i = 0; i < Model.StatusRows.Count; i++)
+    {
+        var row = Model.StatusRows[i];
+        var start = cumulativePercent;
+        cumulativePercent += row.Percent;
+        donutStops.Add($"#{donutColors[i % donutColors.Length]} {start.ToString(CultureInfo.InvariantCulture)}% {cumulativePercent.ToString(CultureInfo.InvariantCulture)}%");
+    }
+
+    var donutGradient = donutStops.Count > 0
+        ? $"conic-gradient(from -90deg, {string.Join(", ", donutStops)})"
+        : "conic-gradient(#e9edf4 0 100%)";
+
+    var statusColors = new[] { "green", "blue", "red", "orange", "purple" };
 }
 
 <!DOCTYPE html>
@@ -38,7 +54,7 @@
                         <strong>REPORTS</strong>
                     </div>
                     <h1>Reports</h1>
-                    <p>Track delivery, workload and task health across the workspace.</p>
+                    <p>Insights and analytics for your projects and team performance.</p>
                     <div id="reportPrintMeta" class="report-print-meta" aria-hidden="true"></div>
                 </div>
 
@@ -66,20 +82,20 @@
             <section class="report-summary">
                 <article class="report-summary-card">
                     <div class="summary-label">
-                        <span class="summary-icon blue">▱</span>
-                        <span>Total projects</span>
+                        <span class="summary-icon blue">✓</span>
+                        <span>Total Tasks</span>
                     </div>
-                    <strong>@Model.TotalProjects</strong>
-                    <small>Projects represented in this report</small>
+                    <strong>@Model.TotalTasks</strong>
+                    <small>All tasks in the selected period</small>
                 </article>
 
                 <article class="report-summary-card">
                     <div class="summary-label">
-                        <span class="summary-icon indigo">✓</span>
-                        <span>Total tasks</span>
+                        <span class="summary-icon purple">◷</span>
+                        <span>In Progress</span>
                     </div>
-                    <strong>@Model.TotalTasks</strong>
-                    <small>@activeTasks active or waiting</small>
+                    <strong>@Model.InProgressTasks</strong>
+                    <small>Tasks currently in progress</small>
                 </article>
 
                 <article class="report-summary-card">
@@ -94,52 +110,31 @@
                 <article class="report-summary-card">
                     <div class="summary-label">
                         <span class="summary-icon red">!</span>
-                        <span>Overdue</span>
+                        <span>On Hold</span>
                     </div>
-                    <strong>@Model.OverdueTasks</strong>
-                    <small>Open tasks past expected date</small>
+                    <strong>@Model.OnHoldTasks</strong>
+                    <small>Tasks currently on hold</small>
                 </article>
             </section>
 
-            <section class="reports-grid">
+            <section class="reports-grid reports-grid-main">
                 <article class="report-card status-card">
                     <div class="report-card-header">
                         <div>
                             <span class="report-card-eyebrow">WORKFLOW HEALTH</span>
-                            <h2>Task status</h2>
+                            <h2>Task status overview</h2>
                         </div>
                         <span class="report-card-meta">@Model.TotalTasks total</span>
                     </div>
-
-                    @{
-                        var statusColors = new[] { "blue", "purple", "green", "orange", "red" };
-                    }
-
-                    @{
-                        var donutStops = new List<string>();
-                        var cumulativePercent = 0d;
-                        for (var i = 0; i < Model.StatusRows.Count; i++)
-                        {
-                            var row = Model.StatusRows[i];
-                            var start = cumulativePercent;
-                            cumulativePercent += row.Percent;
-                            donutStops.Add($"#{(new[] { "3164f4", "7856ed", "20b987", "f5a623", "ef5350" })[i % 5]} {start.ToString(CultureInfo.InvariantCulture)}% {cumulativePercent.ToString(CultureInfo.InvariantCulture)}%");
-                        }
-
-                        var donutGradient = donutStops.Count > 0
-                            ? $"conic-gradient(from -90deg, {string.Join(", ", donutStops)})"
-                            : "conic-gradient(#e9edf4 0 100%)";
-                    }
 
                     <div class="status-analytics">
                         <div class="status-donut-wrap">
                             <div class="status-donut" style="background:@donutGradient" aria-label="Task status distribution">
                                 <div class="status-donut-center">
                                     <strong>@Model.TotalTasks</strong>
-                                    <span>Tasks</span>
+                                    <span>Total Tasks</span>
                                 </div>
                             </div>
-                            <span class="status-donut-caption">Total workload</span>
                         </div>
 
                         <div class="status-legend">
@@ -161,109 +156,72 @@
                     </div>
                 </article>
 
-                <article class="report-card breakdown-card">
+                <article class="report-card project-card">
                     <div class="report-card-header">
                         <div>
-                            <span class="report-card-eyebrow">AT A GLANCE</span>
-                            <h2>Task breakdown</h2>
+                            <span class="report-card-eyebrow">DELIVERY</span>
+                            <h2>Project performance</h2>
                         </div>
+                        <span class="report-count">@Model.ProjectRows.Count projects</span>
                     </div>
 
-                    <div class="breakdown-list">
-                        <div class="breakdown-row">
-                            <span><i class="breakdown-dot blue"></i>Pending</span>
-                            <strong>@Model.PendingTasks</strong>
-                        </div>
-                        <div class="breakdown-row">
-                            <span><i class="breakdown-dot purple"></i>In Progress</span>
-                            <strong>@Model.InProgressTasks</strong>
-                        </div>
-                        <div class="breakdown-row">
-                            <span><i class="breakdown-dot orange"></i>On Hold</span>
-                            <strong>@Model.OnHoldTasks</strong>
-                        </div>
-                        <div class="breakdown-row">
-                            <span><i class="breakdown-dot gray"></i>Cancelled</span>
-                            <strong>@Model.CancelledTasks</strong>
-                        </div>
-                    </div>
+                    <div class="report-table-wrap">
+                        <table id="projectReportTable" class="report-table compact-table">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Tasks</th>
+                                    <th>Completed</th>
+                                    <th>In progress</th>
+                                    <th>Overdue</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @if (Model.ProjectRows.Any())
+                            {
+                                foreach (var row in Model.ProjectRows)
+                                {
+                                    var projectPercent = row.TaskCount > 0
+                                        ? Math.Round((double)row.Completed / row.TaskCount * 100)
+                                        : 0;
+                                    var projectInitial = string.IsNullOrWhiteSpace(row.ProjectTitle)
+                                        ? "P"
+                                        : row.ProjectTitle.Substring(0, 1).ToUpper();
 
-                    <div class="breakdown-note">
-                        <span class="note-icon">i</span>
-                        <span>Completed and overdue counts are tracked separately from the active workflow.</span>
+                                    <tr>
+                                        <td>
+                                            <div class="entity-cell">
+                                                <span class="entity-avatar">@projectInitial</span>
+                                                <strong>@row.ProjectTitle</strong>
+                                            </div>
+                                        </td>
+                                        <td><span class="table-number">@row.TaskCount</span></td>
+                                        <td><span class="metric-pill success">@row.Completed</span></td>
+                                        <td><span class="metric-pill info">@row.InProgress</span></td>
+                                        <td><span class="metric-pill danger">@row.Overdue</span></td>
+                                        <td>
+                                            <div class="progress-cell">
+                                                <strong>@projectPercent%</strong>
+                                                <div class="progress-track">
+                                                    <span style="width:@projectPercent%"></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="6" class="report-empty">No project data for this period.</td></tr>
+                            }
+                            </tbody>
+                        </table>
                     </div>
                 </article>
             </section>
 
-            <section class="report-card full-card">
-                <div class="report-card-header">
-                    <div>
-                        <span class="report-card-eyebrow">DELIVERY</span>
-                        <h2>Project performance</h2>
-                        <p class="report-card-description">Task volume and completion across projects in the selected period.</p>
-                    </div>
-                    <span class="report-count">@Model.ProjectRows.Count projects</span>
-                </div>
-
-                <div class="report-table-wrap">
-                    <table id="projectReportTable" class="report-table">
-                        <thead>
-                            <tr>
-                                <th>Project</th>
-                                <th>Tasks</th>
-                                <th>Progress</th>
-                                <th>Completed</th>
-                                <th>In progress</th>
-                                <th>Overdue</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @if (Model.ProjectRows.Any())
-                        {
-                            foreach (var row in Model.ProjectRows)
-                            {
-                                var projectPercent = row.TaskCount > 0
-                                    ? Math.Round((double)row.Completed / row.TaskCount * 100)
-                                    : 0;
-                                var projectInitial = string.IsNullOrWhiteSpace(row.ProjectTitle)
-                                    ? "P"
-                                    : row.ProjectTitle.Substring(0, 1).ToUpper();
-
-                                <tr>
-                                    <td>
-                                        <div class="entity-cell">
-                                            <span class="entity-avatar">@projectInitial</span>
-                                            <div>
-                                                <strong>@row.ProjectTitle</strong>
-                                                <small>Project workspace</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><span class="table-number">@row.TaskCount</span></td>
-                                    <td>
-                                        <div class="progress-cell">
-                                            <div class="progress-track">
-                                                <span style="width:@projectPercent%"></span>
-                                            </div>
-                                            <small>@projectPercent%</small>
-                                        </div>
-                                    </td>
-                                    <td><span class="metric-pill success">@row.Completed</span></td>
-                                    <td><span class="metric-pill info">@row.InProgress</span></td>
-                                    <td><span class="metric-pill danger">@row.Overdue</span></td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr><td colspan="6" class="report-empty">No project data for this period.</td></tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section class="report-card full-card">
+            <section class="report-card full-card workload-card">
                 <div class="report-card-header">
                     <div>
                         <span class="report-card-eyebrow">CAPACITY</span>
@@ -279,9 +237,9 @@
                             <tr>
                                 <th>Student</th>
                                 <th>Assigned</th>
-                                <th>Completion</th>
                                 <th>Completed</th>
                                 <th>Pending / active</th>
+                                <th>Completion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -300,23 +258,20 @@
                                     <td>
                                         <div class="entity-cell">
                                             <span class="entity-avatar person">@studentInitial</span>
-                                            <div>
-                                                <strong>@row.StudentName</strong>
-                                                <small>Assigned workload</small>
-                                            </div>
+                                            <strong>@row.StudentName</strong>
                                         </div>
                                     </td>
                                     <td><span class="table-number">@row.Assigned</span></td>
+                                    <td><span class="metric-pill success">@row.Completed</span></td>
+                                    <td><span class="metric-pill neutral">@row.Pending</span></td>
                                     <td>
                                         <div class="progress-cell">
+                                            <strong>@studentPercent%</strong>
                                             <div class="progress-track">
                                                 <span style="width:@studentPercent%"></span>
                                             </div>
-                                            <small>@studentPercent%</small>
                                         </div>
                                     </td>
-                                    <td><span class="metric-pill success">@row.Completed</span></td>
-                                    <td><span class="metric-pill neutral">@row.Pending</span></td>
                                 </tr>
                             }
                         }
