@@ -40,6 +40,9 @@ namespace TaskManagement.Application.DTOs
         [Required]
         public DateTime ExpectedEndDate { get; set; }
 
+        // Set only when the task actually reaches Completed.
+        public DateTime? CompletedAtUtc { get; set; }
+
         [Required]
         [Range(0, 9999999999.99)]
         public decimal Amount { get; set; }

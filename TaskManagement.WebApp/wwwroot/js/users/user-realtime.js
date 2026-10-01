@@ -28,14 +28,15 @@
         const type = String(payload.type || "").toLowerCase();
         const rejected = type.includes("rejected");
         const settled = type.includes("paymentsettled");
+        const withheld = type.includes("paymentwithheld");
         const approved = type.includes("approved");
 
         const toast = document.createElement("div");
         toast.className =
             "user-review-realtime-toast " +
-            (rejected ? "is-rejected" : settled ? "is-settled" : approved ? "is-approved" : "");
+            (rejected ? "is-rejected" : withheld ? "is-withheld" : settled ? "is-settled" : approved ? "is-approved" : "");
 
-        const icon = rejected ? "×" : settled ? "₹" : "✓";
+        const icon = rejected ? "×" : withheld ? "₹" : settled ? "₹" : "✓";
 
         toast.innerHTML =
             '<div class="user-review-toast-icon">' + icon + '</div>' +
@@ -78,7 +79,7 @@
 
                 notifications
                     .filter(n =>
-                        ["TaskReviewApproved", "TaskReviewRejected", "TaskPaymentSettled"]
+                        ["TaskReviewApproved", "TaskReviewRejected", "TaskPaymentSettled", "TaskPaymentWithheld"]
                             .includes(String(n.type || ""))
                     )
                     .forEach((n, index) => {

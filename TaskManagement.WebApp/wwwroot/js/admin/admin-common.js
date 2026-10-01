@@ -180,59 +180,6 @@
 
 
     /* =====================================================
-       ADMIN GLOBAL SEARCH
-       Client-side search over data already rendered on the
-       current admin page. No backend/search endpoint required.
-    ===================================================== */
-
-    const adminGlobalSearch = document.getElementById("adminGlobalSearch");
-
-    if (adminGlobalSearch) {
-        const searchSelectors = [
-            ".review-card",
-            ".pending-payment-card",
-            ".project-table tbody tr",
-            ".report-table tbody tr",
-            ".admin-stat-modal-item"
-        ];
-
-        function getAdminSearchTargets() {
-            const targets = [];
-            searchSelectors.forEach(selector => {
-                document.querySelectorAll(selector).forEach(element => {
-                    if (!targets.includes(element)) {
-                        targets.push(element);
-                    }
-                });
-            });
-            return targets;
-        }
-
-        function applyAdminGlobalSearch() {
-            const query = adminGlobalSearch.value.trim().toLowerCase();
-
-            getAdminSearchTargets().forEach(element => {
-                const matches =
-                    !query ||
-                    element.textContent.toLowerCase().includes(query);
-
-                element.hidden = !matches;
-            });
-        }
-
-        adminGlobalSearch.addEventListener("input", applyAdminGlobalSearch);
-
-        adminGlobalSearch.addEventListener("keydown", event => {
-            if (event.key === "Escape") {
-                adminGlobalSearch.value = "";
-                applyAdminGlobalSearch();
-                adminGlobalSearch.blur();
-            }
-        });
-    }
-
-
-    /* =====================================================
        GLOBAL ADMIN NOTIFICATIONS
        Chat messages are intentionally excluded from this panel.
     ===================================================== */

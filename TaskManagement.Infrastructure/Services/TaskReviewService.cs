@@ -19,6 +19,29 @@ namespace TaskManagement.Infrastructure.Services
             _userManager = userManager;
         }
 
+        private static TimeZoneInfo GetApplicationLocalTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
+        }
+
+        private static DateTime GetDeadlineBoundaryUtc(DateTime expectedEndDate)
+        {
+            var localDeadlineBoundary = expectedEndDate.Date.AddDays(1);
+
+            return TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(
+                    localDeadlineBoundary,
+                    DateTimeKind.Unspecified),
+                GetApplicationLocalTimeZone());
+        }
+
         private IQueryable<TaskReviewDto> ReviewQuery()
         {
             return from r in _db.TaskReviews.AsNoTracking()
@@ -45,6 +68,9 @@ namespace TaskManagement.Infrastructure.Services
                        RejectionReason = r.RejectionReason,
                        PaymentStatus = pay == null ? null : pay.Status,
                        SubmittedAt = r.SubmittedAt,
+                       DeadlineAtSubmission = r.DeadlineAtSubmission,
+                       IsLate = r.DeadlineAtSubmission.HasValue &&
+                                r.SubmittedAt > r.DeadlineAtSubmission.Value,
                        PaymentMethod = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.PaymentMethod).FirstOrDefault(),
                        UpiId = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.UpiId).FirstOrDefault(),
                        AccountHolderName = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.AccountHolderName).FirstOrDefault(),
@@ -130,6 +156,10 @@ namespace TaskManagement.Infrastructure.Services
             review.ReviewedByAdminId = adminId;
             review.ReviewedAt = DateTime.UtcNow;
             review.RejectionReason = reason.Trim();
+
+            // A rejected review means the task was not completed. Clear the
+            // prior submission time so a later resubmission becomes authoritative.
+            task.CompletedAtUtc = null;
             task.Status = "On Hold";
 
             var assignment = await _db.TaskAssignments.FirstOrDefaultAsync(x => x.Id == review.TaskAssignmentId);
@@ -169,7 +199,17 @@ namespace TaskManagement.Infrastructure.Services
             var assignment = await _db.TaskAssignments.FirstOrDefaultAsync(x => x.Id == review.TaskAssignmentId);
             if (task == null || assignment == null) return (false, "Task assignment not found.");
 
-            if (payNow)
+            // Deadline eligibility is based on the timestamp captured at
+            // submission, not on the task's current editable end date.
+            var deadlineBoundaryUtc = review.DeadlineAtSubmission
+                ?? GetDeadlineBoundaryUtc(task.ExpectedEndDate);
+
+            var isLate = review.SubmittedAt > deadlineBoundaryUtc;
+            var payableAmount = isLate ? 0m : task.Amount;
+
+            // A late task has no payable amount, so payment details are not
+            // required and Pay Now/Pay Later both finalize it as withheld.
+            if (payNow && !isLate)
             {
                 var paymentDetails = await _db.UserPaymentDetails
                     .AsNoTracking()
@@ -186,7 +226,10 @@ namespace TaskManagement.Infrastructure.Services
                     TaskAssignmentId = assignment.Id,
                     TaskId = task.Id,
                     UserId = assignment.UserId,
-                    Amount = task.Amount,
+                    Amount = payableAmount,
+                    Status = isLate
+                        ? "Withheld"
+                        : (payNow ? "Paid" : "Pending"),
                     ApprovedAt = DateTime.UtcNow
                 };
 
@@ -194,13 +237,17 @@ namespace TaskManagement.Infrastructure.Services
             }
             else
             {
-                payment.Amount = task.Amount;
+                payment.Amount = payableAmount;
                 payment.ApprovedAt ??= DateTime.UtcNow;
             }
 
-            payment.Status = payNow ? "Paid" : "Pending";
-            payment.PaidAt = payNow ? DateTime.UtcNow : null;
-            payment.SettledByAdminId = payNow ? adminId : null;
+            payment.Status = isLate
+                ? "Withheld"
+                : (payNow ? "Paid" : "Pending");
+            payment.PaidAt = !isLate && payNow ? DateTime.UtcNow : null;
+            payment.SettledByAdminId = isLate || payNow
+                ? adminId
+                : null;
 
             review.Status = "Approved";
             review.ReviewedByAdminId = adminId;
@@ -209,6 +256,7 @@ namespace TaskManagement.Infrastructure.Services
             // The task is considered finished after the admin makes the
             // explicit payment decision. Pay Later means payment is pending,
             // not that the review action was cancelled.
+            task.CompletedAtUtc ??= DateTime.UtcNow;
             task.Status = "Completed";
 
             // A completed task must not retain an active chat session.
@@ -220,14 +268,24 @@ namespace TaskManagement.Infrastructure.Services
             if (taskChats.Count > 0)
                 _db.ChatSessions.RemoveRange(taskChats);
 
+            var notificationType = isLate
+                ? "TaskPaymentWithheld"
+                : payNow
+                    ? "TaskPaymentSettled"
+                    : "TaskReviewApproved";
+
+            var notificationTitle = isLate
+                ? $"Payment Withheld: {task.Title}"
+                : payNow
+                    ? $"Payment Settled: {task.Title}"
+                    : $"Task Approved: {task.Title}";
+
             _db.Notifications.Add(new Notification
             {
                 UserId = assignment.UserId,
                 TaskAssignmentId = assignment.Id,
-                Type = payNow ? "TaskPaymentSettled" : "TaskReviewApproved",
-                Title = payNow
-                    ? $"Payment Settled: {task.Title}"
-                    : $"Task Approved: {task.Title}",
+                Type = notificationType,
+                Title = notificationTitle,
                 IsRead = false,
                 IsDelivered = false,
                 CreatedAt = DateTime.UtcNow

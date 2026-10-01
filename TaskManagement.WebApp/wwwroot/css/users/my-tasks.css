@@ -4179,3 +4179,45 @@ html.light-theme .user-task-app .task-card .task-card-top .task-review-pending {
         font-size: 12px !important;
     }
 }
+
+
+/* =========================================================
+   DEADLINE DATE STATE
+========================================================= */
+
+.task-card:not([data-status="Completed"]) .task-meta > span:first-child {
+    color: #dc4f5a;
+    font-weight: 700;
+}
+
+.task-card[data-status="Completed"] .task-meta > span:first-child {
+    color: #20a36f;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   TASK DETAILS — DEADLINE PAYMENT WARNING
+========================================================= */
+
+.task-deadline-modal-warning {
+    margin-top: 14px;
+    padding: 9px 12px;
+    border: 1px solid rgba(220, 79, 90, .22);
+    border-radius: 9px;
+    background: rgba(220, 79, 90, .07);
+    color: #dc4f5a;
+    font-size: 11px;
+    line-height: 1.55;
+    font-weight: 700;
+}
+
+.task-deadline-modal-warning[hidden] {
+    display: none !important;
+}
+
+html.light-theme .task-deadline-modal-warning {
+    color: #c53c48;
+    background: rgba(220, 79, 90, .06);
+    border-color: rgba(220, 79, 90, .18);
+}

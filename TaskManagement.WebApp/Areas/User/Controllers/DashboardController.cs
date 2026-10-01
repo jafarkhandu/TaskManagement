@@ -128,6 +128,21 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 })
                 .ToList();
 
+            var activeDeadlineTasks = tasks
+                .Where(x => x.Status != "Completed")
+                .ToList();
+
+            var overdueDeadlineTasks = activeDeadlineTasks.Count(
+                x => x.ExpectedEndDate.Date < now.Date
+            );
+
+            var deadlineHealthPercent = activeDeadlineTasks.Count == 0
+                ? 100
+                : (int)Math.Round(
+                    (activeDeadlineTasks.Count - overdueDeadlineTasks) * 100.0 /
+                    activeDeadlineTasks.Count
+                );
+
             var model = new UserDashboardViewModel
             {
                 UserName = user.FullName ?? user.UserName ?? "User",
@@ -161,6 +176,8 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 ActiveProjects = projectSummaries.Count(
                     x => x.Status != "Completed"
                 ),
+
+                DeadlineHealthPercent = deadlineHealthPercent,
 
                 FocusTasks = focusTasks,
                 RecentTasks = recentTasks,

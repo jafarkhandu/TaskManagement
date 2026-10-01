@@ -32,7 +32,9 @@
         <section class="review-list" id="reviewList">
         @foreach (var review in Model)
         {
-            <article class="review-card" data-review-id="@review.ReviewId">
+            <article class="review-card"
+                     data-review-id="@review.ReviewId"
+                     data-late="@(review.IsLate ? "true" : "false")">
                 <div class="review-card-head">
                     <div>
                         <span class="review-task-id">TASK-@review.TaskId</span>
@@ -46,9 +48,14 @@
                     <div><span>Amount</span><strong>₹ @review.Amount.ToString("N2")</strong></div>
                     <div><span>Priority</span><strong>@review.Priority</strong></div>
                     <div><span>Submitted</span><strong>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</strong></div>
+                    <div>
+                        <span>Deadline</span>
+                        <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
+                            @(review.IsLate ? "Late · ₹0 payable" : "On time · Full payment")
+                        </strong>
+                    </div>
                 </div>
-
-                <div class="review-repository">
+<div class="review-repository">
                     <span>Submitted Repository</span>
                     @if (!string.IsNullOrWhiteSpace(review.RepositoryUrl))
                     {
@@ -57,7 +64,9 @@
                 </div>
 
                 <div class="review-actions">
-                    <button type="button" class="btn btn-review-approve" data-action="approve">✓ Approve</button>
+                    <button type="button" class="btn btn-review-approve" data-action="approve">
+                        @(review.IsLate ? "✓ Approve · No Payment" : "✓ Approve")
+                    </button>
                     <button type="button" class="btn btn-review-reject" data-action="reject">✕ Reject</button>
                 </div>
             </article>
@@ -129,6 +138,7 @@
       <div class="payment-review-summary">
         <span>User</span><strong id="paymentUserName">-</strong>
         <span>Amount</span><strong id="paymentAmount">₹ 0.00</strong>
+        <span>Eligibility</span><strong id="paymentEligibility">-</strong>
         <span>Method</span><strong id="paymentMethod">-</strong>
       </div>
       <div class="payment-review-method" id="paymentReviewMethod">
@@ -148,7 +158,7 @@
         </div>
       </div>
     </div>
-    <div class="payment-review-warning">Payment is handled by the admin outside this workflow. Use <b>Pay Now</b> only after you have actually settled the amount.</div>
+    <div class="payment-review-warning" id="paymentReviewWarning">Payment is handled by the admin outside this workflow. Use <b>Pay Now</b> only after you have actually settled the amount.</div>
    </div>
    <div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-outline-warning" id="payLater">Later</button><button class="btn btn-success" id="payNow">Pay Now</button></div>
   </div>

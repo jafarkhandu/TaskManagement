@@ -1479,6 +1479,23 @@ html.light-theme .user-chat-island-orb {
     }
 
 
+/* ================= DEADLINE HEALTH ================= */
+
+.deadline-health-progress {
+    margin-top: 9px;
+    padding-top: 8px;
+    border-top: 0;
+}
+
+.deadline-health-track {
+    height: 4px;
+}
+
+.deadline-health-track span {
+    background: linear-gradient(90deg, #4b8cff, #32d6a1);
+}
+
+
 /* ================= INSIGHT ================= */
 
 .overview-insight {
