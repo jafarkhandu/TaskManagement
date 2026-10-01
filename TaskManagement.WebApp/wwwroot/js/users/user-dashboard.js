@@ -758,6 +758,51 @@
         );
 
 
+        // Live task status sync. My Tasks listens to this browser event
+        // and moves the affected card without a refresh.
+        notificationConnection.on(
+            "TaskStatusChanged",
+            (payload) => {
+                if (!payload) return;
+                window.dispatchEvent(
+                    new CustomEvent("taskmanager:task-status-changed", {
+                        detail: payload
+                    })
+                );
+            }
+        );
+
+        notificationConnection.on(
+            "TaskAssignmentReassigned",
+            async (payload) => {
+                if (!payload) return;
+
+                try {
+                    await loadAssignmentNotifications();
+                }
+                catch (error) {
+                    console.warn("Unable to refresh reassignment notification:", error);
+                }
+
+                if (payload.notificationId) {
+                    showLiveToast({
+                        notificationId: payload.notificationId,
+                        type: payload.type || "TaskAssignmentReassigned",
+                        title: payload.title || "Task Assignment Changed",
+                        message: payload.message || "This task has been reassigned and can no longer be accepted or rejected.",
+                        taskId: payload.taskId,
+                        projectId: payload.projectId,
+                        createdAt: payload.createdAt
+                    });
+
+                    notificationConnection.invoke(
+                        "AcknowledgeNotification",
+                        Number(payload.notificationId)
+                    ).catch(() => {});
+                }
+            }
+        );
+
         notificationConnection.on(
             "TaskAssignmentReceived",
             async (payload) => {
