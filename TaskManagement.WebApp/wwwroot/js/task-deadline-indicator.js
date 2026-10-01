@@ -108,9 +108,27 @@
         const remaining = deadline.getTime() - now.getTime();
 
         if (remaining <= 0) {
+            // Overdue streak is calendar-day based, not a rolling 24-hour count.
+            // Example: due Oct 1 -> Oct 2 = 1 day overdue, Oct 3 = 2 days.
+            const dueDate = new Date(
+                deadline.getFullYear(),
+                deadline.getMonth(),
+                deadline.getDate() - 1,
+                0, 0, 0, 0
+            );
+
+            const currentDate = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                0, 0, 0, 0
+            );
+
             const overdueDays = Math.max(
                 1,
-                Math.ceil(Math.abs(remaining) / DAY_MS)
+                Math.round(
+                    (currentDate.getTime() - dueDate.getTime()) / DAY_MS
+                )
             );
 
             const indicator = ensureIndicator(card);
