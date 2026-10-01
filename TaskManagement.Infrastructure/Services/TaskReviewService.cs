@@ -178,6 +178,15 @@ namespace TaskManagement.Infrastructure.Services
             payment.SettledByAdminId = payNow ? adminId : null;
             task.Status = "Completed";
 
+            // A completed task must not retain an active chat session.
+            // Remove every session for this task, not only the currently selected one.
+            var taskChats = await _db.ChatSessions
+                .Where(x => x.TaskId == task.Id)
+                .ToListAsync();
+
+            if (taskChats.Count > 0)
+                _db.ChatSessions.RemoveRange(taskChats);
+
             if (payNow)
             {
                 _db.Notifications.Add(new Notification
