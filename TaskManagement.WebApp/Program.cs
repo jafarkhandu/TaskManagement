@@ -5,6 +5,7 @@ using TaskManagement.Infrastructure.Data;
 using TaskManagement.Infrastructure.Identity;
 using TaskManagement.Infrastructure.Services;
 using TaskManagement.WebApp.Hubs;
+using TaskManagement.WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +81,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskReviewService, TaskReviewService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddHostedService<DeadlineNotificationBackgroundService>();
 
 var app = builder.Build();
 
