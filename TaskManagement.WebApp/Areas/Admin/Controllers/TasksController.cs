@@ -146,14 +146,14 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return BadRequest(new { success = false, message = string.Join(" | ", errors) });
             }
 
-            var chatSessionIdsToDelete =
+            var chatSessionsToDelete =
                 string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase)
                     ? await _context.ChatSessions
                         .AsNoTracking()
                         .Where(x => x.TaskId == model.Id && x.IsActive)
-                        .Select(x => x.Id)
+                        .Select(x => new ValueTuple<int, string>(x.Id, x.UserId))
                         .ToListAsync()
-                    : new List<int>();
+                    : new List<(int Id, string UserId)>();
 
             // Capture a still-pending assignment before the update so a reassignment
             // can be delivered live to both the old and new users.
@@ -303,13 +303,17 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
             if (string.Equals(model.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var chatSessionId in chatSessionIdsToDelete)
+                foreach (var chat in chatSessionsToDelete)
                 {
                     try
                     {
                         await _chatHub.Clients
-                            .Group($"chat-{chatSessionId}")
-                            .SendAsync("ChatDeleted", new { chatSessionId });
+                            .Group($"chat-{chat.Id}")
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        await _chatHub.Clients
+                            .User(chat.UserId)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
                     }
                     catch
                     {
