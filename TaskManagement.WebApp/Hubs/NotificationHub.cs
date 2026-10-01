@@ -122,7 +122,11 @@ namespace TaskManagement.WebApp.Hubs
                                 notificationId = x.Notification.Id,
                                 type = x.Notification.Type,
                                 title = x.Notification.Title,
-                                message = x.Notification.Title,
+                                message = x.Notification.Type == "TaskDeadlineTomorrow"
+                                    ? (t.Title + " is due tomorrow.")
+                                    : x.Notification.Type == "TaskDeadlineToday"
+                                        ? (t.Title + " is due today.")
+                                        : x.Notification.Title,
                                 scenario = t.Scenario,
                                 priority = t.Priority,
                                 startDate = t.StartDate,
