@@ -245,7 +245,9 @@ namespace TaskManagement.Infrastructure.Services
                 ? "Withheld"
                 : (payNow ? "Paid" : "Pending");
             payment.PaidAt = !isLate && payNow ? DateTime.UtcNow : null;
-            payment.SettledByAdminId = adminId;
+            payment.SettledByAdminId = isLate || payNow
+                ? adminId
+                : null;
 
             review.Status = "Approved";
             review.ReviewedByAdminId = adminId;
