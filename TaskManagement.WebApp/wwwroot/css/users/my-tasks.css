@@ -1828,34 +1828,10 @@ html.light-theme .modal-info {
         color: #7b8da5;
     }
 
-/* Review Pending — isolated reference-style badge. */
-.user-task-app .task-card .task-card-top .task-review-pending {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 0 0 auto !important;
-    min-width: 220px !important;
-    width: 220px !important;
-    height: 52px !important;
-    margin: 0 0 0 8px !important;
-    padding: 0 22px !important;
-    box-sizing: border-box !important;
-    border-radius: 999px !important;
-    border: 3px solid #d7c9ef !important;
-    background: #f0ebfa !important;
-    color: #7044c6 !important;
-    font-size: 20px !important;
-    font-weight: 800 !important;
-    line-height: 1 !important;
-    letter-spacing: 0 !important;
-    white-space: nowrap !important;
-    text-align: center !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
     html.light-theme .modal-info strong {
         color: #24324b;
+    }
+
         /* =========================================================
    MY TASKS LIGHT HERO — KEEP DASHBOARD IMAGE VISIBLE
    ========================================================= */
@@ -2035,26 +2011,6 @@ html.light-theme .task-card .task-chat-btn:hover span {
 }
 
 
-/* Review Pending badge — reference style */
-.task-review-pending {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 42px;
-    padding: 8px 22px;
-    margin-left: 6px;
-    border-radius: 999px;
-    color: #7044c6 !important;
-    background: #f0ebfa !important;
-    border: 2px solid #d7c9ef !important;
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: 0;
-    line-height: 1.15;
-    white-space: nowrap;
-}
-
-
 /* Final reference override: keep Review Pending badge intact after theme.css loads. */
 html .user-task-app .task-card .task-card-top .task-review-pending {
     display: inline-flex !important;
@@ -2079,4 +2035,56 @@ html .user-task-app .task-card .task-card-top .task-review-pending {
     text-align: center !important;
     opacity: 1 !important;
     visibility: visible !important;
+}
+
+
+/* =========================================================
+   REVIEW PENDING — REFERENCE-QUALITY STATUS PILL
+   Compact sizing; glass in dark mode; clean in light mode.
+========================================================= */
+.user-task-app .task-card .task-card-top .task-review-pending {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    margin: 0 0 0 8px !important;
+    padding: 0 14px !important;
+    box-sizing: border-box !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(177, 148, 255, .46) !important;
+    background: rgba(112, 68, 198, .16) !important;
+    color: #bfa7ff !important;
+    font-size: 14px !important;
+    font-weight: 750 !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 18px rgba(0,0,0,.12) !important;
+    backdrop-filter: blur(12px) saturate(125%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+html.light-theme .user-task-app .task-card .task-card-top .task-review-pending {
+    height: 36px !important;
+    padding: 0 14px !important;
+    border: 1px solid #d7c9ef !important;
+    background: #f0ebfa !important;
+    color: #7044c6 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 700px) {
+    .user-task-app .task-card .task-card-top .task-review-pending {
+        height: 34px !important;
+        padding: 0 12px !important;
+        font-size: 13px !important;
+    }
 }
