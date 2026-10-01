@@ -695,3 +695,20 @@ body {
         padding: 22px;
     }
 }
+
+
+.payment-deadline-warning {
+    border-color: rgba(220, 79, 90, .24) !important;
+    background: rgba(220, 79, 90, .07) !important;
+    color: #dc4f5a !important;
+}
+
+.payment-deadline-warning .action-info-icon {
+    color: #dc4f5a !important;
+}
+
+html.light-theme .payment-deadline-warning {
+    border-color: rgba(198, 63, 73, .20) !important;
+    background: rgba(220, 79, 90, .06) !important;
+    color: #c53c48 !important;
+}
