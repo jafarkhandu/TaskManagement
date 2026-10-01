@@ -629,6 +629,11 @@ namespace TaskManagement.Infrastructure.Services
             // A pending assignment is a request, not an accepted assignment.
             // When admin changes the assignee while it is still pending, invalidate
             // the old request and create a fresh pending request for the new user.
+            var pendingAssignmentForSameUser =
+                latestAssignment != null &&
+                string.Equals(latestAssignment.Status, "Pending", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(latestAssignment.UserId, assignedUser.Id, StringComparison.Ordinal);
+
             if (pendingReassignment)
             {
                 latestAssignment!.Status = "Reassigned";
@@ -668,6 +673,12 @@ namespace TaskManagement.Infrastructure.Services
                 });
 
                 // Do not mark the task as accepted/directly assigned.
+                task.AssignedToUserId = null;
+                task.Status = "Pending";
+            }
+            else if (pendingAssignmentForSameUser)
+            {
+                // A pending request remains a request until the user accepts it.
                 task.AssignedToUserId = null;
                 task.Status = "Pending";
             }
