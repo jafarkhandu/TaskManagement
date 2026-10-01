@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderList(items) {
         if (!listEl) return;
         if (!items || items.length === 0) {
-            listEl.innerHTML = '<div class="notification-empty"><span>✓</span><strong>You\'re all caught up</strong><small>No new task assignments.</small></div>';
+            listEl.innerHTML = '<div class="notification-empty"><span>✓</span><strong>You\'re all caught up</strong><small>No new notifications.</small></div>';
             return;
         }
 
