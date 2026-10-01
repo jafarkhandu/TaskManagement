@@ -350,11 +350,15 @@
                         </option>
 
                         <option value="Pending">
-                            Pending
+                            To Do
                         </option>
 
                         <option value="In Progress">
-                            In Progress
+                            In Progress / Review
+                        </option>
+
+                        <option value="Review Pending">
+                            Review Pending
                         </option>
 
                         <option value="On Hold">
@@ -568,24 +572,6 @@
 
                             <div class="form-field">
 
-                                <label>Status</label>
-
-                                <select name="Status"
-                                        class="form-control">
-
-                                    <option>Pending</option>
-                                    <option>In Progress</option>
-                                    <option>On Hold</option>
-                                    <option>Completed</option>
-                                    <option>Cancelled</option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="form-field">
-
                                 <label>Amount</label>
 
                                 <input type="number"
@@ -740,11 +726,25 @@
 
                                 <label>Assigned To</label>
 
-                                <select name="AssignedToUserId"
-                                        id="editAssignedTo"
-                                        class="form-control"
-                                        required>
-                                </select>
+                                <div class="user-autocomplete" data-user-autocomplete>
+                                    <input type="text"
+                                           id="editAssignedToSearch"
+                                           class="form-control user-autocomplete-input"
+                                           placeholder="Select User"
+                                           autocomplete="off"
+                                           required />
+                                    <input type="hidden"
+                                           name="AssignedToUserId"
+                                           id="editAssignedTo" />
+                                    <div id="editAssignedToOptions"
+                                         class="user-autocomplete-options"></div>
+                                </div>
+
+                                <small id="editAssignedToLockMessage"
+                                       class="text-muted"
+                                       style="display:none;">
+                                    User can't be changed once the task has been accepted.
+                                </small>
 
                             </div>
 
@@ -761,25 +761,6 @@
                                     <option>Medium</option>
                                     <option>High</option>
                                     <option>Critical</option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="form-field">
-
-                                <label>Status</label>
-
-                                <select name="Status"
-                                        id="editStatus"
-                                        class="form-control">
-
-                                    <option>Pending</option>
-                                    <option>In Progress</option>
-                                    <option>On Hold</option>
-                                    <option>Completed</option>
-                                    <option>Cancelled</option>
 
                                 </select>
 
