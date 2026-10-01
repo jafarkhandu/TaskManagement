@@ -16,10 +16,33 @@ function post(url, data) {
 }
 
 function fillPaymentModal(x) {
+    const isLate = Boolean(x.isLate);
+
     document.getElementById('paymentTaskTitle').textContent = x.taskTitle || 'Payment Details';
     document.getElementById('paymentUserName').textContent = x.userName || '-';
-    document.getElementById('paymentAmount').textContent = '₹ ' + Number(x.amount || 0).toFixed(2);
-    document.getElementById('paymentMethod').textContent = x.paymentMethod || 'Not set';
+    document.getElementById('paymentAmount').textContent =
+        '₹ ' + (isLate ? '0.00' : Number(x.amount || 0).toFixed(2));
+
+    const eligibility = document.getElementById('paymentEligibility');
+    if (eligibility) {
+        eligibility.textContent = isLate
+            ? 'WITHHELD · LATE SUBMISSION'
+            : 'ELIGIBLE · FULL PAYMENT';
+        eligibility.classList.toggle('payment-withheld', isLate);
+        eligibility.classList.toggle('payment-eligible', !isLate);
+    }
+
+    const warning = document.getElementById('paymentReviewWarning');
+    if (warning) {
+        warning.innerHTML = isLate
+            ? '<b>Payment withheld:</b> this task was submitted after the deadline. The payable amount is ₹0.00.'
+            : 'Payment is handled by the admin outside this workflow. Use <b>Pay Now</b> only after you have actually settled the amount.';
+        warning.classList.toggle('payment-review-warning-late', isLate);
+    }
+
+    document.getElementById('paymentMethod').textContent = isLate
+        ? 'Not required'
+        : (x.paymentMethod || 'Not set');
     document.getElementById('paymentUpi').textContent = x.upiId || '-';
     document.getElementById('paymentHolder').textContent = x.accountHolderName || '-';
     document.getElementById('paymentBank').textContent = x.bankName || '-';
@@ -31,7 +54,7 @@ function fillPaymentModal(x) {
     const bankPanel = document.getElementById('paymentBankPanel');
 
     const method = String(x.paymentMethod || '').trim().toUpperCase();
-    const isUpi = method === 'UPI' && !!x.upiId;
+    const isUpi = !isLate && method === 'UPI' && !!x.upiId;
     const hasBankDetails =
         !!x.accountHolderName ||
         !!x.bankName ||
