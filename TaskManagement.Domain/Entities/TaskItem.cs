@@ -22,6 +22,9 @@ namespace TaskManagement.Domain.Entities
 
         public DateTime ExpectedEndDate { get; set; }
 
+        // Captures the exact moment the task is completed for admin-only deadline performance insights.
+        public DateTime? CompletedAtUtc { get; set; }
+
         public decimal Amount { get; set; }
     }
 }
