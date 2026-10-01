@@ -51,7 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isDeadlineNotification =
                 n.notificationType === 'TaskDeadlineTomorrow' ||
-                n.notificationType === 'TaskDeadlineToday';
+                n.notificationType === 'TaskDeadlineToday' ||
+                n.notificationType === 'TaskPaymentWithheld';
 
             card.innerHTML = `
                 <div class="notification-card-inner">
