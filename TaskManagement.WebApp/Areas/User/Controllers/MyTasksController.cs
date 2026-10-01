@@ -194,14 +194,14 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
             if (user == null)
                 return Challenge();
 
-            var chatSessionIdsToDelete =
+            var chatSessionsToDelete =
                 string.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase)
                     ? await _context.ChatSessions
                         .AsNoTracking()
                         .Where(x => x.TaskId == taskId && x.IsActive)
-                        .Select(x => x.Id)
+                        .Select(x => new { x.Id, x.UserId })
                         .ToListAsync()
-                    : new List<int>();
+                    : new List<dynamic>();
 
             var result = await _taskService.ChangeStatusAsync(
                 taskId,
@@ -230,6 +230,17 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 await _notificationHub.Clients
                     .Group($"project-{result.ProjectId}")
                     .SendAsync("TaskStatusChanged", statusPayload);
+
+                // Also address every admin directly. This makes the sync
+                // independent of whether the admin board has successfully
+                // rejoined the project group after a SignalR reconnect.
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                foreach (var admin in admins)
+                {
+                    await _notificationHub.Clients
+                        .User(admin.Id)
+                        .SendAsync("TaskStatusChanged", statusPayload);
+                }
 
                 // The assigned user also receives the same event directly so
                 // every open My Tasks board stays live without requiring a refresh.
@@ -292,13 +303,20 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
                 // Completed tasks no longer keep their task chat. The service already
                 // removed the database records; notify connected chat clients using the
                 // session IDs captured before deletion.
-                foreach (var chatSessionId in chatSessionIdsToDelete)
+                foreach (var chat in chatSessionsToDelete)
                 {
                     try
                     {
                         await _chatHub.Clients
-                            .Group($"chat-{chatSessionId}")
-                            .SendAsync("ChatDeleted", new { chatSessionId });
+                            .Group($"chat-{chat.Id}")
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
+
+                        // The user may only have the conversation drawer open,
+                        // not the individual SignalR chat group. Notify the user
+                        // directly so the stale conversation disappears there too.
+                        await _chatHub.Clients
+                            .User(chat.UserId)
+                            .SendAsync("ChatDeleted", new { chatSessionId = chat.Id });
                     }
                     catch
                     {
