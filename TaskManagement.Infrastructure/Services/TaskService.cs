@@ -634,19 +634,13 @@ namespace TaskManagement.Infrastructure.Services
                 string.Equals(latestAssignment.Status, "Pending", StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(latestAssignment.UserId, assignedUser.Id, StringComparison.Ordinal);
 
-            var rejectedReassignment =
-                acceptedAssignment == null &&
-                latestAssignment != null &&
-                string.Equals(latestAssignment.Status, "Rejected", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(latestAssignment.UserId, assignedUser.Id, StringComparison.Ordinal);
-
             var oldAssignmentUserId =
-                pendingReassignment || rejectedReassignment
+                pendingReassignment
                     ? latestAssignment!.UserId
                     : null;
 
             var shouldCreateNewAssignment =
-                pendingReassignment || rejectedReassignment;
+                pendingReassignment;
 
             var shouldKeepPendingAssignment =
                 acceptedAssignment == null &&
