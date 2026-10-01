@@ -229,7 +229,40 @@ function openScenarioModal(button) {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('scenarioModal')).show();
 }
 
-document.addEventListener('click', event => {
+document.addEventListener('click', async event => {
+    const fullAction = event.target.closest('.all-review-action');
+    if (fullAction) {
+        activeReview = { reviewId: Number(fullAction.dataset.reviewId || 0) };
+        const action = fullAction.dataset.action;
+        if (!activeReview.reviewId) return;
+
+        if (action === 'reject') {
+            document.getElementById('rejectReason').value = '';
+            bootstrap.Modal.getOrCreateInstance(
+                document.getElementById('rejectReviewModal')
+            ).show();
+            return;
+        }
+
+        if (action === 'approve' && fullAction.dataset.late === 'true') {
+            fullAction.disabled = true;
+            const settled = await settle(false, false);
+            if (!settled) fullAction.disabled = false;
+            return;
+        }
+
+        try {
+            const response = await post(cfg.approveUrl, { id: activeReview.reviewId });
+            const data = await response.json();
+            if (!response.ok || !data.success)
+                throw new Error(data.message || 'Unable to approve review.');
+            await openPaymentModal(activeReview.reviewId);
+        } catch (error) {
+            alert(error.message);
+        }
+        return;
+    }
+
     const scenarioButton = event.target.closest('.scenario-open-btn');
     if (scenarioButton) {
         openScenarioModal(scenarioButton);
