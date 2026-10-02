@@ -118,6 +118,9 @@
 
         setLoading(true);
 
+        // Keep the button in its loading state until the browser starts navigation.
+        // This avoids the brief "Sign in" flash between the AJAX response and redirect.
+        let isRedirecting = false;
 
         try {
 
@@ -164,6 +167,8 @@
              * displaying the green "Login successful." message.
              */
 
+            isRedirecting = true;
+
             window.location.href =
                 result.redirectUrl ||
                 "/Home/Index";
@@ -184,7 +189,9 @@
         }
         finally {
 
-            setLoading(false);
+            if (!isRedirecting) {
+                setLoading(false);
+            }
 
         }
 
