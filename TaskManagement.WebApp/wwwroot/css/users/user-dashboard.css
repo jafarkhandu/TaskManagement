@@ -2003,10 +2003,42 @@ html.light-theme .user-chat-island-orb {
 .dashboard-task-modal-list {
     max-height: 420px;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(88, 143, 230, .48) rgba(255, 255, 255, .035);
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-right: 4px;
+    padding: 0 4px 2px 0;
+}
+
+/* Match the modal's glassy dark surface instead of the browser's white scrollbar. */
+.dashboard-task-modal-list::-webkit-scrollbar {
+    width: 7px;
+}
+
+.dashboard-task-modal-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, .035);
+    border-radius: 10px;
+}
+
+.dashboard-task-modal-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        rgba(102, 161, 244, .62),
+        rgba(76, 118, 194, .46)
+    );
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 10px;
+}
+
+.dashboard-task-modal-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        rgba(116, 174, 255, .78),
+        rgba(88, 133, 214, .62)
+    );
 }
 
 .dashboard-task-modal-item {
@@ -2111,6 +2143,14 @@ html.light-theme .user-chat-island-orb {
 }
 
 @media (max-width: 600px) {
+    .dashboard-task-modal-list {
+        scrollbar-width: thin;
+    }
+
+    .dashboard-task-modal-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
     .dashboard-task-modal {
         padding: 14px;
     }
