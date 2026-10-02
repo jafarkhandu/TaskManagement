@@ -600,9 +600,8 @@
 
             targetList.querySelector('.empty-column')?.remove();
 
-            // Put a newly submitted review at the end of the review column,
-            // matching the refreshed board ordering instead of leaving it at
-            // its previous active-task position.
+            // Put the submitted card at the end of the In Progress / Review
+            // column. The refreshed board uses this column for Review Pending.
             targetList.appendChild(card);
 
             const map = {
@@ -634,6 +633,8 @@
                 if (idx !== -1) {
                     cards.splice(idx, 1);
                 }
+
+                card.dataset.status = 'Review Pending';
 
                 cards.push(card);
             }
@@ -727,6 +728,7 @@
             if (oldStatus === normalized) return;
 
             card.dataset.status = normalized;
+
             if (normalized === 'Review Pending') {
                 setReviewPendingCardState(card);
                 target.appendChild(card);
@@ -734,8 +736,12 @@
             else {
                 clearReviewPendingCardState(card);
 
-                if (target.firstElementChild) target.insertBefore(card, target.firstElementChild);
-                else target.appendChild(card);
+                if (target.firstElementChild) {
+                    target.insertBefore(card, target.firstElementChild);
+                }
+                else {
+                    target.appendChild(card);
+                }
             }
 
             const countMap = {
@@ -1070,6 +1076,10 @@
             const status = String(card.dataset.status || 'Pending').trim().toLowerCase();
             const isLocked = status === 'completed' || status === 'review pending';
             card.draggable = !isLocked;
+
+            if (status === 'review pending') {
+                setReviewPendingCardState(card);
+            }
 
             card.addEventListener('dragstart', function (e) {
                 const currentStatus = String(card.dataset.status || 'Pending').trim().toLowerCase();
