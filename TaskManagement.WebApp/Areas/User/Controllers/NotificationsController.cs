@@ -448,28 +448,29 @@ namespace TaskManagement.WebApp.Areas.User.Controllers
 
             try
             {
-                var notifications = await _context.Notifications
+                var clearableTypes = new[]
+                {
+                    "TaskAssignment",
+                    "TaskAssignmentReassigned",
+                    "TaskReviewApproved",
+                    "TaskReviewRejected",
+                    "TaskPaymentSettled",
+                    "TaskPaymentWithheld",
+                    "TaskDeadlineTomorrow",
+                    "TaskDeadlineToday"
+                };
+
+                // Delete eligible notifications directly in SQL instead of
+                // loading every row into EF change tracking first.
+                await _context.Notifications
                     .Where(n =>
                         n.UserId == user.Id &&
-                        (n.Type == "TaskAssignment" ||
-                         n.Type == "TaskAssignmentReassigned" ||
-                         n.Type == "TaskReviewApproved" ||
-                         n.Type == "TaskReviewRejected" ||
-                         n.Type == "TaskPaymentSettled" ||
-                         n.Type == "TaskPaymentWithheld" ||
-                         n.Type == "TaskDeadlineTomorrow" ||
-                         n.Type == "TaskDeadlineToday") &&
+                        clearableTypes.Contains(n.Type) &&
                         !(n.Type == "TaskAssignment" &&
                           _context.TaskAssignments.Any(a =>
                               a.Id == n.TaskAssignmentId &&
                               a.Status == "Pending")))
-                    .ToListAsync();
-
-                if (notifications.Count > 0)
-                {
-                    _context.Notifications.RemoveRange(notifications);
-                    await _context.SaveChangesAsync();
-                }
+                    .ExecuteDeleteAsync();
 
                 return Json(new
                 {
