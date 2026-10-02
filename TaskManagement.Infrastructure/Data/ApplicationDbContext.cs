@@ -246,6 +246,12 @@ namespace TaskManagement.Infrastructure.Data
 
                 b.HasIndex(x => x.ChatSessionId);
 
+                b.HasIndex(x => new
+                {
+                    x.ChatSessionId,
+                    x.SentAt
+                });
+
                 b.HasIndex(x => x.SenderId);
 
                 b.HasOne<ChatSession>()
