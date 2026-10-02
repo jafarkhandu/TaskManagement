@@ -376,19 +376,17 @@
 </div>
 
 
-<div class="modal fade" id="notificationScenarioModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content notification-scenario-modal">
-            <div class="modal-header">
-                <div>
-                    <span class="scenario-modal-eyebrow">TASK SCENARIO</span>
-                    <h5>Scenario Details</h5>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="notification-scenario-overlay" id="notificationScenarioModal" hidden aria-hidden="true">
+    <div class="notification-scenario-dialog" role="dialog" aria-modal="true" aria-labelledby="notificationScenarioTitle">
+        <div class="notification-scenario-header">
+            <div>
+                <span class="scenario-modal-eyebrow">TASK SCENARIO</span>
+                <h5 id="notificationScenarioTitle">Scenario Details</h5>
             </div>
-            <div class="modal-body">
-                <div id="notificationScenarioFullText" class="notification-scenario-full-text"></div>
-            </div>
+            <button type="button" class="scenario-modal-close" id="notificationScenarioClose" aria-label="Close">×</button>
+        </div>
+        <div class="notification-scenario-body">
+            <div id="notificationScenarioFullText" class="notification-scenario-full-text"></div>
         </div>
     </div>
 </div>
