@@ -829,101 +829,279 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 16px;
 }
 
-    .task-modal.show {
-        display: flex;
-        animation: modalIn .25s ease;
-    }
+.task-modal.show {
+    display: flex;
+    animation: modalIn .25s ease;
+}
 
 .task-modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(2,10,22,.68);
-    backdrop-filter: blur(8px);
+    background: rgba(2,10,22,.74);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .task-modal-box {
     position: relative;
-    width: min(560px, calc(100% - 30px));
-    padding: 25px;
-    border-radius: 17px;
-    border: 1px solid rgba(100,145,220,.22);
-    background: linear-gradient( 145deg, rgba(17,42,70,.96), rgba(7,24,44,.97) );
-    box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 60px rgba(54,100,255,.12);
+    width: min(700px, 100%);
+    max-height: calc(100vh - 32px);
+    padding: 28px;
+    overflow-y: auto;
+    border-radius: 20px;
+    border: 1px solid rgba(100,145,220,.24);
+    background: linear-gradient(145deg, rgba(17,42,70,.98), rgba(7,24,44,.99));
+    box-shadow: 0 30px 90px rgba(0,0,0,.56), 0 0 60px rgba(54,100,255,.14);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(105,145,220,.45) transparent;
+}
+
+.task-modal-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-modal-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.task-modal-box::-webkit-scrollbar-thumb {
+    background: rgba(105,145,220,.42);
+    border-radius: 999px;
 }
 
 .modal-close {
     position: absolute;
     right: 17px;
     top: 15px;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
     border: 0;
+    border-radius: 10px;
     background: transparent;
     color: #8095ad;
-    font-size: 22px;
+    font-size: 25px;
+    line-height: 1;
     cursor: pointer;
+    transition: .2s ease;
+}
+
+.modal-close:hover,
+.modal-close:focus-visible {
+    background: rgba(255,255,255,.07);
+    color: #fff;
+    outline: none;
 }
 
 .modal-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    padding-right: 42px;
 }
 
 .modal-icon {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
     display: grid;
     place-items: center;
-    border-radius: 10px;
+    border-radius: 11px;
     background: linear-gradient(135deg,#397aff,#6545df);
+    color: #fff;
+    font-size: 19px;
+    font-weight: 800;
+    box-shadow: 0 8px 22px rgba(69,91,255,.24);
 }
 
 .modal-title h2 {
     margin: 0;
-    font-size: 17px;
+    color: #f5f8ff;
+    font-size: 20px;
+    letter-spacing: -.25px;
 }
 
 .modal-task-id {
     margin-top: 25px;
-    color: #6681a0;
-    font-size: 9px;
+    color: #7891b0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .5px;
 }
 
 .task-modal-box > h2 {
-    margin: 4px 0;
-    font-size: 23px;
+    margin: 5px 0 0;
+    color: #f7f9ff;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -.6px;
+    overflow-wrap: anywhere;
 }
 
-.task-modal-box > p {
-    color: #8fa2b8;
-    font-size: 11px;
+.modal-description-section {
+    margin-top: 22px;
+}
+
+.modal-section-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #dfe8f5;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.modal-description {
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 13px 14px;
+    border: 1px solid rgba(110,145,190,.20);
+    border-radius: 13px;
+    background: rgba(7,24,44,.56);
+    color: #aebed1;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: pre-wrap;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(105,145,220,.45) transparent;
+}
+
+.modal-description::-webkit-scrollbar {
+    width: 5px;
+}
+
+.modal-description::-webkit-scrollbar-thumb {
+    background: rgba(105,145,220,.42);
+    border-radius: 999px;
 }
 
 .modal-grid {
     display: grid;
-    grid-template-columns: repeat(2,1fr);
-    gap: 8px;
-    margin-top: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
 }
 
 .modal-info {
-    padding: 13px;
-    border-radius: 10px;
-    border: 1px solid rgba(110,145,190,.12);
-    background: rgba(10,28,49,.65);
+    min-width: 0;
+    min-height: 82px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 13px;
+    border: 1px solid rgba(110,145,190,.15);
+    background: rgba(10,28,49,.66);
 }
 
-    .modal-info span {
-        display: block;
-        color: #71869f;
-        font-size: 8px;
-        margin-bottom: 5px;
-    }
+.modal-info-full {
+    grid-column: 1 / -1;
+}
 
-    .modal-info strong {
-        font-size: 11px;
-    }
+.modal-info-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+    background: rgba(61,111,230,.24);
+}
+
+.status-icon {
+    background: rgba(61,130,230,.28);
+    color: #70a8ff;
+}
+
+.priority-icon {
+    background: rgba(111,73,220,.28);
+    color: #b88cff;
+}
+
+.start-date-icon {
+    background: rgba(26,185,139,.26);
+    color: #44dfb1;
+}
+
+.end-date-icon {
+    background: rgba(226,153,35,.26);
+    color: #ffc05b;
+}
+
+.amount-icon {
+    background: rgba(0,184,215,.24);
+    color: #45d9ee;
+}
+
+.modal-info > div:last-child {
+    min-width: 0;
+}
+
+.modal-info span {
+    display: block;
+    margin-bottom: 5px;
+    color: #8195ae;
+    font-size: 10px;
+}
+
+.modal-info strong {
+    display: block;
+    color: #f5f8ff;
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.task-deadline-modal-warning {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px 15px;
+    border: 1px solid rgba(255,75,88,.55);
+    border-radius: 13px;
+    background: rgba(155,38,62,.16);
+    color: #ff6875;
+}
+
+.deadline-warning-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255,75,88,.18);
+    color: #ff6672;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.deadline-warning-copy {
+    min-width: 0;
+}
+
+.deadline-warning-copy strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #ff5d69;
+    font-size: 14px;
+}
+
+.deadline-warning-copy span {
+    display: block;
+    color: #ff9aa2;
+    font-size: 11px;
+    line-height: 1.5;
+}
 
 
 /* ================= ANIMATION ================= */
@@ -955,6 +1133,67 @@ body {
 }
 
 @media (max-width: 760px) {
+
+    .task-modal {
+        padding: 10px;
+    }
+
+    .task-modal-box {
+        width: 100%;
+        max-height: calc(100vh - 20px);
+        padding: 21px 17px;
+        border-radius: 17px;
+    }
+
+    .modal-title {
+        gap: 10px;
+    }
+
+    .modal-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+
+    .modal-title h2 {
+        font-size: 18px;
+    }
+
+    .modal-task-id {
+        margin-top: 20px;
+    }
+
+    .task-modal-box > h2 {
+        font-size: 23px;
+    }
+
+    .modal-description-section {
+        margin-top: 18px;
+    }
+
+    .modal-description {
+        max-height: 135px;
+    }
+
+    .modal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-info-full {
+        grid-column: auto;
+    }
+
+    .task-deadline-modal-warning {
+        align-items: flex-start;
+    }
+
+    .deadline-warning-copy strong {
+        font-size: 13px;
+    }
+
+    .deadline-warning-copy span {
+        font-size: 10px;
+    }
 
     .task-sidebar {
         width: 70px;
@@ -1394,82 +1633,75 @@ body {
 
 /* =====================================================
    MY TASKS - COMMON USER SHELL FIX
-   Keeps Hatim's original My Tasks layout
+   Keep the same user shell and topbar proportions as the
+   Dashboard, Profile, Notifications and Payment pages.
 ===================================================== */
 
-/* The sidebar is fixed, so the page itself must not
-   behave like a flex row. */
 .user-task-app {
     display: block;
     width: 100%;
     min-height: 100vh;
 }
 
-/* Main content exactly follows Hatim's original layout */
 .main-content {
     width: calc(100% - 235px);
     margin-left: 235px;
     min-height: 100vh;
-    padding: 14px 24px 40px;
+    padding: 0 25px 35px;
 }
 
-    /* Restore Hatim's compact topbar */
-    .main-content .topbar {
-        height: 36px;
-        margin-bottom: 14px;
-        gap: 20px;
-    }
+.main-content .topbar {
+    height: 76px;
+    margin-bottom: 0;
+    gap: 20px;
+}
 
-    /* Hatim-style search */
-    .main-content .search {
-        height: 36px;
-        max-width: 460px;
-        width: 100%;
-        border-radius: 9px;
-        padding: 0 12px;
-    }
+.main-content .search {
+    width: min(570px, 52vw);
+    max-width: none;
+    height: 43px;
+    border-radius: 11px;
+    padding: 0 10px 0 14px;
+}
 
-        .main-content .search input {
-            font-size: 11px;
-        }
+.main-content .search input {
+    font-size: 11px;
+}
 
-    .main-content .search-icon {
-        font-size: 17px;
-    }
+.main-content .search-icon {
+    font-size: 21px;
+}
 
-    .main-content .search kbd {
-        font-size: 8px;
-        padding: 3px 6px;
-    }
+.main-content .search kbd {
+    font-size: 9px;
+    padding: 4px 7px;
+}
 
-    /* Compact top actions */
-    .main-content .top-actions {
-        gap: 9px;
-    }
+.main-content .top-actions {
+    gap: 9px;
+}
 
-    .main-content .round-button {
-        width: 35px;
-        height: 35px;
-    }
+.main-content .round-button {
+    width: 38px;
+    height: 38px;
+}
 
-    /* User profile stays compact like Hatim's version */
-    .main-content .user-avatar {
-        width: 35px;
-        height: 35px;
-    }
+.main-content .user-avatar {
+    width: 38px;
+    height: 38px;
+}
 
-    .main-content .user-info strong {
-        font-size: 10px;
-    }
+.main-content .user-info strong {
+    font-size: 10px;
+}
 
-    .main-content .user-info small {
-        font-size: 8px;
-    }
+.main-content .user-info small {
+    font-size: 9px;
+}
 
-    /* Notification icon */
-    .main-content .notification-icon-glyph {
-        font-size: 16px;
-    }
+.main-content .notification-icon-glyph {
+    font-size: 17px;
+}
 
 
 /* =====================================================
@@ -1544,38 +1776,37 @@ html.light-theme .user-task-app {
 /* MAIN CONTENT */
 
 html.light-theme .main-content {
-    padding: 18px 28px 40px;
+    padding: 0 25px 35px;
 }
 
-    /* TOPBAR — same feeling as Dashboard */
+html.light-theme .main-content .topbar {
+    height: 76px;
+    margin-bottom: 0;
+    gap: 20px;
+}
 
-    html.light-theme .main-content .topbar {
-        height: 44px;
-        margin-bottom: 18px;
-        gap: 24px;
-    }
+html.light-theme .main-content .search {
+    width: min(570px, 52vw);
+    max-width: none;
+    height: 43px;
+    border-radius: 11px;
+    padding: 0 10px 0 14px;
+}
 
-    html.light-theme .main-content .search {
-        height: 44px;
-        max-width: 610px;
-        border-radius: 12px;
-        padding: 0 15px;
-    }
+html.light-theme .main-content .search input {
+    font-size: 11px;
+    color: #253452;
+}
 
-        html.light-theme .main-content .search input {
-            font-size: 12px;
-            color: #253452;
-        }
+html.light-theme .main-content .search-icon {
+    font-size: 21px;
+    color: #7890ad;
+}
 
-    html.light-theme .main-content .search-icon {
-        font-size: 17px;
-        color: #7890ad;
-    }
-
-    html.light-theme .main-content .search kbd {
-        font-size: 9px;
-        padding: 4px 7px;
-    }
+html.light-theme .main-content .search kbd {
+    font-size: 9px;
+    padding: 4px 7px;
+}
 
 /* HERO */
 
@@ -1790,20 +2021,27 @@ html.light-theme .empty-column {
 /* TASK DETAILS MODAL */
 
 html.light-theme .task-modal-backdrop {
-    background: rgba(30,45,70,.25);
+    background: rgba(30,45,70,.30);
 }
 
 html.light-theme .task-modal-box {
-    background: rgba(255,255,255,.88);
-    border: 1px solid rgba(255,255,255,.9);
-    box-shadow: 0 30px 80px rgba(35,50,80,.20);
+    background: rgba(255,255,255,.96);
+    border: 1px solid rgba(116,140,170,.18);
+    box-shadow: 0 30px 80px rgba(35,50,80,.24);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     color: #17233b;
+    scrollbar-color: rgba(80,110,150,.32) transparent;
 }
 
 html.light-theme .modal-close {
     color: #71829b;
+}
+
+html.light-theme .modal-close:hover,
+html.light-theme .modal-close:focus-visible {
+    background: rgba(50,75,110,.08);
+    color: #263750;
 }
 
 html.light-theme .modal-title h2,
@@ -1815,22 +2053,73 @@ html.light-theme .modal-task-id {
     color: #7b8da5;
 }
 
-html.light-theme .task-modal-box > p {
-    color: #71829b;
+html.light-theme .modal-section-label {
+    color: #30425d;
+}
+
+html.light-theme .modal-description {
+    background: #f5f8fc;
+    border-color: rgba(100,120,150,.16);
+    color: #53657e;
+    scrollbar-color: rgba(80,110,150,.32) transparent;
 }
 
 html.light-theme .modal-info {
-    background: rgba(245,248,252,.72);
-    border-color: rgba(100,120,150,.10);
+    background: #f7f9fc;
+    border-color: rgba(100,120,150,.14);
 }
 
-    html.light-theme .modal-info span {
-        color: #7b8da5;
-    }
+html.light-theme .modal-info span {
+    color: #7b8da5;
+}
 
-    html.light-theme .modal-info strong {
-        color: #24324b;
-    }
+html.light-theme .modal-info strong {
+    color: #24324b;
+}
+
+html.light-theme .status-icon {
+    background: rgba(61,130,230,.12);
+    color: #3d7edc;
+}
+
+html.light-theme .priority-icon {
+    background: rgba(111,73,220,.12);
+    color: #754bc8;
+}
+
+html.light-theme .start-date-icon {
+    background: rgba(26,185,139,.12);
+    color: #159b78;
+}
+
+html.light-theme .end-date-icon {
+    background: rgba(226,153,35,.14);
+    color: #c27a08;
+}
+
+html.light-theme .amount-icon {
+    background: rgba(0,184,215,.12);
+    color: #0795ad;
+}
+
+html.light-theme .task-deadline-modal-warning {
+    color: #c53c48;
+    background: rgba(220,79,90,.06);
+    border-color: rgba(220,79,90,.22);
+}
+
+html.light-theme .deadline-warning-icon {
+    background: rgba(220,79,90,.10);
+    color: #c53c48;
+}
+
+html.light-theme .deadline-warning-copy strong {
+    color: #c53c48;
+}
+
+html.light-theme .deadline-warning-copy span {
+    color: #9e4a53;
+}
 
         /* =========================================================
    MY TASKS LIGHT HERO — KEEP DASHBOARD IMAGE VISIBLE
@@ -3452,84 +3741,6 @@ body {
     
 }
 
-/* =====================================================
-   MY TASKS - COMMON USER SHELL FIX
-   Keeps Hatim's original My Tasks layout
-===================================================== */
-
-/* The sidebar is fixed, so the page itself must not
-   behave like a flex row. */
-.user-task-app {
-    display: block;
-    width: 100%;
-    min-height: 100vh;
-}
-
-/* Main content exactly follows Hatim's original layout */
-.main-content {
-    width: calc(100% - 235px);
-    margin-left: 235px;
-    min-height: 100vh;
-    padding: 14px 24px 40px;
-}
-
-    /* Restore Hatim's compact topbar */
-    .main-content .topbar {
-        height: 36px;
-        margin-bottom: 14px;
-        gap: 20px;
-    }
-
-    /* Hatim-style search */
-    .main-content .search {
-        height: 36px;
-        max-width: 460px;
-        width: 100%;
-        border-radius: 9px;
-        padding: 0 12px;
-    }
-
-        .main-content .search input {
-            font-size: 11px;
-        }
-
-    .main-content .search-icon {
-        font-size: 17px;
-    }
-
-    .main-content .search kbd {
-        font-size: 8px;
-        padding: 3px 6px;
-    }
-
-    /* Compact top actions */
-    .main-content .top-actions {
-        gap: 9px;
-    }
-
-    .main-content .round-button {
-        width: 35px;
-        height: 35px;
-    }
-
-    /* User profile stays compact like Hatim's version */
-    .main-content .user-avatar {
-        width: 35px;
-        height: 35px;
-    }
-
-    .main-content .user-info strong {
-        font-size: 10px;
-    }
-
-    .main-content .user-info small {
-        font-size: 8px;
-    }
-
-    /* Notification icon */
-    .main-content .notification-icon-glyph {
-        font-size: 16px;
-    }
 
 
 /* =====================================================
@@ -3601,41 +3812,6 @@ html.light-theme .user-task-app {
     color: #17233b;
 }
 
-/* MAIN CONTENT */
-
-html.light-theme .main-content {
-    padding: 18px 28px 40px;
-}
-
-    /* TOPBAR — same feeling as Dashboard */
-
-    html.light-theme .main-content .topbar {
-        height: 44px;
-        margin-bottom: 18px;
-        gap: 24px;
-    }
-
-    html.light-theme .main-content .search {
-        height: 44px;
-        max-width: 610px;
-        border-radius: 12px;
-        padding: 0 15px;
-    }
-
-        html.light-theme .main-content .search input {
-            font-size: 12px;
-            color: #253452;
-        }
-
-    html.light-theme .main-content .search-icon {
-        font-size: 17px;
-        color: #7890ad;
-    }
-
-    html.light-theme .main-content .search kbd {
-        font-size: 9px;
-        padding: 4px 7px;
-    }
 
 /* HERO */
 
