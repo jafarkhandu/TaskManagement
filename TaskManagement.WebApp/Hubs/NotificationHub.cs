@@ -87,17 +87,11 @@ namespace TaskManagement.WebApp.Hubs
                             .Select(x => x.notificationId)
                             .ToList();
 
-                        var notifications = await _context.Notifications
+                        await _context.Notifications
                             .Where(n => ids.Contains(n.Id))
-                            .ToListAsync();
-
-                        foreach (var notification in notifications)
-                        {
-                            notification.IsDelivered = true;
-                            notification.IsRead = true;
-                        }
-
-                        await _context.SaveChangesAsync();
+                            .ExecuteUpdateAsync(setters => setters
+                                .SetProperty(n => n.IsDelivered, true)
+                                .SetProperty(n => n.IsRead, true));
                     }
                 }
                 else
@@ -147,16 +141,10 @@ namespace TaskManagement.WebApp.Hubs
                             .Select(x => x.notificationId)
                             .ToList();
 
-                        var notifications = await _context.Notifications
+                        await _context.Notifications
                             .Where(n => ids.Contains(n.Id))
-                            .ToListAsync();
-
-                        foreach (var notification in notifications)
-                        {
-                            notification.IsDelivered = true;
-                        }
-
-                        await _context.SaveChangesAsync();
+                            .ExecuteUpdateAsync(setters =>
+                                setters.SetProperty(n => n.IsDelivered, true));
                     }
 
                     // Chat messages use their own delivery channel so they never
@@ -206,16 +194,10 @@ namespace TaskManagement.WebApp.Hubs
                             .Select(x => x.notificationId)
                             .ToList();
 
-                        var chatNotifications = await _context.Notifications
+                        await _context.Notifications
                             .Where(n => chatIds.Contains(n.Id))
-                            .ToListAsync();
-
-                        foreach (var notification in chatNotifications)
-                        {
-                            notification.IsDelivered = true;
-                        }
-
-                        await _context.SaveChangesAsync();
+                            .ExecuteUpdateAsync(setters =>
+                                setters.SetProperty(n => n.IsDelivered, true));
                     }
 
                 }
