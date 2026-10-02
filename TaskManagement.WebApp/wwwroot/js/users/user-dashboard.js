@@ -1039,13 +1039,154 @@
         document.body.style.overflow = "";
     }
 
-    function openDashboardTaskModal(filter) {
+    let allUserTasksPromise = null;
+
+    async function loadAllUserTasks() {
+        if (allUserTasksPromise) {
+            return allUserTasksPromise;
+        }
+
+        allUserTasksPromise = fetch("/User/MyTasks", {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            cache: "no-store"
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Unable to load all tasks.");
+                }
+
+                return response.text();
+            })
+            .then(html => {
+                const documentFragment =
+                    new DOMParser().parseFromString(html, "text/html");
+
+                return Array.from(
+                    documentFragment.querySelectorAll(".task-card")
+                ).map(card => ({
+                    id: card.dataset.taskId || "",
+                    title: card.dataset.title || "Task",
+                    scenario: card.dataset.scenario || "",
+                    status: card.dataset.status || "Unknown",
+                    priority: card.dataset.priority || "",
+                    due: card.dataset.endDate || ""
+                }));
+            })
+            .catch(error => {
+                allUserTasksPromise = null;
+                throw error;
+            });
+
+        return allUserTasksPromise;
+    }
+
+    function getDashboardRenderedTasks() {
+        const renderedTasks = Array.from(
+            document.querySelectorAll(".task-item, .activity-item")
+        );
+
+        const seen = new Set();
+
+        return renderedTasks
+            .filter(task => {
+                const id = task.dataset.id || "";
+
+                if (!id) {
+                    return true;
+                }
+
+                if (seen.has(id)) {
+                    return false;
+                }
+
+                seen.add(id);
+                return true;
+            })
+            .map(task => ({
+                id: task.dataset.id || "",
+                title: task.dataset.title || "Task",
+                scenario:
+                    task.querySelector(".task-text small")?.textContent.trim() ||
+                    task.querySelector(".activity-item small")?.textContent.trim() ||
+                    "",
+                status:
+                    task.dataset.status ||
+                    task.querySelector("small")?.textContent.trim() ||
+                    "Unknown",
+                priority:
+                    task.querySelector("em")?.textContent.trim() || "",
+                due:
+                    task.querySelector("time")?.textContent.trim() || ""
+            }));
+    }
+
+    function matchesDashboardFilter(task, filter) {
+        const status = String(task.status || "").trim().toLowerCase();
+
+        if (filter === "progress") {
+            return status === "in progress" || status === "review pending";
+        }
+
+        if (filter === "completed") {
+            return status === "completed";
+        }
+
+        if (filter === "hold") {
+            return status === "on hold";
+        }
+
+        return true;
+    }
+
+    function renderDashboardTaskModal(tasks, filter) {
+        const filteredTasks =
+            tasks.filter(task => matchesDashboardFilter(task, filter));
+
+        if (!filteredTasks.length) {
+            dashboardTaskModalList.innerHTML = `
+                <div class="dashboard-task-modal-empty">
+                    <span>✓</span>
+                    <strong>No tasks in this category</strong>
+                    <small>No matching tasks were found.</small>
+                </div>
+            `;
+            return;
+        }
+
+        dashboardTaskModalList.innerHTML = filteredTasks.map(task => {
+            const title = escapeHtml(task.title || "Task");
+            const status = escapeHtml(task.status || "Unknown");
+            const scenario = escapeHtml(task.scenario || status);
+            const priority = escapeHtml(task.priority || "");
+            const due = escapeHtml(task.due || "");
+
+            return `
+                <div class="dashboard-task-modal-item">
+                    <span class="dashboard-task-modal-icon">✓</span>
+
+                    <div class="dashboard-task-modal-content">
+                        <strong>${title}</strong>
+                        <small>${scenario}</small>
+                    </div>
+
+                    <div class="dashboard-task-modal-meta">
+                        ${priority ? `<span>${priority}</span>` : ""}
+                        ${due ? `<time>${due}</time>` : ""}
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    async function openDashboardTaskModal(filter) {
         if (!dashboardTaskModal || !dashboardTaskModalList)
             return;
 
         const labels = {
-            all: ["Total Tasks", "All tasks currently shown in your dashboard."],
-            progress: ["In Progress", "Tasks currently marked as In Progress."],
+            all: ["Total Tasks", "All tasks assigned to you."],
+            progress: ["In Progress", "Active tasks, including tasks pending admin review."],
             completed: ["Completed", "Tasks currently marked as Completed."],
             hold: ["On Hold", "Tasks currently marked as On Hold."]
         };
@@ -1056,99 +1197,30 @@
         dashboardTaskModalTitle.textContent = title;
         dashboardTaskModalSubtitle.textContent = subtitle;
 
-        // Focus tasks exclude completed items, while Recent Activity includes
-        // the latest tasks. Combine both rendered sources and de-duplicate by ID
-        // so the summary modal can show completed tasks without any backend change.
-        const renderedTasks = Array.from(
-            document.querySelectorAll(".task-item, .activity-item")
-        );
-
-        const seen = new Set();
-
-        const tasks = renderedTasks.filter(task => {
-            const id = task.dataset.id || "";
-            const status =
-                (task.dataset.status ||
-                    task.querySelector("small")?.textContent ||
-                    "").trim().toLowerCase();
-
-            if (id) {
-                if (seen.has(id))
-                    return false;
-
-                seen.add(id);
-            }
-
-            if (filter === "progress")
-                return status === "in progress";
-
-            if (filter === "completed")
-                return status === "completed";
-
-            if (filter === "hold")
-                return status === "on hold";
-
-            return true;
-        });
-
-        if (!tasks.length) {
-            dashboardTaskModalList.innerHTML = `
-                <div class="dashboard-task-modal-empty">
-                    <span>✓</span>
-                    <strong>No tasks in this category</strong>
-                    <small>There are no matching tasks available on the dashboard right now.</small>
-                </div>
-            `;
-        } else {
-            dashboardTaskModalList.innerHTML = tasks.map(task => {
-                const title =
-                    escapeHtml(task.dataset.title || "Task");
-
-                const status =
-                    escapeHtml(
-                        task.dataset.status ||
-                        task.querySelector("small")?.textContent.trim() ||
-                        "Unknown"
-                    );
-
-                const scenario =
-                    escapeHtml(
-                        task.querySelector(".task-text small")?.textContent.trim() ||
-                        task.querySelector(".activity-item small")?.textContent.trim() ||
-                        ""
-                    );
-
-                const priority =
-                    escapeHtml(
-                        task.querySelector("em")?.textContent.trim() || ""
-                    );
-
-                const due =
-                    escapeHtml(
-                        task.querySelector("time")?.textContent.trim() || ""
-                    );
-
-                return `
-                    <div class="dashboard-task-modal-item">
-                        <span class="dashboard-task-modal-icon">✓</span>
-
-                        <div class="dashboard-task-modal-content">
-                            <strong>${title}</strong>
-                            <small>${scenario || status}</small>
-                        </div>
-
-                        <div class="dashboard-task-modal-meta">
-                            ${priority ? `<span>${priority}</span>` : ""}
-                            ${due ? `<time>${due}</time>` : ""}
-                        </div>
-                    </div>
-                `;
-            }).join("");
-        }
+        dashboardTaskModalList.innerHTML = `
+            <div class="dashboard-task-modal-empty">
+                <span>…</span>
+                <strong>Loading tasks...</strong>
+                <small>Fetching your complete task list.</small>
+            </div>
+        `;
 
         dashboardTaskModal.classList.add("show");
         dashboardTaskModal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
+
+        try {
+            const tasks = await loadAllUserTasks();
+            renderDashboardTaskModal(tasks, filter);
+        } catch (error) {
+            console.warn("Dashboard task modal could not load all tasks:", error);
+
+            // Keep the modal useful even if the secondary request fails.
+            renderDashboardTaskModal(
+                getDashboardRenderedTasks(),
+                filter
+            );
+        }
     }
 
     document.querySelectorAll(".stat[data-stat]")
