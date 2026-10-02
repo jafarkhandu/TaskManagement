@@ -26,7 +26,8 @@
         Task<(bool Success, string Error, AdminChatMessageDto? Message)> SendMessageAsync(
             int chatSessionId,
             string senderId,
-            string message);
+            string message,
+            bool isAdmin);
 
         Task<object?> GetChatAsync(
             int chatSessionId,
