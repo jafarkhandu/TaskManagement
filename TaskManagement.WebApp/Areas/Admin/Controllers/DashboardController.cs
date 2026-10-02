@@ -99,24 +99,24 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             }
 
             // Upcoming deadlines (next tasks)
-            var upcomingTasks = await _context.TaskItems
-                .Where(t => t.ExpectedEndDate >= DateTime.UtcNow)
-                .OrderBy(t => t.ExpectedEndDate)
+            // Join the project title in the same query to avoid a second
+            // database round-trip just to build the project lookup map.
+            var upcomingDeadlines = await (
+                from t in _context.TaskItems.AsNoTracking()
+                join p in _context.Projects.AsNoTracking()
+                    on t.ProjectId equals p.Id
+                where t.ExpectedEndDate >= DateTime.UtcNow
+                orderby t.ExpectedEndDate
+                select new DeadlineDto
+                {
+                    TaskId = t.Id,
+                    Title = t.Title,
+                    ProjectTitle = p.ProjectTitle,
+                    ExpectedEndDate = t.ExpectedEndDate,
+                    Priority = t.Priority
+                })
                 .Take(5)
                 .ToListAsync();
-
-            var projectMap = await _context.Projects
-                .Where(p => upcomingTasks.Select(t => t.ProjectId).Contains(p.Id) || projectIds.Contains(p.Id))
-                .ToDictionaryAsync(p => p.Id, p => p.ProjectTitle);
-
-            var upcomingDeadlines = upcomingTasks.Select(t => new DeadlineDto
-            {
-                TaskId = t.Id,
-                Title = t.Title,
-                ProjectTitle = projectMap.ContainsKey(t.ProjectId) ? projectMap[t.ProjectId] : string.Empty,
-                ExpectedEndDate = t.ExpectedEndDate,
-                Priority = t.Priority
-            }).ToList();
 
             // Task overview
             var createdCount = dashboardTaskStats?.CreatedCount ?? 0;
@@ -129,20 +129,19 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             };
 
             // Project distribution (task count per project)
-            var distribution = await _context.TaskItems
-                .GroupBy(t => t.ProjectId)
-                .Select(g => new { ProjectId = g.Key, Count = g.Count() })
+            // Resolve the project title in the same grouped query instead of
+            // loading a second project dictionary.
+            var projectDistribution = await (
+                from t in _context.TaskItems.AsNoTracking()
+                join p in _context.Projects.AsNoTracking()
+                    on t.ProjectId equals p.Id
+                group t by new { p.Id, p.ProjectTitle } into g
+                select new ProjectDistributionDto
+                {
+                    ProjectTitle = g.Key.ProjectTitle,
+                    TaskCount = g.Count()
+                })
                 .ToListAsync();
-
-            var projectTitles = await _context.Projects
-                .Where(p => distribution.Select(d => d.ProjectId).Contains(p.Id))
-                .ToDictionaryAsync(p => p.Id, p => p.ProjectTitle);
-
-            var projectDistribution = distribution.Select(d => new ProjectDistributionDto
-            {
-                ProjectTitle = projectTitles.ContainsKey(d.ProjectId) ? projectTitles[d.ProjectId] : "",
-                TaskCount = d.Count
-            }).ToList();
 
             // Load the pending-payment queue once for the dashboard view.
             ViewBag.PendingPayments = await _reviewService.GetPendingPaymentsAsync();
