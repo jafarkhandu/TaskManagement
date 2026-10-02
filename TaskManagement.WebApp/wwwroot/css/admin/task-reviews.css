@@ -909,3 +909,22 @@ body.scenario-modal-open .modal-backdrop{
         grid-template-columns:repeat(2,minmax(0,1fr));
     }
 }
+
+
+/* Matching dark outlines for the visible compact queues. */
+.review-card{
+    border:1px solid #344052 !important;
+}
+.pending-payment-card{
+    border:1px solid #344052 !important;
+}
+.pending-payment-date{
+    font-size:9px;
+}
+.pending-payment-card>strong{
+    font-size:12px;
+}
+.pending-payment-card .pending-pay-btn{
+    min-width:68px;
+    padding:6px 9px;
+}
