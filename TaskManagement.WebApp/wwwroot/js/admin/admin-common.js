@@ -908,12 +908,16 @@
 
             await connection.start();
 
+            return connection;
+
         }
         catch (error) {
             console.warn(
                 "Admin real-time notification connection failed:",
                 error
             );
+
+            return null;
         }
     }
 
@@ -929,7 +933,28 @@
         30000
     );
 
-    startAdminRealtimeNotifications();
+    const adminNotificationConnectionReady =
+        startAdminRealtimeNotifications();
+
+    window.__adminNotificationConnectionReady =
+        adminNotificationConnectionReady;
+
+    adminNotificationConnectionReady.then(function (connection) {
+        if (!connection) {
+            return;
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "adminNotificationConnectionReady",
+                {
+                    detail: {
+                        connection: connection
+                    }
+                }
+            )
+        );
+    });
 
 
 });
