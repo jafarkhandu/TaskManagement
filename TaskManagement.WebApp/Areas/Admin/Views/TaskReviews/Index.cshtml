@@ -80,12 +80,20 @@
                         </div>
                         <div>
                             <span>Deadline</span>
-                            <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
-                                @(review.IsLate ? "Late · ₹0 payable" : "On time · Full payment")
-                            </strong>
-                            <small class="deadline-status @(review.IsLate ? "is-late" : "is-on-time")">
-                                @(review.IsLate ? "Late submission" : "Within deadline")
-                            </small>
+                            @if (review.DeadlineAtSubmission.HasValue)
+                            {
+                                <strong class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
+                                    @review.DeadlineAtSubmission.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                                </strong>
+                                <small class="deadline-status @(review.IsLate ? "is-late" : "is-on-time")">
+                                    @(review.IsLate ? "Late submission · Payment withheld" : "On time · Full payment")
+                                </small>
+                            }
+                            else
+                            {
+                                <strong class="deadline-unavailable">No deadline</strong>
+                                <small class="deadline-status">No deadline recorded</small>
+                            }
                         </div>
                     </div>
 
@@ -212,7 +220,14 @@
                         <span>@review.Priority<small>Priority</small></span>
                         <span>@review.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")<small>Submitted</small></span>
                         <span class="@(review.IsLate ? "deadline-late" : "deadline-on-time")">
-                            @(review.IsLate ? "Late" : "On time")
+                            @if (review.DeadlineAtSubmission.HasValue)
+                            {
+                                @review.DeadlineAtSubmission.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                            }
+                            else
+                            {
+                                @:No deadline
+                            }
                             <small>Deadline</small>
                         </span>
                     </div>
