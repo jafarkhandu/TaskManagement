@@ -275,4 +275,65 @@
         );
     }
 
+
+
+    // =====================================================
+    // Compact scenario preview
+    // =====================================================
+    const scenarioBox = document.getElementById("scenarioPreviewBox");
+    const scenarioText = scenarioBox?.querySelector(".scenario-preview-text");
+    const scenarioMoreButton = document.getElementById("scenarioMoreButton");
+    const scenarioModal = document.getElementById("notificationScenarioModal");
+    const scenarioFullText = document.getElementById("notificationScenarioFullText");
+
+    function updateScenarioPreview() {
+        if (!scenarioBox || !scenarioText || !scenarioMoreButton) {
+            return;
+        }
+
+        scenarioMoreButton.hidden =
+            scenarioText.scrollHeight <= scenarioText.clientHeight + 2;
+    }
+
+    function closeScenarioModal() {
+        if (!scenarioModal) {
+            return;
+        }
+
+        scenarioModal.hidden = true;
+        scenarioModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("scenario-modal-open");
+    }
+
+    scenarioMoreButton?.addEventListener("click", () => {
+        if (!scenarioModal || !scenarioFullText) {
+            return;
+        }
+
+        scenarioFullText.textContent =
+            scenarioText?.textContent?.trim() || "No scenario provided.";
+
+        scenarioModal.hidden = false;
+        scenarioModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("scenario-modal-open");
+    });
+
+    document.getElementById("notificationScenarioClose")
+        ?.addEventListener("click", closeScenarioModal);
+
+    scenarioModal?.addEventListener("click", (event) => {
+        if (event.target === scenarioModal) {
+            closeScenarioModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && scenarioModal && !scenarioModal.hidden) {
+            closeScenarioModal();
+        }
+    });
+
+    updateScenarioPreview();
+    window.addEventListener("resize", updateScenarioPreview);
+
 });

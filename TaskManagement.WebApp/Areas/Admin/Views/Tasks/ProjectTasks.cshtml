@@ -14,6 +14,7 @@
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/images/ciit-logo.png" asp-append-version="true" />
 
     <title>Project Tasks - CIIT</title>
 
@@ -29,6 +30,10 @@
           asp-append-version="true" />
     <link rel="stylesheet"
           href="~/css/admin/admin-common.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/task-deadline-indicator.css"
           asp-append-version="true" />
 
 </head>
@@ -485,6 +490,19 @@
                         <h5 class="modal-title">
                             Add Task
                         </h5>
+
+                        <div class="add-task-project-dates"
+                             aria-label="Project timeline">
+                            <span>Project Timeline</span>
+                            <div class="add-task-project-date">
+                                <strong>Start Date</strong>
+                                <time id="addTaskProjectStart">-</time>
+                            </div>
+                            <div class="add-task-project-date">
+                                <strong>End Date</strong>
+                                <time id="addTaskProjectEnd">-</time>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -1120,6 +1138,9 @@
             asp-append-version="true">
     </script>
     <script src="~/js/admin/admin-common.js"
+        asp-append-version="true"></script>
+
+    <script src="~/js/task-deadline-indicator.js"
         asp-append-version="true"></script>
 
 </body>

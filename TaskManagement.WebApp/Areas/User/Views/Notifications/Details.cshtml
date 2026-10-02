@@ -5,30 +5,47 @@
     var isReviewApproved = notificationType == "TaskReviewApproved";
     var isReviewRejected = notificationType == "TaskReviewRejected";
     var isPaymentSettled = notificationType == "TaskPaymentSettled";
+    var isPaymentWithheld = notificationType == "TaskPaymentWithheld";
     var isReassignment = notificationType == "TaskAssignmentReassigned";
+    var isDeadlineTomorrow = notificationType == "TaskDeadlineTomorrow";
+    var isDeadlineToday = notificationType == "TaskDeadlineToday";
+    var isDeadlineNotification = isDeadlineTomorrow || isDeadlineToday;
     var isTaskAssignment = notificationType == "TaskAssignment";
-    var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled || isReassignment;
+    var isReviewUpdate = isReviewApproved || isReviewRejected || isPaymentSettled || isPaymentWithheld || isReassignment;
 
-    var detailTitle = isPaymentSettled
-        ? "Payment Settled"
-        : isReviewApproved
-            ? "Task Review Approved"
-            : isReviewRejected
-                ? "Task Review Rejected"
-                : "New Task Assignment";
+    var detailTitle = isDeadlineTomorrow
+        ? "Deadline Tomorrow"
+        : isDeadlineToday
+            ? "Deadline Today"
+            : isPaymentSettled
+                ? "Payment Settled"
+                : isPaymentWithheld
+                    ? "Payment Withheld"
+                : isReviewApproved
+                    ? "Task Review Approved"
+                    : isReviewRejected
+                        ? "Task Review Rejected"
+                        : "New Task Assignment";
 
-    var detailDescription = isPaymentSettled
-        ? "Your task review is complete and the payment has been settled."
-        : isReviewApproved
-            ? "Your submitted work has been reviewed and approved by the admin."
-            : isReviewRejected
-                ? "Your submitted work was rejected and the task has been placed on hold."
-                : "Review the task details below and choose to accept or reject.";
+    var detailDescription = isDeadlineTomorrow
+        ? "This task is due tomorrow."
+        : isDeadlineToday
+            ? "This task is due today."
+            : isPaymentSettled
+                ? "Your task review is complete and the payment has been settled."
+                : isPaymentWithheld
+                    ? "This task was submitted after the deadline and is not eligible for payment."
+                : isReviewApproved
+                    ? "Your submitted work has been reviewed and approved by the admin."
+                    : isReviewRejected
+                        ? "Your submitted work was rejected and the task has been placed on hold."
+                        : "Review the task details below and choose to accept or reject.";
 }
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/images/ciit-logo.png" asp-append-version="true" />
     <title>TaskManager — Notification Details</title>
     <link rel="stylesheet"
       href="~/css/users/user-dashboard.css"
@@ -85,7 +102,7 @@
                         <div class="task-header-text">
 
                             <span class="task-eyebrow">
-                                @(isTaskAssignment ? "TASK ASSIGNMENT" : "TASK UPDATE")
+                                @(isTaskAssignment ? "TASK ASSIGNMENT" : isDeadlineNotification ? "DEADLINE ALERT" : "TASK UPDATE")
                             </span>
 
                             <h1>
@@ -138,8 +155,9 @@
                                         Scenario
                                     </span>
 
-                                    <div class="scenario-box">
-                                        @Model.Scenario
+                                    <div class="scenario-box" id="scenarioPreviewBox">
+                                        <span class="scenario-preview-text">@Model.Scenario</span>
+                                        <button type="button" class="scenario-more-button" id="scenarioMoreButton" hidden>More...</button>
                                     </div>
 
                                 </div>
@@ -202,7 +220,7 @@
                             else
                             {
                                 <div class="notification-event-panel">
-                                    <span class="detail-label">UPDATE</span>
+                                    <span class="detail-label">@(isDeadlineNotification ? "DEADLINE" : "UPDATE")</span>
                                     <h3>@Model.NotificationTitle</h3>
                                     <p>
                                         @(isReassignment
@@ -215,7 +233,9 @@
                                                     ? "Your submitted work was approved by the admin."
                                                     : isPaymentSettled
                                                         ? "The task was completed and the payment was settled."
-                                                        : "This task notification contains the latest update.")
+                                                        : isPaymentWithheld
+                                                            ? "The task was completed, but no payment is due because the work was submitted after the deadline."
+                                                            : "This task notification contains the latest update.")
                                     </p>
                                 </div>
                             }
@@ -250,9 +270,15 @@
                             }
                             else
                             {
-                                <div class="action-info-box notification-update-box">
+                                <div class="action-info-box notification-update-box @(isDeadlineNotification || isPaymentWithheld ? "payment-deadline-warning" : "")">
                                     <span class="action-info-icon">✦</span>
-                                    <p>@Model.NotificationTitle</p>
+                                    <p>
+                                        @(isDeadlineNotification
+                                            ? "⚠ Submit this task before the deadline. No payment will be made after the deadline."
+                                            : isPaymentWithheld
+                                                ? "⚠ This task was submitted after the deadline and is no longer eligible for payment."
+                                                : Model.NotificationTitle)
+                                    </p>
                                 </div>
                             }
 
@@ -286,6 +312,13 @@
                                     <div class="final-status accepted-status">
                                         <span>₹</span>
                                         Payment Settled
+                                    </div>
+                                }
+                                else if (isPaymentWithheld)
+                                {
+                                    <div class="final-status rejected-status">
+                                        <span>₹</span>
+                                        Payment Withheld
                                     </div>
                                 }
                                 else if (Model.AssignmentStatus == "Pending")
@@ -342,6 +375,21 @@
 
 </div>
 
+
+<div class="notification-scenario-overlay" id="notificationScenarioModal" hidden aria-hidden="true">
+    <div class="notification-scenario-dialog" role="dialog" aria-modal="true" aria-labelledby="notificationScenarioTitle">
+        <div class="notification-scenario-header">
+            <div>
+                <span class="scenario-modal-eyebrow">TASK SCENARIO</span>
+                <h5 id="notificationScenarioTitle">Scenario Details</h5>
+            </div>
+            <button type="button" class="scenario-modal-close" id="notificationScenarioClose" aria-label="Close">×</button>
+        </div>
+        <div class="notification-scenario-body">
+            <div id="notificationScenarioFullText" class="notification-scenario-full-text"></div>
+        </div>
+    </div>
+</div>
 
 <script>
     window.notificationDetails = {

@@ -322,17 +322,24 @@
 }
 
 .task-chat-avatar {
-    width: 44px;
+    width: 118px;
     height: 44px;
-    flex: 0 0 44px;
-    border-radius: 14px;
+    flex: 0 0 118px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
     font-size: 20px;
-    background: linear-gradient(135deg, var(--task-chat-accent), var(--task-chat-accent-2));
-    box-shadow: 0 8px 22px rgba(108, 99, 255, .24);
+    background: transparent;
+    box-shadow: none;
+}
+
+.task-chat-logo {
+    width: 118px;
+    height: 44px;
+    display: block;
+    object-fit: contain;
 }
 
 .task-chat-title {

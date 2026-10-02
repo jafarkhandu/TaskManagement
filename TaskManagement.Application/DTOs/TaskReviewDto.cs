@@ -17,6 +17,13 @@ namespace TaskManagement.Application.DTOs
         public string? RejectionReason { get; set; }
         public string? PaymentStatus { get; set; }
         public DateTime SubmittedAt { get; set; }
+
+        // Deadline snapshot captured when the user submitted the task.
+        public DateTime? DeadlineAtSubmission { get; set; }
+
+        // Server-calculated payment eligibility for the submitted review.
+        public bool IsLate { get; set; }
+
         public string? PaymentMethod { get; set; }
         public string? UpiId { get; set; }
         public string? AccountHolderName { get; set; }

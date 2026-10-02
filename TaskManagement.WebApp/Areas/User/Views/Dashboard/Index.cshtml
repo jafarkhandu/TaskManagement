@@ -23,6 +23,7 @@
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/images/ciit-logo.png" asp-append-version="true" />
 
     <title>TaskManager — Dashboard</title>
 
@@ -371,6 +372,32 @@
                             <div class="overview-progress-track">
 
                                 <span style="width:@completionRate%"></span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================= DEADLINE HEALTH ================= -->
+
+                        <div class="overview-progress deadline-health-progress">
+
+                            <div class="overview-progress-head">
+
+                                <span>
+                                    Deadline Health
+                                </span>
+
+                                <strong>
+                                    @Model.DeadlineHealthPercent%
+                                </strong>
+
+                            </div>
+
+
+                            <div class="overview-progress-track deadline-health-track">
+
+                                <span style="width:@Model.DeadlineHealthPercent%"></span>
 
                             </div>
 

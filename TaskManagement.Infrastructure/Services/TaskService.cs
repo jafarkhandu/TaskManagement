@@ -73,6 +73,12 @@ namespace TaskManagement.Infrastructure.Services
                     Status = t.Status,
                     StartDate = t.StartDate,
                     ExpectedEndDate = t.ExpectedEndDate,
+                    CompletedAtUtc = t.CompletedAtUtc ??
+                        _db.TaskReviews
+                            .Where(r => r.TaskId == t.Id)
+                            .OrderByDescending(r => r.Id)
+                            .Select(r => (DateTime?)r.SubmittedAt)
+                            .FirstOrDefault(),
                     Amount = t.Amount
                 })
                 .ToListAsync();
@@ -116,6 +122,12 @@ namespace TaskManagement.Infrastructure.Services
                     Status = t.Status,
                     StartDate = t.StartDate,
                     ExpectedEndDate = t.ExpectedEndDate,
+                    CompletedAtUtc = t.CompletedAtUtc ??
+                        _db.TaskReviews
+                            .Where(r => r.TaskId == t.Id)
+                            .OrderByDescending(r => r.Id)
+                            .Select(r => (DateTime?)r.SubmittedAt)
+                            .FirstOrDefault(),
                     Amount = t.Amount
                 })
                 .FirstOrDefaultAsync();
@@ -480,6 +492,18 @@ namespace TaskManagement.Infrastructure.Services
             }
         }
 
+        private static TimeZoneInfo GetApplicationLocalTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
+        }
+
         private static bool IsValidGitHubRepositoryUrl(string? value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -539,6 +563,22 @@ namespace TaskManagement.Infrastructure.Services
 
             assignment.CompletionRepositoryUrl = completionRepositoryUrl.Trim();
             assignment.RespondedAt = DateTime.UtcNow;
+
+            // Capture the user's exact submission moment once. The admin
+            // review/payment decision happens later and must not change it.
+            var submittedAt = DateTime.UtcNow;
+
+            // ExpectedEndDate is date-only in the UI. The task remains valid
+            // through the entire selected local calendar day, so the payment
+            // cutoff is the following local midnight converted to UTC.
+            var localDeadlineBoundary = task.ExpectedEndDate.Date.AddDays(1);
+            var deadlineAtSubmission = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(
+                    localDeadlineBoundary,
+                    DateTimeKind.Unspecified),
+                GetApplicationLocalTimeZone());
+
+            task.CompletedAtUtc = submittedAt;
             task.Status = "Review Pending";
 
             var review = new TaskReview
@@ -546,7 +586,8 @@ namespace TaskManagement.Infrastructure.Services
                 TaskId = taskId,
                 TaskAssignmentId = assignment.Id,
                 SubmittedByUserId = userId,
-                SubmittedAt = DateTime.UtcNow,
+                SubmittedAt = submittedAt,
+                DeadlineAtSubmission = deadlineAtSubmission,
                 Status = "Pending"
             };
 
@@ -652,6 +693,17 @@ namespace TaskManagement.Infrastructure.Services
             {
                 latestAssignment!.Status = "Reassigned";
                 latestAssignment.RespondedAt = DateTime.UtcNow;
+
+                // An old assignee must not receive deadline reminders after
+                // the task is reassigned to someone else.
+                var oldDeadlineNotifications = await _db.Notifications
+                    .Where(n =>
+                        n.TaskAssignmentId == latestAssignment.Id &&
+                        (n.Type == "TaskDeadlineTomorrow" || n.Type == "TaskDeadlineToday"))
+                    .ToListAsync();
+
+                if (oldDeadlineNotifications.Count > 0)
+                    _db.Notifications.RemoveRange(oldDeadlineNotifications);
 
                 var newAssignment = new TaskAssignment
                 {

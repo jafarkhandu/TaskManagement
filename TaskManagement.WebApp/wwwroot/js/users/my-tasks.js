@@ -21,6 +21,7 @@
     const modalStartDate = document.getElementById("modalStartDate");
     const modalEndDate = document.getElementById("modalEndDate");
     const modalAmount = document.getElementById("modalAmount");
+    const modalDeadlineWarning = document.getElementById("modalDeadlineWarning");
 
     const completionModal = document.getElementById('taskCompletionModal');
     const completionTaskTitle = document.getElementById('completionTaskTitle');
@@ -145,6 +146,70 @@
 
     /* ================= MODAL ================= */
 
+    function getTaskDeadlineState(card, now = new Date()) {
+        const raw = String(card?.dataset?.endDate || '').trim();
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+
+        if (!match) return 'none';
+
+        const dueDate = new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3]),
+            0, 0, 0, 0
+        );
+
+        const currentDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            0, 0, 0, 0
+        );
+
+        const daysUntilDue = Math.round(
+            (dueDate.getTime() - currentDate.getTime()) / 86400000
+        );
+
+        const status = String(card.dataset.status || '').trim().toLowerCase();
+
+        if (status === 'completed' || status === 'cancelled')
+            return 'none';
+
+        if (daysUntilDue < 0)
+            return 'overdue';
+
+        if (daysUntilDue === 0)
+            return 'today';
+
+        if (daysUntilDue === 1)
+            return 'tomorrow';
+
+        return 'none';
+    }
+
+    function updateModalDeadlineWarning(card) {
+        if (!modalDeadlineWarning) return;
+
+        const state = getTaskDeadlineState(card);
+
+        if (state === 'today' || state === 'tomorrow') {
+            modalDeadlineWarning.textContent =
+                '⚠ Submit this task before the deadline. No payment will be made after the deadline.';
+            modalDeadlineWarning.hidden = false;
+            return;
+        }
+
+        if (state === 'overdue') {
+            modalDeadlineWarning.textContent =
+                '⚠ Deadline exceeded. This task is no longer eligible for payment.';
+            modalDeadlineWarning.hidden = false;
+            return;
+        }
+
+        modalDeadlineWarning.textContent = '';
+        modalDeadlineWarning.hidden = true;
+    }
+
     function openTaskModal(card) {
 
         modalTaskId.textContent =
@@ -173,6 +238,9 @@
                 ? "₹ " + card.dataset.amount
                 : "₹ 0.00";
 
+        updateModalDeadlineWarning(card);
+
+        modal.dataset.openTaskId = String(card.dataset.taskId || '');
         modal.classList.add("show");
 
         document.body.style.overflow = "hidden";
@@ -207,7 +275,9 @@
             setText('modalStartDate', card.dataset.startDate || '—');
             setText('modalEndDate', card.dataset.endDate || '—');
             setText('modalAmount', card.dataset.amount ? '₹ ' + card.dataset.amount : '₹ 0.00');
+            updateModalDeadlineWarning(card);
 
+            taskModal.dataset.openTaskId = String(card.dataset.taskId || '');
             taskModal.classList.add('show');
             document.body.style.overflow = 'hidden';
             return;
@@ -258,6 +328,12 @@
         if (!modal) return;
 
         modal.classList.remove("show");
+        modal.dataset.openTaskId = '';
+
+        if (modalDeadlineWarning) {
+            modalDeadlineWarning.textContent = '';
+            modalDeadlineWarning.hidden = true;
+        }
 
         document.body.style.overflow = "";
     }
@@ -649,6 +725,14 @@
 
             if (isCompleted) {
                 card.querySelector('.task-chat-btn')?.remove();
+            }
+
+            if (
+                modal?.classList.contains('show') &&
+                modalDeadlineWarning &&
+                modal.dataset.openTaskId === String(taskId)
+            ) {
+                updateModalDeadlineWarning(card);
             }
 
             applyFilters();

@@ -30,6 +30,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/images/ciit-logo.png" asp-append-version="true" />
 
     <title>TaskManager — My Tasks</title>
 
@@ -43,6 +44,10 @@
 
 <link rel="stylesheet"
       href="~/css/theme.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/task-deadline-indicator.css"
       asp-append-version="true" />
 </head>
 
@@ -242,7 +247,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -257,16 +262,14 @@
 
                                 @if (string.Equals(task.Status, "Review Pending", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="review-status-badge">Review Pending</span>
+                                    <span class="task-review-pending">Review Pending</span>
                                 }
 
                             </div>
 
                             <h3>@task.Title</h3>
 
-                            <p>@task.Scenario</p>
-
-                            <div class="task-meta">
+<div class="task-meta">
 
                                 <span>
                                     ◫
@@ -327,7 +330,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -342,16 +345,14 @@
 
                                 @if (string.Equals(task.Status, "Review Pending", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    <span class="review-status-badge">Review Pending</span>
+                                    <span class="task-review-pending">Review Pending</span>
                                 }
 
                             </div>
 
                             <h3>@task.Title</h3>
 
-                            <p>@task.Scenario</p>
-
-                            <div class="task-meta">
+<div class="task-meta">
 
                                 <span>
                                     ◫
@@ -411,7 +412,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -428,9 +429,7 @@
 
                             <h3>@task.Title</h3>
 
-                            <p>@task.Scenario</p>
-
-                            <div class="task-meta">
+<div class="task-meta">
 
                                 <span>
                                     ◫
@@ -500,7 +499,7 @@
                                 data-priority="@task.Priority"
                                 data-task-id="@task.Id"
                                 data-start-date="@task.StartDate.ToString("dd MMM yyyy")"
-                                data-end-date="@task.ExpectedEndDate.ToString("dd MMM yyyy")"
+                                data-end-date="@task.ExpectedEndDate.ToString("yyyy-MM-dd")"
                                 data-amount="@task.Amount.ToString("0.00")">
 
                             <div class="task-card-top">
@@ -517,9 +516,7 @@
 
                             <h3>@task.Title</h3>
 
-                            <p>@task.Scenario</p>
-
-                            <div class="task-meta">
+<div class="task-meta">
 
                                 <span>
                                     ◫
@@ -698,6 +695,12 @@
 
         </div>
 
+        <div id="modalDeadlineWarning"
+             class="task-deadline-modal-warning"
+             role="alert"
+             aria-live="polite"
+             hidden></div>
+
     </div>
 
 </div>
@@ -706,6 +709,9 @@
         asp-append-version="true"></script>
 
 <script src="~/js/users/my-tasks.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/task-deadline-indicator.js"
         asp-append-version="true"></script>
 
 

@@ -146,9 +146,29 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Error });
 
-            await SendLatestUserNotificationAsync(
-                id,
-                payNow ? "TaskPaymentSettled" : "TaskReviewApproved");
+            var settledPayment = await _context.TaskPayments
+                .AsNoTracking()
+                .Where(x => x.TaskAssignmentId == (
+                    _context.TaskReviews
+                        .Where(r => r.Id == id)
+                        .Select(r => r.TaskAssignmentId)
+                        .FirstOrDefault()))
+                .OrderByDescending(x => x.Id)
+                .Select(x => new
+                {
+                    x.Status,
+                    x.Amount
+                })
+                .FirstOrDefaultAsync();
+
+            var notificationType =
+                string.Equals(settledPayment?.Status, "Withheld", StringComparison.OrdinalIgnoreCase)
+                    ? "TaskPaymentWithheld"
+                    : payNow
+                        ? "TaskPaymentSettled"
+                        : "TaskReviewApproved";
+
+            await SendLatestUserNotificationAsync(id, notificationType);
 
             await BroadcastTaskStatusAsync(
                 taskBeforeSettlement?.Id ?? 0,
@@ -180,13 +200,19 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 }
             }
 
+            var finalPaymentStatus =
+                settledPayment?.Status ?? (payNow ? "Paid" : "Pending");
+
             return Json(new
             {
                 success = true,
-                paymentStatus = payNow ? "Paid" : "Pending",
-                message = payNow
-                    ? "Payment settled and task completed."
-                    : "Task approved. Payment remains pending."
+                paymentStatus = finalPaymentStatus,
+                paymentAmount = settledPayment?.Amount ?? 0m,
+                message = string.Equals(finalPaymentStatus, "Withheld", StringComparison.OrdinalIgnoreCase)
+                    ? "Task completed. No payment is due because it was submitted after the deadline."
+                    : payNow
+                        ? "Payment settled and task completed."
+                        : "Task approved. Payment remains pending."
             });
         }
 
@@ -260,7 +286,9 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 ? reviewReason
                 : type == "TaskPaymentSettled"
                     ? "Payment for your task has been settled."
-                    : "Your submitted task has been approved by the admin.";
+                    : type == "TaskPaymentWithheld"
+                        ? "Your task was submitted after the deadline. No payment will be made for this task."
+                        : "Your submitted task has been approved by the admin.";
 
             await _notificationHub.Clients.User(notification.UserId)
                 .SendAsync("UserReviewNotificationReceived", new
