@@ -227,6 +227,8 @@
        NOTIFICATIONS
     ===================================================== */
 
+    window.__dashboardNotificationHandler = true;
+
     const notificationButton =
         document.getElementById("notificationButton");
 
@@ -1238,25 +1240,26 @@
    Dark <-> Light Glassmorphism
    ========================================================= */
 
-const themeButton = document.getElementById("themeButton");
+if (!window.__taskManagerThemeInitialized) {
+    const themeButton = document.getElementById("themeButton");
+    const savedTheme = localStorage.getItem("taskmanager-theme");
 
-const savedTheme = localStorage.getItem("taskmanager-theme");
+    if (savedTheme === "light") {
+        document.documentElement.classList.add("light-theme");
+    }
 
-if (savedTheme === "light") {
-    document.documentElement.classList.add("light-theme");
+    themeButton?.addEventListener("click", () => {
+        const isLight =
+            document.documentElement.classList.toggle("light-theme");
+
+        localStorage.setItem(
+            "taskmanager-theme",
+            isLight ? "light" : "dark"
+        );
+    });
+
+    window.__taskManagerThemeInitialized = true;
 }
-
-themeButton?.addEventListener("click", () => {
-
-    const isLight =
-        document.documentElement.classList.toggle("light-theme");
-
-    localStorage.setItem(
-        "taskmanager-theme",
-        isLight ? "light" : "dark"
-    );
-
-});
 
 
     /* =====================================================
