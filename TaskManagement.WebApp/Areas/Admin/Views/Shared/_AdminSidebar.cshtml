@@ -54,25 +54,13 @@
             <span>Users</span>
         </a>
 
-        <a href="#"
-           class="sidebar-link @(currentController.Equals("Calendar", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-            <span class="nav-icon">▣</span>
-            <span>Calendar</span>
-        </a>
-
         <a href="@Url.Action("Index", "Reports", new { area = "Admin" })"
            class="sidebar-link @(currentController.Equals("Reports", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
             <span class="nav-icon">▥</span>
             <span>Reports</span>
         </a>
 
-        <a href="#"
-           class="sidebar-link @(currentController.Equals("Settings", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-            <span class="nav-icon">⚙</span>
-            <span>Settings</span>
-        </a>
-
-    </nav>
+        </nav>
 
     <!-- LOGOUT -->
     <form class="sidebar-logout-form"
