@@ -394,4 +394,75 @@
 
         });
 
+
+
+    /* =========================================
+       USER ACTION MENUS
+    ========================================= */
+
+    const actionMenus =
+        document.querySelectorAll(".user-action-menu");
+
+    function closeActionMenus(exceptMenu = null) {
+
+        actionMenus.forEach(function (menu) {
+
+            if (menu === exceptMenu) {
+                return;
+            }
+
+            menu.classList.remove("open");
+
+            const trigger =
+                menu.querySelector(".user-action-menu-trigger");
+
+            if (trigger) {
+                trigger.setAttribute("aria-expanded", "false");
+            }
+
+        });
+
+    }
+
+    actionMenus.forEach(function (menu) {
+
+        const trigger =
+            menu.querySelector(".user-action-menu-trigger");
+
+        if (!trigger) {
+            return;
+        }
+
+        trigger.addEventListener("click", function (event) {
+
+            event.stopPropagation();
+
+            const isOpen =
+                menu.classList.contains("open");
+
+            closeActionMenus(menu);
+
+            menu.classList.toggle("open", !isOpen);
+
+            trigger.setAttribute(
+                "aria-expanded",
+                String(!isOpen)
+            );
+
+        });
+
+    });
+
+    document.addEventListener("click", function () {
+        closeActionMenus();
+    });
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape") {
+            closeActionMenus();
+        }
+
+    });
+
 });
