@@ -2067,3 +2067,45 @@ html:not(.light-theme) .admin-dashboard .admin-notification-view-all {
         justify-self:start;
     }
 }
+
+
+/* Smooth Total Tasks / dashboard stat modal scrolling.
+   Keep one scroll owner so the rows and scrollbar stay synchronized. */
+.admin-stat-modal-box{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+}
+.admin-stat-modal-list{
+    flex:1 1 auto;
+    min-height:0;
+    max-height:370px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-gutter:stable;
+    scroll-behavior:auto;
+    padding:2px 8px 2px 0;
+}
+.admin-stat-modal-list::-webkit-scrollbar{
+    width:8px;
+}
+.admin-stat-modal-list::-webkit-scrollbar-track{
+    background:transparent;
+    border-radius:999px;
+}
+.admin-stat-modal-list::-webkit-scrollbar-thumb{
+    background:#c8d2e1;
+    border-radius:999px;
+    border:2px solid #fff;
+}
+.admin-stat-modal-list::-webkit-scrollbar-thumb:hover{
+    background:#9eacc0;
+}
+@media(max-width:600px){
+    .admin-stat-modal-list{
+        max-height:calc(100vh - 245px);
+        padding-right:7px;
+    }
+}

@@ -114,6 +114,35 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 .ThenBy(u => u.Email)
                 .ToListAsync();
 
+            // Load all user roles in one query so the Users page does not
+            // issue one Identity query per user.
+            var userIds = users
+                .Select(u => u.Id)
+                .ToList();
+
+            var userRoles = await (
+                from userRole in _context.UserRoles.AsNoTracking()
+                join roleEntity in _context.Roles.AsNoTracking()
+                    on userRole.RoleId equals roleEntity.Id
+                where userIds.Contains(userRole.UserId)
+                select new
+                {
+                    userRole.UserId,
+                    Role = roleEntity.Name
+                })
+                .ToListAsync();
+
+            var roleMap = userRoles
+                .GroupBy(x => x.UserId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .Select(x => x.Role)
+                        .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
+                        ?? "User");
+
+            ViewData["UserRoles"] = roleMap;
+
             return View(users);
         }
 
