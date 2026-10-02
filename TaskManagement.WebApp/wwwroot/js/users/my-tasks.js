@@ -22,6 +22,7 @@
     const modalEndDate = document.getElementById("modalEndDate");
     const modalAmount = document.getElementById("modalAmount");
     const modalDeadlineWarning = document.getElementById("modalDeadlineWarning");
+    const modalDeadlineWarningText = document.getElementById("modalDeadlineWarningText");
 
     const completionModal = document.getElementById('taskCompletionModal');
     const completionTaskTitle = document.getElementById('completionTaskTitle');
@@ -190,23 +191,25 @@
     function updateModalDeadlineWarning(card) {
         if (!modalDeadlineWarning) return;
 
+        const warningText = modalDeadlineWarningText || modalDeadlineWarning;
+
         const state = getTaskDeadlineState(card);
 
         if (state === 'today' || state === 'tomorrow') {
-            modalDeadlineWarning.textContent =
-                '⚠ Submit this task before the deadline. No payment will be made after the deadline.';
+            warningText.textContent =
+                'Submit this task before the deadline. No payment will be made after the deadline.';
             modalDeadlineWarning.hidden = false;
             return;
         }
 
         if (state === 'overdue') {
-            modalDeadlineWarning.textContent =
-                '⚠ Deadline exceeded. This task is no longer eligible for payment.';
+            warningText.textContent =
+                'Deadline exceeded. This task is no longer eligible for payment.';
             modalDeadlineWarning.hidden = false;
             return;
         }
 
-        modalDeadlineWarning.textContent = '';
+        warningText.textContent = '';
         modalDeadlineWarning.hidden = true;
     }
 
@@ -242,6 +245,7 @@
 
         modal.dataset.openTaskId = String(card.dataset.taskId || '');
         modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
 
         document.body.style.overflow = "hidden";
     }
@@ -279,6 +283,7 @@
 
             taskModal.dataset.openTaskId = String(card.dataset.taskId || '');
             taskModal.classList.add('show');
+            taskModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
             return;
         }
@@ -329,9 +334,10 @@
 
         modal.classList.remove("show");
         modal.dataset.openTaskId = '';
+        modal.setAttribute("aria-hidden", "true");
 
         if (modalDeadlineWarning) {
-            modalDeadlineWarning.textContent = '';
+            (modalDeadlineWarningText || modalDeadlineWarning).textContent = '';
             modalDeadlineWarning.hidden = true;
         }
 
