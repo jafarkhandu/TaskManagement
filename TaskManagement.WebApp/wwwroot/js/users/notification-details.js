@@ -295,13 +295,42 @@
             scenarioText.scrollHeight <= scenarioText.clientHeight + 2;
     }
 
+    function closeScenarioModal() {
+        if (!scenarioModal) {
+            return;
+        }
+
+        scenarioModal.hidden = true;
+        scenarioModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("scenario-modal-open");
+    }
+
     scenarioMoreButton?.addEventListener("click", () => {
         if (!scenarioModal || !scenarioFullText) {
             return;
         }
 
-        scenarioFullText.textContent = scenarioText?.textContent?.trim() || "No scenario provided.";
-        bootstrap.Modal.getOrCreateInstance(scenarioModal).show();
+        scenarioFullText.textContent =
+            scenarioText?.textContent?.trim() || "No scenario provided.";
+
+        scenarioModal.hidden = false;
+        scenarioModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("scenario-modal-open");
+    });
+
+    document.getElementById("notificationScenarioClose")
+        ?.addEventListener("click", closeScenarioModal);
+
+    scenarioModal?.addEventListener("click", (event) => {
+        if (event.target === scenarioModal) {
+            closeScenarioModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && scenarioModal && !scenarioModal.hidden) {
+            closeScenarioModal();
+        }
     });
 
     updateScenarioPreview();
