@@ -134,7 +134,8 @@ namespace TaskManagement.Infrastructure.Services
         public async Task<(bool Success, string Error, AdminChatMessageDto? Message)> SendMessageAsync(
             int chatSessionId,
             string senderId,
-            string message)
+            string message,
+            bool isAdmin)
         {
             if (string.IsNullOrWhiteSpace(message))
                 return (false, "Message cannot be empty.", null);
@@ -144,32 +145,35 @@ namespace TaskManagement.Infrastructure.Services
             if (message.Length > 4000)
                 return (false, "Message cannot exceed 4000 characters.", null);
 
-            var session = await _context.ChatSessions
-                .FirstOrDefaultAsync(x =>
-                    x.Id == chatSessionId &&
-                    x.IsActive);
+            // Load the session, task status, and sender identity in one query.
+            // Callers already have the authenticated role claim, so there is no
+            // need for an additional Identity role lookup here.
+            var session = await (
+                from chatSession in _context.ChatSessions
+                join task in _context.TaskItems.AsNoTracking()
+                    on chatSession.TaskId equals task.Id
+                join sender in _context.Users.AsNoTracking()
+                    on senderId equals sender.Id
+                where chatSession.Id == chatSessionId && chatSession.IsActive
+                select new
+                {
+                    Session = chatSession,
+                    task.Status,
+                    SenderName = sender.FullName ?? sender.UserName
+                })
+                .FirstOrDefaultAsync();
 
             if (session == null)
                 return (false, "Chat session not found.", null);
 
-            var sender = await _userManager.FindByIdAsync(senderId);
-
-            if (sender == null)
-                return (false, "Sender not found.", null);
-
-            var senderIsAdmin = await _userManager.IsInRoleAsync(sender, "Admin");
-
-            if (!senderIsAdmin && session.UserId != senderId)
+            if (!isAdmin && session.Session.UserId != senderId)
                 return (false, "You are not allowed to send messages in this chat.", null);
 
-            if (senderIsAdmin && session.AdminId != senderId)
+            if (isAdmin && session.Session.AdminId != senderId)
                 return (false, "You are not allowed to send messages in this chat.", null);
 
-            // Prevent messages on completed tasks for users
-            var task = await _context.TaskItems.AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == session.TaskId);
-
-            if (task != null && string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase) && !senderIsAdmin)
+            if (!isAdmin &&
+                string.Equals(session.Status, "Completed", StringComparison.OrdinalIgnoreCase))
                 return (false, "Cannot send messages for completed task.", null);
 
             var chatMessage = new ChatMessage
@@ -189,7 +193,7 @@ namespace TaskManagement.Infrastructure.Services
             {
                 Id = chatMessage.Id,
                 SenderId = chatMessage.SenderId,
-                SenderName = sender?.FullName ?? sender?.UserName,
+                SenderName = session.SenderName,
                 Message = chatMessage.Message,
                 SentAt = chatMessage.SentAt,
                 IsRead = chatMessage.IsRead
@@ -207,6 +211,8 @@ namespace TaskManagement.Infrastructure.Services
                 from session in _context.ChatSessions.AsNoTracking()
                 join task in _context.TaskItems.AsNoTracking()
                     on session.TaskId equals task.Id
+                join user in _context.Users.AsNoTracking()
+                    on session.UserId equals user.Id
                 where session.Id == chatSessionId && session.IsActive
                 select new
                 {
@@ -214,6 +220,13 @@ namespace TaskManagement.Infrastructure.Services
                     session.TaskId,
                     session.UserId,
                     session.AdminId,
+                    User = new
+                    {
+                        user.Id,
+                        user.FullName,
+                        user.Email,
+                        user.UserName
+                    },
                     Task = new
                     {
                         task.Id,
@@ -253,17 +266,15 @@ namespace TaskManagement.Infrastructure.Services
 
             if (isAdmin)
             {
-                var user = await _userManager.FindByIdAsync(sessionTask.UserId);
-
                 return new
                 {
                     Id = sessionTask.SessionId,
                     sessionTask.TaskId,
                     User = new
                     {
-                        Id = user?.Id,
-                        FullName = user?.FullName,
-                        Email = user?.Email
+                        Id = sessionTask.User.Id,
+                        FullName = sessionTask.User.FullName,
+                        Email = sessionTask.User.Email
                     },
                     Task = sessionTask.Task,
                     Messages = messages
