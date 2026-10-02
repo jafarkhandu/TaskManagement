@@ -1394,82 +1394,75 @@ body {
 
 /* =====================================================
    MY TASKS - COMMON USER SHELL FIX
-   Keeps Hatim's original My Tasks layout
+   Keep the same user shell and topbar proportions as the
+   Dashboard, Profile, Notifications and Payment pages.
 ===================================================== */
 
-/* The sidebar is fixed, so the page itself must not
-   behave like a flex row. */
 .user-task-app {
     display: block;
     width: 100%;
     min-height: 100vh;
 }
 
-/* Main content exactly follows Hatim's original layout */
 .main-content {
     width: calc(100% - 235px);
     margin-left: 235px;
     min-height: 100vh;
-    padding: 14px 24px 40px;
+    padding: 0 25px 35px;
 }
 
-    /* Restore Hatim's compact topbar */
-    .main-content .topbar {
-        height: 36px;
-        margin-bottom: 14px;
-        gap: 20px;
-    }
+.main-content .topbar {
+    height: 76px;
+    margin-bottom: 0;
+    gap: 20px;
+}
 
-    /* Hatim-style search */
-    .main-content .search {
-        height: 36px;
-        max-width: 460px;
-        width: 100%;
-        border-radius: 9px;
-        padding: 0 12px;
-    }
+.main-content .search {
+    width: min(570px, 52vw);
+    max-width: none;
+    height: 43px;
+    border-radius: 11px;
+    padding: 0 10px 0 14px;
+}
 
-        .main-content .search input {
-            font-size: 11px;
-        }
+.main-content .search input {
+    font-size: 11px;
+}
 
-    .main-content .search-icon {
-        font-size: 17px;
-    }
+.main-content .search-icon {
+    font-size: 21px;
+}
 
-    .main-content .search kbd {
-        font-size: 8px;
-        padding: 3px 6px;
-    }
+.main-content .search kbd {
+    font-size: 9px;
+    padding: 4px 7px;
+}
 
-    /* Compact top actions */
-    .main-content .top-actions {
-        gap: 9px;
-    }
+.main-content .top-actions {
+    gap: 9px;
+}
 
-    .main-content .round-button {
-        width: 35px;
-        height: 35px;
-    }
+.main-content .round-button {
+    width: 38px;
+    height: 38px;
+}
 
-    /* User profile stays compact like Hatim's version */
-    .main-content .user-avatar {
-        width: 35px;
-        height: 35px;
-    }
+.main-content .user-avatar {
+    width: 38px;
+    height: 38px;
+}
 
-    .main-content .user-info strong {
-        font-size: 10px;
-    }
+.main-content .user-info strong {
+    font-size: 10px;
+}
 
-    .main-content .user-info small {
-        font-size: 8px;
-    }
+.main-content .user-info small {
+    font-size: 9px;
+}
 
-    /* Notification icon */
-    .main-content .notification-icon-glyph {
-        font-size: 16px;
-    }
+.main-content .notification-icon-glyph {
+    font-size: 17px;
+}
 
 
 /* =====================================================
@@ -1544,38 +1537,37 @@ html.light-theme .user-task-app {
 /* MAIN CONTENT */
 
 html.light-theme .main-content {
-    padding: 18px 28px 40px;
+    padding: 0 25px 35px;
 }
 
-    /* TOPBAR — same feeling as Dashboard */
+html.light-theme .main-content .topbar {
+    height: 76px;
+    margin-bottom: 0;
+    gap: 20px;
+}
 
-    html.light-theme .main-content .topbar {
-        height: 44px;
-        margin-bottom: 18px;
-        gap: 24px;
-    }
+html.light-theme .main-content .search {
+    width: min(570px, 52vw);
+    max-width: none;
+    height: 43px;
+    border-radius: 11px;
+    padding: 0 10px 0 14px;
+}
 
-    html.light-theme .main-content .search {
-        height: 44px;
-        max-width: 610px;
-        border-radius: 12px;
-        padding: 0 15px;
-    }
+html.light-theme .main-content .search input {
+    font-size: 11px;
+    color: #253452;
+}
 
-        html.light-theme .main-content .search input {
-            font-size: 12px;
-            color: #253452;
-        }
+html.light-theme .main-content .search-icon {
+    font-size: 21px;
+    color: #7890ad;
+}
 
-    html.light-theme .main-content .search-icon {
-        font-size: 17px;
-        color: #7890ad;
-    }
-
-    html.light-theme .main-content .search kbd {
-        font-size: 9px;
-        padding: 4px 7px;
-    }
+html.light-theme .main-content .search kbd {
+    font-size: 9px;
+    padding: 4px 7px;
+}
 
 /* HERO */
 
