@@ -10,7 +10,7 @@ namespace TaskManagement.Application.Interfaces
         Task<(bool Success, string Error)> RegisterAsync(
             RegisterDto model);
 
-        Task<(bool Success, string Error)> LoginAsync(
+        Task<(bool Success, string Error, bool IsAdmin)> LoginAsync(
             LoginDto model);
 
         Task LogoutAsync();
