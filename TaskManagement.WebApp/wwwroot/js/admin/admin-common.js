@@ -651,7 +651,7 @@
     async function refreshAdminChatSidebarDot() {
         try {
             const response = await fetch(
-                "/Admin/Chat",
+                "/Admin/Chat/UnreadCount",
                 {
                     credentials: "same-origin",
                     cache: "no-store"
@@ -662,16 +662,8 @@
                 return;
             }
 
-            const html = await response.text();
-            const parsed = new DOMParser().parseFromString(html, "text/html");
-
-            const hasUnreadChat = Array.from(
-                parsed.querySelectorAll(".admin-chat-item")
-            ).some(item =>
-                (parseInt(item.dataset.unread || "0", 10) || 0) > 0
-            );
-
-            setAdminChatSidebarDot(hasUnreadChat);
+            const result = await response.json();
+            setAdminChatSidebarDot(result?.hasUnreadChat === true);
         }
         catch (error) {
             console.warn(

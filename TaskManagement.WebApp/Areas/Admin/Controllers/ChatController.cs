@@ -41,6 +41,31 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             return View(sessions);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> UnreadCount()
+        {
+            var admin = await _userManager.GetUserAsync(User);
+
+            if (admin == null)
+                return Unauthorized();
+
+            var hasUnreadChat = await (
+                from message in _context.ChatMessages.AsNoTracking()
+                join session in _context.ChatSessions.AsNoTracking()
+                    on message.ChatSessionId equals session.Id
+                join task in _context.TaskItems.AsNoTracking()
+                    on session.TaskId equals task.Id
+                where session.AdminId == admin.Id
+                    && session.IsActive
+                    && task.Status != "Completed"
+                    && !message.IsRead
+                    && message.SenderId == session.UserId
+                select message.Id
+            ).AnyAsync();
+
+            return Ok(new { hasUnreadChat });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkChatRead(int chatSessionId)
