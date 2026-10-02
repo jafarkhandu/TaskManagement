@@ -791,23 +791,32 @@ namespace TaskManagement.Infrastructure.Services
         {
             var usersInUserRole = await _userManager.GetUsersInRoleAsync("User");
 
-            var output = new List<UserLookupDto>();
+            if (usersInUserRole.Count == 0)
+                return new List<UserLookupDto>();
 
-            foreach (var u in usersInUserRole)
-            {
-                // Exclude administrators even if they also have the User role
-                if (await _userManager.IsInRoleAsync(u, "Admin"))
-                    continue;
+            // Resolve administrators in one query instead of making one
+            // IsInRoleAsync call per user (N+1 database round-trips).
+            var userIds = usersInUserRole
+                .Select(u => u.Id)
+                .ToList();
 
-                output.Add(new UserLookupDto
+            var adminUserIds = await (
+                from userRole in _db.UserRoles.AsNoTracking()
+                join role in _db.Roles.AsNoTracking()
+                    on userRole.RoleId equals role.Id
+                where role.Name == "Admin" && userIds.Contains(userRole.UserId)
+                select userRole.UserId
+            )
+            .ToHashSetAsync();
+
+            return usersInUserRole
+                .Where(u => !adminUserIds.Contains(u.Id))
+                .Select(u => new UserLookupDto
                 {
                     Id = u.Id,
                     Email = u.Email ?? string.Empty,
                     FullName = u.FullName ?? string.Empty
-                });
-            }
-
-            return output
+                })
                 .OrderBy(u => u.FullName)
                 .ThenBy(u => u.Email)
                 .ToList();
