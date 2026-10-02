@@ -94,7 +94,7 @@ namespace TaskManagement.WebApp.Hubs
             if (isAdmin && session.AdminId != user.Id)
                 throw new HubException("You are not allowed to send messages in this chat.");
 
-            var result = await _chatService.SendMessageAsync(chatSessionId, user.Id, message);
+            var result = await _chatService.SendMessageAsync(chatSessionId, user.Id, message, isAdmin);
 
             if (!result.Success)
                 throw new HubException(result.Error);
