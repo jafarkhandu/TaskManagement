@@ -1572,42 +1572,43 @@
 
             }
 
-        }
 
+            window.addEventListener(
+                'adminNotificationConnectionReady',
+                function (event) {
 
-        window.addEventListener(
-            'adminNotificationConnectionReady',
-            function (event) {
+                    const connection =
+                        event?.detail?.connection ||
+                        window.__adminNotificationConnection;
 
-                const connection =
-                    event?.detail?.connection ||
-                    window.__adminNotificationConnection;
+                    attachAdminSignalR(connection);
 
-                attachAdminSignalR(connection);
-
-            }
-        );
-
-
-        if (window.__adminNotificationConnection) {
-
-            attachAdminSignalR(
-                window.__adminNotificationConnection
+                }
             );
 
-        }
-        else if (
-            window.__adminNotificationConnectionReady
-        ) {
 
-            window.__adminNotificationConnectionReady
-                .then(
-                    attachAdminSignalR
+            if (window.__adminNotificationConnection) {
+
+                attachAdminSignalR(
+                    window.__adminNotificationConnection
                 );
 
+            }
+            else if (
+                window.__adminNotificationConnectionReady
+            ) {
+
+                window.__adminNotificationConnectionReady
+                    .then(
+                        attachAdminSignalR
+                    );
+
+            }
+
         }
 
-        }        /* =====================================================
+
+        /* =====================================================
            ADD TASK
         ===================================================== */
 
