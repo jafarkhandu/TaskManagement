@@ -275,4 +275,36 @@
         );
     }
 
+
+
+    // =====================================================
+    // Compact scenario preview
+    // =====================================================
+    const scenarioBox = document.getElementById("scenarioPreviewBox");
+    const scenarioText = scenarioBox?.querySelector(".scenario-preview-text");
+    const scenarioMoreButton = document.getElementById("scenarioMoreButton");
+    const scenarioModal = document.getElementById("notificationScenarioModal");
+    const scenarioFullText = document.getElementById("notificationScenarioFullText");
+
+    function updateScenarioPreview() {
+        if (!scenarioBox || !scenarioText || !scenarioMoreButton) {
+            return;
+        }
+
+        scenarioMoreButton.hidden =
+            scenarioText.scrollHeight <= scenarioText.clientHeight + 2;
+    }
+
+    scenarioMoreButton?.addEventListener("click", () => {
+        if (!scenarioModal || !scenarioFullText) {
+            return;
+        }
+
+        scenarioFullText.textContent = scenarioText?.textContent?.trim() || "No scenario provided.";
+        bootstrap.Modal.getOrCreateInstance(scenarioModal).show();
+    });
+
+    updateScenarioPreview();
+    window.addEventListener("resize", updateScenarioPreview);
+
 });
