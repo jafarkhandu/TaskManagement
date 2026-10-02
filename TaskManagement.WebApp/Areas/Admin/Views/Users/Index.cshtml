@@ -7,6 +7,57 @@
 @{
     ViewData["Title"] = "Users";
     Layout = null;
+
+    var userRoles =
+        ViewData["UserRoles"] as Dictionary<string, string>
+        ?? new Dictionary<string, string>();
+
+    string GetUserRole(ApplicationUser user)
+    {
+        return userRoles.TryGetValue(user.Id, out var role)
+            ? role
+            : "User";
+    }
+
+    var totalUsers = Model.Count;
+    var activeUsers = Model.Where(u => u.IsActive).ToList();
+    var inactiveUsers = Model.Where(u => !u.IsActive).ToList();
+
+    var specialAdmins = Model
+        .Where(u => string.Equals(
+            GetUserRole(u),
+            "Admin",
+            StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    var managers = Model
+        .Where(u => string.Equals(
+            GetUserRole(u),
+            "Manager",
+            StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    var administratorCount = specialAdmins.Count + managers.Count;
+
+    string GetDisplayName(ApplicationUser user)
+    {
+        return string.IsNullOrWhiteSpace(user.FullName)
+            ? (user.Email ?? "Unnamed User")
+            : user.FullName;
+    }
+
+    string GetInitials(ApplicationUser user)
+    {
+        var displayName = GetDisplayName(user);
+
+        return string.Join(
+            "",
+            displayName
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Take(2)
+                .Select(x => x[0]))
+            .ToUpper();
+    }
 }
 
 <!DOCTYPE html>
@@ -82,6 +133,109 @@
                 </div>
 
             </section>
+
+
+            <!-- ================= USER SUMMARY CARDS ================= -->
+
+            <section class="user-summary-grid"
+                     aria-label="User statistics">
+
+                <button type="button"
+                        class="user-summary-card user-summary-card-total"
+                        data-user-summary="total">
+
+                    <span class="user-summary-icon" aria-hidden="true">👥</span>
+
+                    <span class="user-summary-content">
+                        <span class="user-summary-label">Total Users</span>
+                        <strong>@totalUsers</strong>
+                    </span>
+
+                </button>
+
+                <button type="button"
+                        class="user-summary-card user-summary-card-active"
+                        data-user-summary="active">
+
+                    <span class="user-summary-icon" aria-hidden="true">●</span>
+
+                    <span class="user-summary-content">
+                        <span class="user-summary-label">Active Users</span>
+                        <strong>@activeUsers.Count</strong>
+                    </span>
+
+                </button>
+
+                <button type="button"
+                        class="user-summary-card user-summary-card-inactive"
+                        data-user-summary="inactive">
+
+                    <span class="user-summary-icon" aria-hidden="true">●</span>
+
+                    <span class="user-summary-content">
+                        <span class="user-summary-label">Inactive Users</span>
+                        <strong>@inactiveUsers.Count</strong>
+                    </span>
+
+                </button>
+
+                <button type="button"
+                        class="user-summary-card user-summary-card-admin"
+                        data-user-summary="administrators">
+
+                    <span class="user-summary-icon" aria-hidden="true">♜</span>
+
+                    <span class="user-summary-content">
+                        <span class="user-summary-label">Administrators</span>
+                        <strong>@administratorCount</strong>
+                    </span>
+
+                </button>
+
+            </section>
+
+
+            <!-- ================= USER SUMMARY MODAL ================= -->
+
+            <div class="user-summary-modal"
+                 id="userSummaryModal"
+                 hidden
+                 aria-hidden="true">
+
+                <div class="user-summary-modal-backdrop"
+                     data-user-summary-close></div>
+
+                <section class="user-summary-dialog"
+                         role="dialog"
+                         aria-modal="true"
+                         aria-labelledby="userSummaryModalTitle">
+
+                    <div class="user-summary-dialog-header">
+
+                        <div>
+                            <span class="user-summary-dialog-eyebrow">
+                                User Management
+                            </span>
+
+                            <h2 id="userSummaryModalTitle">Users</h2>
+                        </div>
+
+                        <button type="button"
+                                class="user-summary-modal-close"
+                                data-user-summary-close
+                                aria-label="Close user list">
+                            ×
+                        </button>
+
+                    </div>
+
+                    <div class="user-summary-dialog-body"
+                         id="userSummaryDialogBody">
+                    </div>
+
+                </section>
+
+            </div>
 
 
             <!-- ================= USERS CARD ================= -->
@@ -191,14 +345,16 @@
                                 foreach (var user in Model)
                                 {
 
-                                    var roles =
-                                        await UserManager.GetRolesAsync(user);
-
-                                    var role =
-                                        roles.FirstOrDefault() ?? "User";
+                                    var role = GetUserRole(user);
 
 
                                     <tr class="user-row"
+                                        data-user-id="@user.Id"
+                                        data-user-name="@GetDisplayName(user)"
+                                        data-user-email="@(user.Email ?? "")"
+                                        data-user-role="@role"
+                                        data-user-active="@user.IsActive.ToString().ToLowerInvariant()"
+                                        data-user-photo="@(user.ProfilePictureUrl ?? "")"
                                         data-search="@($"{user.FullName} {user.Email} {user.PhoneNumber} {role}")">
 
 
