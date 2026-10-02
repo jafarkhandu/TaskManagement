@@ -343,55 +343,66 @@
 
                                             <div class="user-actions">
 
-
-                                                <a href="@Url.Action(
-                                                    "Manage",
-                                                    "Users",
-                                                    new
-                                                    {
-                                                        area = "Admin",
-                                                        id = user.Id
-                                                    })"
-                                                   class="user-action-btn manage-btn">
-
-                                                    Manage
-
-                                                </a>
-
-
-                                                @if (user.IsActive)
-                                                {
-
-                                                    @if (!string.Equals(
-                                                        role,
-                                                        "Admin",
-                                                        StringComparison.OrdinalIgnoreCase))
-                                                    {
-
-                                                        <button type="button"
-                                                                class="user-action-btn deactivate-btn deactivate-account-btn"
-                                                                data-user-id="@user.Id">
-
-                                                            Deactivate
-
-                                                        </button>
-
-                                                    }
-
-                                                }
-                                                else
-                                                {
+                                                <div class="user-action-menu">
 
                                                     <button type="button"
-                                                            class="user-action-btn activate-btn activate-account-btn"
-                                                            data-user-id="@user.Id">
+                                                            class="user-action-menu-trigger"
+                                                            aria-label="Open actions for @(string.IsNullOrWhiteSpace(user.FullName) ? "user" : user.FullName)"
+                                                            aria-expanded="false">
 
-                                                        Activate
+                                                        <span aria-hidden="true">⋮</span>
 
                                                     </button>
 
-                                                }
+                                                    <div class="user-action-menu-panel" role="menu">
 
+                                                        <a href="@Url.Action(
+                                                            "Manage",
+                                                            "Users",
+                                                            new
+                                                            {
+                                                                area = "Admin",
+                                                                id = user.Id
+                                                            })"
+                                                           class="user-action-menu-item"
+                                                           role="menuitem">
+
+                                                            Manage User
+
+                                                        </a>
+
+                                                        @if (user.IsActive)
+                                                        {
+                                                            @if (!string.Equals(
+                                                                role,
+                                                                "Admin",
+                                                                StringComparison.OrdinalIgnoreCase))
+                                                            {
+                                                                <button type="button"
+                                                                        class="user-action-menu-item user-action-menu-danger deactivate-account-btn"
+                                                                        data-user-id="@user.Id"
+                                                                        role="menuitem">
+
+                                                                    Deactivate User
+
+                                                                </button>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="button"
+                                                                    class="user-action-menu-item user-action-menu-success activate-account-btn"
+                                                                    data-user-id="@user.Id"
+                                                                    role="menuitem">
+
+                                                                Activate User
+
+                                                            </button>
+                                                        }
+
+                                                    </div>
+
+                                                </div>
 
                                             </div>
 
