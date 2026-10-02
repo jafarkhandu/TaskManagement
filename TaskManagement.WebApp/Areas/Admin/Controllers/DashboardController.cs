@@ -25,14 +25,29 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         {
             // Summary counts
             var totalProjects = await _context.Projects.CountAsync();
-            var totalTasks = await _context.TaskItems.CountAsync();
+            // Keep the dashboard task counters in one SQL query instead of
+            // issuing a separate round-trip for every counter.
+            var dashboardTaskStats = await _context.TaskItems
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TotalTasks = g.Count(),
+                    InProgressTasks = g.Count(t =>
+                        EF.Functions.Like(t.Status, "%progress%") || t.Status == "In Progress"),
+                    OverdueTasks = g.Count(t =>
+                        t.ExpectedEndDate < DateTime.UtcNow &&
+                        !EF.Functions.Like(t.Status, "%complete%") &&
+                        !EF.Functions.Like(t.Status, "%done%")),
+                    CreatedCount = g.Count(t =>
+                        t.StartDate >= DateTime.UtcNow.AddDays(-30)),
+                    CompletedCount = g.Count(t =>
+                        EF.Functions.Like(t.Status, "%complete%") || t.Status == "Completed")
+                })
+                .FirstOrDefaultAsync();
 
-            var inProgressTasks = await _context.TaskItems
-                .CountAsync(t => EF.Functions.Like(t.Status, "%progress%") || t.Status == "In Progress");
-
-            var overdueTasks = await _context.TaskItems
-                .CountAsync(t => t.ExpectedEndDate < DateTime.UtcNow &&
-                    !EF.Functions.Like(t.Status, "%complete%") && !EF.Functions.Like(t.Status, "%done%"));
+            var totalTasks = dashboardTaskStats?.TotalTasks ?? 0;
+            var inProgressTasks = dashboardTaskStats?.InProgressTasks ?? 0;
+            var overdueTasks = dashboardTaskStats?.OverdueTasks ?? 0;
 
             // Recent projects (by StartDate desc)
             var recentProjectsEntities = await _context.Projects
@@ -104,8 +119,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             }).ToList();
 
             // Task overview
-            var createdCount = await _context.TaskItems.CountAsync(t => t.StartDate >= DateTime.UtcNow.AddDays(-30));
-            var completedCount = await _context.TaskItems.CountAsync(t => EF.Functions.Like(t.Status, "%complete%") || t.Status == "Completed");
+            var createdCount = dashboardTaskStats?.CreatedCount ?? 0;
+            var completedCount = dashboardTaskStats?.CompletedCount ?? 0;
 
             var taskOverview = new TaskOverviewDto
             {
