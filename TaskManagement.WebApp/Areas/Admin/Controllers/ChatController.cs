@@ -221,7 +221,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             if (string.IsNullOrWhiteSpace(model.Message))
                 return BadRequest("Message cannot be empty.");
 
-            var result = await _chatService.SendMessageAsync(model.ChatSessionId, user.Id, model.Message.Trim());
+            var result = await _chatService.SendMessageAsync(model.ChatSessionId, user.Id, model.Message.Trim(), true);
 
             if (!result.Success)
                 return BadRequest(result.Error);
