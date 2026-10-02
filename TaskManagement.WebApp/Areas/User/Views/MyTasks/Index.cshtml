@@ -634,63 +634,78 @@
 
 <!-- ================= TASK DETAILS MODAL ================= -->
 
-<div class="task-modal" id="taskModal">
+<div class="task-modal" id="taskModal" aria-hidden="true">
 
     <div class="task-modal-backdrop"></div>
 
-    <div class="task-modal-box">
+    <div class="task-modal-box"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="modalTitle">
 
         <button type="button"
                 class="modal-close"
-                id="closeTaskModal">
+                id="closeTaskModal"
+                aria-label="Close task details">
             ×
         </button>
 
         <div class="modal-title">
-
-            <div class="modal-icon">
-                ✓
-            </div>
-
+            <div class="modal-icon" aria-hidden="true">✓</div>
             <h2>Task Details</h2>
-
         </div>
 
-        <div class="modal-task-id"
-             id="modalTaskId">
+        <div class="modal-task-id" id="modalTaskId"></div>
+
+        <h2 id="modalTitle"></h2>
+
+        <div class="modal-description-section">
+            <span class="modal-section-label">Description</span>
+            <div class="modal-description" id="modalScenario">
+                No description available.
+            </div>
         </div>
-
-        <h2 id="modalTitle">
-        </h2>
-
-        <p id="modalScenario">
-        </p>
 
         <div class="modal-grid">
 
             <div class="modal-info">
-                <span>Status</span>
-                <strong id="modalStatus"></strong>
+                <div class="modal-info-icon status-icon" aria-hidden="true">▤</div>
+                <div>
+                    <span>Status</span>
+                    <strong id="modalStatus"></strong>
+                </div>
             </div>
 
             <div class="modal-info">
-                <span>Priority</span>
-                <strong id="modalPriority"></strong>
+                <div class="modal-info-icon priority-icon" aria-hidden="true">⚑</div>
+                <div>
+                    <span>Priority</span>
+                    <strong id="modalPriority"></strong>
+                </div>
             </div>
 
             <div class="modal-info">
-                <span>Start Date</span>
-                <strong id="modalStartDate"></strong>
+                <div class="modal-info-icon start-date-icon" aria-hidden="true">□</div>
+                <div>
+                    <span>Start Date</span>
+                    <strong id="modalStartDate"></strong>
+                </div>
             </div>
 
             <div class="modal-info">
-                <span>Expected End</span>
-                <strong id="modalEndDate"></strong>
+                <div class="modal-info-icon end-date-icon" aria-hidden="true">□</div>
+                <div>
+                    <span>Expected End</span>
+                    <strong id="modalEndDate"></strong>
+                </div>
             </div>
 
-            <div class="modal-info">
-                <span>Amount</span>
-                <strong id="modalAmount"></strong>
+            <div class="modal-info modal-info-full">
+                <div class="modal-info-icon amount-icon" aria-hidden="true">₹</div>
+                <div>
+                    <span>Amount</span>
+                    <strong id="modalAmount"></strong>
+                </div>
             </div>
 
         </div>
@@ -699,7 +714,13 @@
              class="task-deadline-modal-warning"
              role="alert"
              aria-live="polite"
-             hidden></div>
+             hidden>
+            <div class="deadline-warning-icon" aria-hidden="true">!</div>
+            <div class="deadline-warning-copy">
+                <strong>Deadline Alert</strong>
+                <span id="modalDeadlineWarningText"></span>
+            </div>
+        </div>
 
     </div>
 
