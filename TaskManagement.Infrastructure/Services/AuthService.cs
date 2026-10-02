@@ -79,7 +79,8 @@ namespace TaskManagement.Infrastructure.Services
             {
                 return (
                     false,
-                    "Your account is pending activation. You will be notified when your account is activated."
+                    "Your account is pending activation. You will be notified when your account is activated.",
+                    false
                 );
             }
 
@@ -92,26 +93,24 @@ namespace TaskManagement.Infrastructure.Services
 
             if (result.Succeeded)
             {
-                return (true, string.Empty, false);
+                var isAdmin =
+                    (await _userManager.GetRolesAsync(user))
+                    .Contains("Admin", StringComparer.OrdinalIgnoreCase);
+
+                return (true, string.Empty, isAdmin);
             }
 
             if (result.IsLockedOut)
             {
-                return (
-                    false,
-                    "Your account is temporarily locked.");
+                return (false, "Your account is temporarily locked.", false);
             }
 
             if (result.IsNotAllowed)
             {
-                return (
-                    false,
-                    "Login is not allowed for this account.");
+                return (false, "Login is not allowed for this account.", false);
             }
 
-            var isAdmin = (await _userManager.GetRolesAsync(user)).Contains("Admin", StringComparer.OrdinalIgnoreCase);
-
-            return (true, string.Empty, isAdmin);
+            return (false, "Invalid email or password.", false);
         }
 
         public async Task LogoutAsync()
