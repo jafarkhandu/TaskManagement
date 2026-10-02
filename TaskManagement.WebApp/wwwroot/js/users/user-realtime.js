@@ -174,6 +174,14 @@
 
             connection.on("UserDeadlineNotificationReceived", payload => {
                 showDeadlineToast(payload);
+
+                if (!payload || !payload.notificationId)
+                    return;
+
+                connection.invoke(
+                    "AcknowledgeNotification",
+                    Number(payload.notificationId)
+                ).catch(() => {});
             });
 
             connection.on("MissedNotificationsReceived", notifications => {
