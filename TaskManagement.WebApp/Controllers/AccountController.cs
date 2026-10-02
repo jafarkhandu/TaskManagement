@@ -76,16 +76,9 @@ namespace TaskManagement.Web.Controllers
                 });
             }
 
-            var user =
-                 await _userManager.FindByEmailAsync(model.Email);
-
-            var redirectUrl = "/User/Dashboard";
-
-            if (user != null &&
-                await _userManager.IsInRoleAsync(user, "Admin"))
-            {
-                redirectUrl = "/Admin/Dashboard";
-            }
+            var redirectUrl = result.IsAdmin
+                ? "/Admin/Dashboard"
+                : "/User/Dashboard";
             else if (!string.IsNullOrEmpty(returnUrl)
                      && Url.IsLocalUrl(returnUrl))
             {
