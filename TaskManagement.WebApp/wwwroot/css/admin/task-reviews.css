@@ -717,3 +717,57 @@
         justify-self:start;
     }
 }
+
+
+/* Single, smooth scroll surface for the full-queue modals.
+   The modal itself stays fixed; only the list moves, so rows and scrollbar
+   remain perfectly synchronized instead of creating nested scrolling. */
+.all-review-modal{
+    height:calc(100vh - 32px);
+    max-height:calc(100vh - 32px);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+}
+.all-review-modal .modal-header,
+.all-review-toolbar{
+    flex:0 0 auto;
+}
+.all-review-list,
+.all-payment-list{
+    flex:1 1 0;
+    height:auto;
+    max-height:none;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-gutter:stable;
+    scroll-behavior:auto;
+    padding-right:14px;
+}
+.all-review-list::-webkit-scrollbar,
+.all-payment-list::-webkit-scrollbar{
+    width:8px;
+}
+.all-review-list::-webkit-scrollbar-track,
+.all-payment-list::-webkit-scrollbar-track{
+    background:transparent;
+}
+.all-review-list::-webkit-scrollbar-thumb,
+.all-payment-list::-webkit-scrollbar-thumb{
+    background:#c8d1df;
+    border-radius:999px;
+    border:2px solid #f7f9fd;
+}
+.all-review-list::-webkit-scrollbar-thumb:hover,
+.all-payment-list::-webkit-scrollbar-thumb:hover{
+    background:#9eacc0;
+}
+@media(max-width:650px){
+    .all-review-modal{
+        height:calc(100vh - 20px);
+        max-height:calc(100vh - 20px);
+    }
+}
