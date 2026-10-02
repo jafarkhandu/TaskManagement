@@ -594,3 +594,102 @@
     .review-card .review-grid{grid-template-columns:repeat(2,1fr)}
     .pending-payment-card{grid-template-columns:1fr auto}
 }
+
+
+/* Final sizing + modal scroll correction */
+.review-card{
+    padding:11px 13px;
+    border-radius:12px;
+}
+.review-card-head{gap:8px}
+.review-card h2{font-size:14px;margin:2px 0 1px}
+.review-card-head p{font-size:8px}
+.review-card .review-grid{
+    gap:6px;
+    margin:7px 0 5px;
+}
+.review-card .review-grid > div{
+    min-height:52px;
+    padding:8px 10px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.review-grid span{font-size:7px}
+.review-grid strong{
+    font-size:10px;
+    line-height:1.25;
+}
+.review-grid .deadline-status{
+    margin-top:2px;
+    font-size:7px;
+    line-height:1.25;
+}
+.deadline-unavailable{color:#7c8798!important}
+.review-scenario-trigger{margin:3px 0}
+.scenario-open-btn{
+    height:32px;
+    min-width:84px;
+    padding:4px 9px;
+    font-size:8px;
+}
+.review-repository{
+    padding:5px 7px;
+    margin-top:3px;
+}
+.review-actions{
+    margin-top:3px;
+    padding-top:5px;
+}
+.review-actions .btn{
+    padding:5px 8px;
+    font-size:8px;
+}
+.all-review-modal{
+    max-height:calc(100vh - 32px);
+    display:flex;
+    flex-direction:column;
+}
+.all-review-modal .modal-header,
+.all-review-toolbar{
+    flex:0 0 auto;
+}
+.all-review-list,
+.all-payment-list{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+}
+.all-review-list{
+    max-height:calc(100vh - 250px);
+}
+.all-payment-list{
+    max-height:calc(100vh - 230px);
+}
+.all-review-item{
+    align-items:center;
+}
+.all-review-item-meta{
+    min-width:0;
+}
+.all-review-item-meta > span{
+    min-width:0;
+    overflow:hidden;
+}
+.all-review-item-meta > span:first-child{
+    white-space:nowrap;
+}
+.all-review-item-meta small{
+    white-space:nowrap;
+}
+@media(max-width:900px){
+    .all-review-list{max-height:calc(100vh - 285px)}
+    .all-payment-list{max-height:calc(100vh - 250px)}
+}
+@media(max-width:650px){
+    .all-review-list{max-height:calc(100vh - 320px)}
+    .all-payment-list{max-height:calc(100vh - 275px)}
+}
