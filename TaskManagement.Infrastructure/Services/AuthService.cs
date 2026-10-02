@@ -93,9 +93,11 @@ namespace TaskManagement.Infrastructure.Services
 
             if (result.Succeeded)
             {
+                // PasswordSignInAsync has already created the authenticated
+                // principal, including Identity role claims. Reuse that
+                // principal instead of querying the roles table again.
                 var isAdmin =
-                    (await _userManager.GetRolesAsync(user))
-                    .Contains("Admin", StringComparer.OrdinalIgnoreCase);
+                    _signInManager.Context.User.IsInRole("Admin");
 
                 return (true, string.Empty, isAdmin);
             }
