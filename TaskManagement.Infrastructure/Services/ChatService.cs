@@ -424,72 +424,61 @@ namespace TaskManagement.Infrastructure.Services
             int taskId,
             string userId)
         {
-            var session = await _context.ChatSessions
-                .AsNoTracking()
-                .Where(x => x.TaskId == taskId && x.UserId == userId && x.IsActive)
-                .Select(x => new { x.Id, x.TaskId })
+            var sessionTask = await (
+                from session in _context.ChatSessions.AsNoTracking()
+                join task in _context.TaskItems.AsNoTracking()
+                    on session.TaskId equals task.Id
+                where session.TaskId == taskId
+                    && session.UserId == userId
+                    && session.IsActive
+                    && task.Status != "Completed"
+                select new
+                {
+                    SessionId = session.Id,
+                    TaskId = task.Id,
+                    task.Title,
+                    task.Scenario,
+                    task.Status,
+                    task.Priority,
+                    task.StartDate,
+                    task.ExpectedEndDate,
+                    task.Amount
+                })
                 .FirstOrDefaultAsync();
 
-            if (session == null)
-                return null;
-
-            var task = await _context.TaskItems.AsNoTracking()
-                .Where(t => t.Id == session.TaskId && t.Status != "Completed")
-                .Select(t => t.Id)
-                .FirstOrDefaultAsync();
-
-            if (task == 0)
+            if (sessionTask == null)
                 return null;
 
             // Backfill the task-context message for an older blank session.
-            // This keeps previously created sessions consistent with new chats.
+            // Reuse the task data already loaded above instead of querying the task again.
             var hasMessages = await _context.ChatMessages
                 .AsNoTracking()
-                .AnyAsync(x => x.ChatSessionId == session.Id);
+                .AnyAsync(x => x.ChatSessionId == sessionTask.SessionId);
 
             if (!hasMessages)
             {
-                var taskDetails = await _context.TaskItems
-                    .AsNoTracking()
-                    .Where(t => t.Id == session.TaskId)
-                    .Select(t => new
-                    {
-                        t.Id,
-                        t.Title,
-                        t.Scenario,
-                        t.Status,
-                        t.Priority,
-                        t.StartDate,
-                        t.ExpectedEndDate,
-                        t.Amount
-                    })
-                    .FirstOrDefaultAsync();
-
-                if (taskDetails != null)
+                _context.ChatMessages.Add(new ChatMessage
                 {
-                    _context.ChatMessages.Add(new ChatMessage
-                    {
-                        ChatSessionId = session.Id,
-                        SenderId = userId,
-                        Message =
-                            $"New chat started for Task #{taskDetails.Id}\n\n" +
-                            $"Task Title: {taskDetails.Title}\n" +
-                            $"Scenario: {taskDetails.Scenario}\n" +
-                            $"Status: {taskDetails.Status}\n" +
-                            $"Priority: {taskDetails.Priority}\n" +
-                            $"Start Date: {taskDetails.StartDate:dd MMM yyyy}\n" +
-                            $"Expected End Date: {taskDetails.ExpectedEndDate:dd MMM yyyy}\n" +
-                            $"Amount: ₹ {taskDetails.Amount:0.00}\n\n" +
-                            "I would like to discuss this task with Admin.",
-                        SentAt = DateTime.UtcNow,
-                        IsRead = false
-                    });
+                    ChatSessionId = sessionTask.SessionId,
+                    SenderId = userId,
+                    Message =
+                        $"New chat started for Task #{sessionTask.TaskId}\n\n" +
+                        $"Task Title: {sessionTask.Title}\n" +
+                        $"Scenario: {sessionTask.Scenario}\n" +
+                        $"Status: {sessionTask.Status}\n" +
+                        $"Priority: {sessionTask.Priority}\n" +
+                        $"Start Date: {sessionTask.StartDate:dd MMM yyyy}\n" +
+                        $"Expected End Date: {sessionTask.ExpectedEndDate:dd MMM yyyy}\n" +
+                        $"Amount: ₹ {sessionTask.Amount:0.00}\n\n" +
+                        "I would like to discuss this task with Admin.",
+                    SentAt = DateTime.UtcNow,
+                    IsRead = false
+                });
 
-                    await _context.SaveChangesAsync();
-                }
+                await _context.SaveChangesAsync();
             }
 
-            return session.Id;
+            return sessionTask.SessionId;
         }
     }
 }
