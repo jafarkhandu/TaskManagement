@@ -69,20 +69,15 @@ namespace TaskManagement.Infrastructure.Services
             if (string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
                 return (false, "Cannot start chat for completed tasks.", 0, false);
 
-            var admin = await _userManager.Users
-                .Where(x => x.IsActive)
-                .ToListAsync();
-
-            ApplicationUser? selectedAdmin = null;
-
-            foreach (var user in admin)
-            {
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
-                {
-                    selectedAdmin = user;
-                    break;
-                }
-            }
+            // Resolve the active admin in one query instead of loading all active
+            // users and checking the Admin role separately for each user.
+            var selectedAdmin = await _userManager.Users
+                .Where(x =>
+                    x.IsActive &&
+                    _context.UserRoles.Any(ur =>
+                        ur.UserId == x.Id &&
+                        _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Admin")))
+                .FirstOrDefaultAsync();
 
             if (selectedAdmin == null)
                 return (false, "Admin account not found.", 0, false);
