@@ -22,6 +22,104 @@
         return div.innerHTML;
     };
 
+    function isDeadlineNotification(payload) {
+        const type = String(payload?.type || payload?.notificationType || "").trim();
+        return type === "TaskDeadlineTomorrow" || type === "TaskDeadlineToday";
+    }
+
+    function shouldShowDeadlineToast(payload) {
+        if (!isDeadlineNotification(payload) || !payload?.notificationId)
+            return true;
+
+        const storageKey = "taskmanager.shownDeadlineNotificationIds";
+
+        try {
+            const shownIds = JSON.parse(
+                localStorage.getItem(storageKey) || "[]"
+            );
+
+            const notificationId = Number(payload.notificationId);
+
+            if (!notificationId || shownIds.includes(notificationId))
+                return false;
+
+            shownIds.push(notificationId);
+
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify(shownIds.slice(-500))
+            );
+
+            return true;
+        }
+        catch {
+            return true;
+        }
+    }
+
+    function showDeadlineToast(payload) {
+        if (!payload || !payload.notificationId)
+            return;
+
+        if (!shouldShowDeadlineToast(payload))
+            return;
+
+        const toast = document.createElement("div");
+        toast.className = "live-toast";
+
+        toast.innerHTML = `
+            <div class="live-toast-inner">
+                <div class="live-toast-icon">🔔</div>
+                <div class="live-toast-body">
+                    <strong>${escapeHtml(payload.title || "Task Deadline Update")}</strong>
+                    <div class="live-toast-sub">${escapeHtml(payload.message || "")}</div>
+                    <div class="live-toast-progress"><div></div></div>
+                </div>
+                <button type="button"
+                        class="live-toast-close"
+                        aria-label="Close notification">×</button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        const close = () => {
+            if (!toast.isConnected) return;
+            toast.classList.add("live-toast-hidden");
+            setTimeout(() => toast.remove(), 320);
+        };
+
+        toast.addEventListener("click", event => {
+            if (event.target.closest(".live-toast-close"))
+                return;
+
+            window.location.href =
+                `/User/Notifications/Details/${payload.notificationId}`;
+        });
+
+        toast.querySelector(".live-toast-close")?.addEventListener(
+            "click",
+            event => {
+                event.stopPropagation();
+                close();
+            }
+        );
+
+        requestAnimationFrame(() => {
+            toast.classList.add("show");
+        });
+
+        const progress = toast.querySelector(".live-toast-progress > div");
+        if (progress) {
+            requestAnimationFrame(() => {
+                progress.style.transition = "width 5s linear";
+                progress.style.width = "100%";
+            });
+        }
+
+        setTimeout(close, 5200);
+    }
+
     function showReviewToast(payload) {
         if (!payload || !payload.notificationId) return;
 
@@ -74,6 +172,10 @@
 
             connection.on("UserReviewNotificationReceived", showReviewToast);
 
+            connection.on("UserDeadlineNotificationReceived", payload => {
+                showDeadlineToast(payload);
+            });
+
             connection.on("MissedNotificationsReceived", notifications => {
                 if (!Array.isArray(notifications)) return;
 
@@ -84,6 +186,12 @@
                     )
                     .forEach((n, index) => {
                         setTimeout(() => showReviewToast(n), index * 220);
+                    });
+
+                notifications
+                    .filter(n => isDeadlineNotification(n))
+                    .forEach((n, index) => {
+                        setTimeout(() => showDeadlineToast(n), index * 220);
                     });
             });
 
