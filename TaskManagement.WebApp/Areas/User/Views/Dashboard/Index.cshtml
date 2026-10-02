@@ -10,7 +10,13 @@
     var total = Math.Max(Model.TotalTasks, 1);
 
     var pendingPercent = Model.PendingTasks * 100.0 / total;
-    var progressPercent = Model.InProgressTasks * 100.0 / total;
+    // Review Pending tasks are active work too, so keep the dashboard count
+    // consistent with the My Tasks "In Progress / Review" column.
+    var dashboardInProgressTasks = Math.Max(
+        Model.TotalTasks - Model.CompletedTasks - Model.PendingTasks - Model.OnHoldTasks,
+        0);
+
+    var progressPercent = dashboardInProgressTasks * 100.0 / total;
     var holdPercent = Model.OnHoldTasks * 100.0 / total;
     var completedPercent = Model.CompletedTasks * 100.0 / total;
 }
@@ -146,7 +152,7 @@
                 <span class="stat-data">
 
                     <strong>
-                        @Model.InProgressTasks
+                        @dashboardInProgressTasks
                     </strong>
 
                     <small>
@@ -315,7 +321,7 @@
                                 <div>
                                     <small>In Progress</small>
                                     <strong>
-                                        @Model.InProgressTasks
+                                        @dashboardInProgressTasks
                                     </strong>
                                 </div>
 
@@ -424,14 +430,14 @@
                                         @Model.CompletedTasks task(s) completed so far.
                                     </small>
                                 }
-                                else if (Model.InProgressTasks > 0)
+                                else if (dashboardInProgressTasks > 0)
                                 {
                                     <strong>
                                         You're making progress
                                     </strong>
 
                                     <small>
-                                        @Model.InProgressTasks task(s) currently in progress.
+                                        @dashboardInProgressTasks task(s) currently in progress.
                                     </small>
                                 }
                                 else if (Model.PendingTasks > 0)
