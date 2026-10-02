@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System.Net;
-using System.Net.Mail;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -22,6 +20,11 @@ namespace TaskManagement.Infrastructure.Services
             var password = _configuration["EmailSettings:Password"];
             var host = _configuration["EmailSettings:Host"];
             var port = int.Parse(_configuration["EmailSettings:Port"]!);
+            var useSsl = bool.TryParse(
+                _configuration["EmailSettings:UseSSL"],
+                out var configuredUseSsl)
+                ? configuredUseSsl
+                : port == 465;
 
             var message = new MimeMessage();
 
@@ -42,10 +45,16 @@ namespace TaskManagement.Infrastructure.Services
 
             using var client = new MailKit.Net.Smtp.SmtpClient();
 
+            var secureSocketOptions = useSsl
+                ? port == 465
+                    ? SecureSocketOptions.SslOnConnect
+                    : SecureSocketOptions.StartTls
+                : SecureSocketOptions.None;
+
             await client.ConnectAsync(
                 host,
                 port,
-                SecureSocketOptions.SslOnConnect);
+                secureSocketOptions);
 
             await client.AuthenticateAsync(
                 email,
