@@ -186,6 +186,8 @@ namespace TaskManagement.Infrastructure.Migrations
 
                     b.HasIndex("ChatSessionId");
 
+                    b.HasIndex("ChatSessionId", "SentAt");
+
                     b.HasIndex("SenderId");
 
                     b.ToTable("ChatMessages");
