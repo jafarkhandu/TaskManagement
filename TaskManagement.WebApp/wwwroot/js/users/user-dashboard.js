@@ -711,9 +711,12 @@
     );
 
 
-    // Load notifications when dashboard opens.
-    // This handles users who were offline.
-    loadAssignmentNotifications();
+    // Load notifications on pages that use the dashboard notification popup.
+    // The Notifications page has its own list loader, so skip this initial
+    // popup fetch there to avoid requesting the same endpoint twice.
+    if (!document.getElementById("notificationsList")) {
+        loadAssignmentNotifications();
+    }
 
     /* =====================================================
         LIVE TASK ASSIGNMENT - SIGNALR
