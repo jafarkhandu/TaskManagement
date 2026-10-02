@@ -203,38 +203,38 @@ namespace TaskManagement.Infrastructure.Services
             string userId,
             bool isAdmin)
         {
-            var session = await _context.ChatSessions
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
-                    x.Id == chatSessionId &&
-                    x.IsActive);
-
-            if (session == null)
-                return null;
-
-            if (!isAdmin && session.UserId != userId)
-                return null;
-
-            if (isAdmin && session.AdminId != userId)
-                return null;
-
-            var task = await _context.TaskItems
-                .AsNoTracking()
-                .Where(x => x.Id == session.TaskId)
-                .Select(x => new
+            var sessionTask = await (
+                from session in _context.ChatSessions.AsNoTracking()
+                join task in _context.TaskItems.AsNoTracking()
+                    on session.TaskId equals task.Id
+                where session.Id == chatSessionId && session.IsActive
+                select new
                 {
-                    x.Id,
-                    x.Title,
-                    x.Status,
-                    x.ProjectId
+                    SessionId = session.Id,
+                    session.TaskId,
+                    session.UserId,
+                    session.AdminId,
+                    Task = new
+                    {
+                        task.Id,
+                        task.Title,
+                        task.Status,
+                        task.ProjectId
+                    }
                 })
                 .FirstOrDefaultAsync();
 
-            if (task == null)
+            if (sessionTask == null)
+                return null;
+
+            if (!isAdmin && sessionTask.UserId != userId)
+                return null;
+
+            if (isAdmin && sessionTask.AdminId != userId)
                 return null;
 
             // Users cannot access chats for completed tasks
-            if (!isAdmin && string.Equals(task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            if (!isAdmin && string.Equals(sessionTask.Task.Status, "Completed", StringComparison.OrdinalIgnoreCase))
                 return null;
 
             var messages = await _context.ChatMessages
@@ -253,34 +253,34 @@ namespace TaskManagement.Infrastructure.Services
 
             if (isAdmin)
             {
-                var user = await _userManager.FindByIdAsync(session.UserId);
+                var user = await _userManager.FindByIdAsync(sessionTask.UserId);
 
                 return new
                 {
-                    session.Id,
-                    session.TaskId,
+                    Id = sessionTask.SessionId,
+                    sessionTask.TaskId,
                     User = new
                     {
                         Id = user?.Id,
                         FullName = user?.FullName,
                         Email = user?.Email
                     },
-                    Task = task,
+                    Task = sessionTask.Task,
                     Messages = messages
                 };
             }
 
             var userTask = new
             {
-                task.Id,
-                task.Title,
-                task.Status
+                sessionTask.Task.Id,
+                sessionTask.Task.Title,
+                sessionTask.Task.Status
             };
 
             return new
             {
-                session.Id,
-                session.TaskId,
+                Id = sessionTask.SessionId,
+                sessionTask.TaskId,
                 Task = userTask,
                 Messages = messages
             };
