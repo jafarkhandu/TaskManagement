@@ -71,20 +71,48 @@ namespace TaskManagement.Infrastructure.Services
                        DeadlineAtSubmission = r.DeadlineAtSubmission,
                        IsLate = r.DeadlineAtSubmission.HasValue &&
                                 r.SubmittedAt > r.DeadlineAtSubmission.Value,
-                       PaymentMethod = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.PaymentMethod).FirstOrDefault(),
-                       UpiId = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.UpiId).FirstOrDefault(),
-                       AccountHolderName = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.AccountHolderName).FirstOrDefault(),
-                       BankName = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.BankName).FirstOrDefault(),
-                       AccountNumber = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.AccountNumber).FirstOrDefault(),
-                       IfscCode = _db.UserPaymentDetails.Where(pd => pd.UserId == u.Id).Select(pd => pd.IfscCode).FirstOrDefault()
+                       // Payment details are loaded only for the single-review details view.
+                       // Review lists do not consume these fields.
                    };
         }
 
         public Task<List<TaskReviewDto>> GetPendingReviewsAsync() =>
             ReviewQuery().Where(x => x.ReviewStatus == "Pending").OrderBy(x => x.SubmittedAt).ToListAsync();
 
-        public Task<TaskReviewDto?> GetReviewAsync(int reviewId) =>
-            ReviewQuery().FirstOrDefaultAsync(x => x.ReviewId == reviewId);
+        public async Task<TaskReviewDto?> GetReviewAsync(int reviewId)
+        {
+            var review = await ReviewQuery()
+                .FirstOrDefaultAsync(x => x.ReviewId == reviewId);
+
+            if (review == null)
+                return null;
+
+            var paymentDetails = await _db.UserPaymentDetails
+                .AsNoTracking()
+                .Where(x => x.UserId == review.UserId)
+                .Select(x => new
+                {
+                    x.PaymentMethod,
+                    x.UpiId,
+                    x.AccountHolderName,
+                    x.BankName,
+                    x.AccountNumber,
+                    x.IfscCode
+                })
+                .FirstOrDefaultAsync();
+
+            if (paymentDetails != null)
+            {
+                review.PaymentMethod = paymentDetails.PaymentMethod;
+                review.UpiId = paymentDetails.UpiId;
+                review.AccountHolderName = paymentDetails.AccountHolderName;
+                review.BankName = paymentDetails.BankName;
+                review.AccountNumber = paymentDetails.AccountNumber;
+                review.IfscCode = paymentDetails.IfscCode;
+            }
+
+            return review;
+        }
 
         public Task<List<TaskReviewDto>> GetPendingPaymentsAsync() =>
             ReviewQuery().Where(x => x.ReviewStatus == "Approved" && x.PaymentStatus == "Pending")
