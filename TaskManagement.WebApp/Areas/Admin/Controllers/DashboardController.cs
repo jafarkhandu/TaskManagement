@@ -129,8 +129,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 TaskCount = d.Count
             }).ToList();
 
-            ViewBag.PendingPayments = await _reviewService.GetPendingPaymentsAsync();
-
+            // Load the pending-payment queue once for the dashboard view.
             ViewBag.PendingPayments = await _reviewService.GetPendingPaymentsAsync();
 
             var model = new DashboardViewModel
