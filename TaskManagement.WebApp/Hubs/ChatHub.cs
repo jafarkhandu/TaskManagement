@@ -84,7 +84,9 @@ namespace TaskManagement.WebApp.Hubs
             if (session == null)
                 throw new HubException("Chat session not found.");
 
-            var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+            // The hub is already authorized and the Identity role claim is
+            // available on the current principal, so avoid an extra role DB lookup.
+            var isAdmin = Context.User?.IsInRole("Admin") == true;
 
             if (!isAdmin && session.UserId != user.Id)
                 throw new HubException("You are not allowed to send messages in this chat.");
@@ -162,6 +164,25 @@ namespace TaskManagement.WebApp.Hubs
             }
 
 
+            // Broadcast immediately after the chat message is persisted.
+            // Notification persistence/delivery below must not delay the visible chat message.
+            if (result.Message != null)
+            {
+                var payload = new
+                {
+                    chatSessionId = chatSessionId,
+                    id = result.Message.Id,
+                    senderId = result.Message.SenderId,
+                    senderName = result.Message.SenderName,
+                    message = result.Message.Message,
+                    sentAt = result.Message.SentAt,
+                    isRead = result.Message.IsRead
+                };
+
+                await Clients.Group($"chat-{chatSessionId}")
+                    .SendAsync("ReceiveMessage", payload);
+            }
+
             // Persist a user chat notification when Admin sends a message.
             // This is intentionally separate from task-assignment notifications
             // so the user chat toast can never be mixed with the bell toast.
@@ -230,23 +251,6 @@ namespace TaskManagement.WebApp.Hubs
                 }
             }
 
-            // Broadcast the exact message returned by the service (prevents race conditions)
-            if (result.Message != null)
-            {
-                var payload = new
-                {
-                    chatSessionId = chatSessionId,
-                    id = result.Message.Id,
-                    senderId = result.Message.SenderId,
-                    senderName = result.Message.SenderName,
-                    message = result.Message.Message,
-                    sentAt = result.Message.SentAt,
-                    isRead = result.Message.IsRead
-                };
-
-                await Clients.Group($"chat-{chatSessionId}")
-                    .SendAsync("ReceiveMessage", payload);
-            }
         }
     }
 }
