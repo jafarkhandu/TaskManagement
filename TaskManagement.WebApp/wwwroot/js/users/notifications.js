@@ -242,18 +242,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
 
-            // ===============================
-            // SHOW EMPTY STATE AFTER ANIMATION
-            // ===============================
+            // The database deletion is complete at this point.
+            // Update the current DOM immediately instead of waiting for the
+            // animation and issuing another GET just to redraw the same list.
+            cards.forEach(card => {
+                if (card.parentNode)
+                    card.parentNode.removeChild(card);
+            });
 
-            setTimeout(async () => {
-                // Reload from the server so protected pending task
-                // notifications remain visible after Clear All.
-                await loadList();
+            const remainingCards =
+                listEl.querySelectorAll('.notification-card');
 
-                if (clearButton)
-                    clearButton.disabled = false;
-            }, animationTime);
+            if (!remainingCards.length) {
+                listEl.innerHTML =
+                    '<div class="notification-empty"><span>✓</span><strong>You\'re all caught up</strong><small>No new notifications.</small></div>';
+            }
+
+            if (clearButton)
+                clearButton.disabled = false;
 
         }
         catch (error) {
