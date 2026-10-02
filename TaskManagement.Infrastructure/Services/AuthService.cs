@@ -63,7 +63,7 @@ namespace TaskManagement.Infrastructure.Services
             return (true, string.Empty);
         }
 
-        public async Task<(bool Success, string Error)> LoginAsync(
+        public async Task<(bool Success, string Error, bool IsAdmin)> LoginAsync(
             LoginDto model)
         {
             var user =
@@ -71,7 +71,7 @@ namespace TaskManagement.Infrastructure.Services
 
             if (user == null)
             {
-                return (false, "Invalid email or password.");
+                return (false, "Invalid email or password.", false);
             }
 
             // Block login if account is not active (pending or deactivated)
@@ -92,7 +92,7 @@ namespace TaskManagement.Infrastructure.Services
 
             if (result.Succeeded)
             {
-                return (true, string.Empty);
+                return (true, string.Empty, false);
             }
 
             if (result.IsLockedOut)
@@ -109,7 +109,9 @@ namespace TaskManagement.Infrastructure.Services
                     "Login is not allowed for this account.");
             }
 
-            return (false, "Invalid email or password.");
+            var isAdmin = (await _userManager.GetRolesAsync(user)).Contains("Admin", StringComparer.OrdinalIgnoreCase);
+
+            return (true, string.Empty, isAdmin);
         }
 
         public async Task LogoutAsync()
