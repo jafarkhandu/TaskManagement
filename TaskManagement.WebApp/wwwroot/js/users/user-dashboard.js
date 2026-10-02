@@ -55,10 +55,53 @@
             }
         }
 
+    // Deadline toasts are one-shot browser events. The same notification
+    // may be observed by more than one page connection during navigation,
+    // so keep a shared browser-level sent set in localStorage.
+    function isDeadlineNotification(payload) {
+        const type = String(payload?.type || payload?.notificationType || '').trim();
+        return type === 'TaskDeadlineTomorrow' || type === 'TaskDeadlineToday';
+    }
+
+    function shouldShowDeadlineToast(payload) {
+        if (!isDeadlineNotification(payload) || !payload?.notificationId)
+            return true;
+
+        const storageKey = 'taskmanager.shownDeadlineNotificationIds';
+
+        try {
+            const shownIds = JSON.parse(
+                localStorage.getItem(storageKey) || '[]'
+            );
+
+            const notificationId = Number(payload.notificationId);
+
+            if (!notificationId || shownIds.includes(notificationId))
+                return false;
+
+            shownIds.push(notificationId);
+
+            // Keep storage bounded without affecting normal notification history.
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify(shownIds.slice(-500))
+            );
+
+            return true;
+        }
+        catch {
+            // If browser storage is unavailable, preserve existing realtime behaviour.
+            return true;
+        }
+    }
+
     // Live toast UI
     function showLiveToast(payload) {
 
         if (!payload || !payload.notificationId)
+            return;
+
+        if (!shouldShowDeadlineToast(payload))
             return;
 
         const toastId = `live-toast-${payload.notificationId}`;
