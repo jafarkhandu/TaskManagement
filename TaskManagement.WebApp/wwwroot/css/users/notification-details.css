@@ -712,3 +712,94 @@ html.light-theme .payment-deadline-warning {
     background: rgba(220, 79, 90, .06) !important;
     color: #c53c48 !important;
 }
+
+
+/* Compact scenario preview with expandable full text. */
+.scenario-box{
+    position:relative;
+    width:100%;
+    min-height:92px;
+    max-height:92px;
+    overflow:hidden;
+    display:block;
+    padding:13px 15px 30px;
+    line-height:1.55;
+}
+.scenario-preview-text{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:4;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+.scenario-more-button{
+    position:absolute;
+    right:10px;
+    bottom:8px;
+    border:0;
+    border-radius:7px;
+    padding:4px 8px;
+    color:#9fc3ff;
+    background:rgba(37,78,145,.72);
+    font-size:11px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 3px 10px rgba(0,0,0,.14);
+}
+.scenario-more-button:hover{
+    color:#fff;
+    background:#2864ed;
+}
+.notification-scenario-modal{
+    overflow:hidden;
+    border:0;
+    border-radius:18px;
+    background:#f8faff;
+    box-shadow:0 28px 80px rgba(0,0,0,.35);
+}
+.notification-scenario-modal .modal-header{
+    padding:18px 20px;
+    border-bottom:1px solid #e3e9f2;
+    background:#fff;
+}
+.scenario-modal-eyebrow{
+    display:block;
+    color:#557de8;
+    font-size:9px;
+    font-weight:850;
+    letter-spacing:.12em;
+}
+.notification-scenario-modal h5{
+    margin:4px 0 0;
+    color:#17233f;
+    font-size:19px;
+    font-weight:800;
+}
+.notification-scenario-modal .modal-body{
+    padding:20px;
+    max-height:70vh;
+    overflow:auto;
+}
+.notification-scenario-full-text{
+    padding:17px 18px;
+    border:1px solid #dce4ef;
+    border-radius:12px;
+    background:#fff;
+    color:#26344d;
+    font-size:15px;
+    line-height:1.8;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+@media(max-width:650px){
+    .scenario-box{
+        min-height:88px;
+        max-height:88px;
+    }
+    .notification-scenario-full-text{
+        font-size:14px;
+        line-height:1.7;
+    }
+}
