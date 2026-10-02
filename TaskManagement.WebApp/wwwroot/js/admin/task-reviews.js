@@ -228,7 +228,6 @@ if (dashboardPaymentId) {
         alert(error.message);
     });
 }
-})();
 
 // Reference-style scenario and full-queue interactions.
 function openScenarioModal(button) {
@@ -363,3 +362,5 @@ document.getElementById('allReviewsSearch')?.addEventListener('input', filterRev
 document.getElementById('allReviewsStatus')?.addEventListener('change', filterReviewQueue);
 document.getElementById('allReviewsPriority')?.addEventListener('change', filterReviewQueue);
 document.getElementById('allPaymentsSearch')?.addEventListener('input', filterPaymentQueue);
+
+})();
