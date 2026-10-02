@@ -83,6 +83,9 @@ function fillPaymentModal(x) {
     }
 }
 
+let paymentParentModalId = null;
+let scenarioParentModalId = null;
+
 async function openPaymentModal(reviewId) {
     const response = await fetch('/Admin/TaskReviews/Details?id=' + encodeURIComponent(reviewId), {
         credentials: 'same-origin',
@@ -96,9 +99,18 @@ async function openPaymentModal(reviewId) {
     activeReview = data.data;
     fillPaymentModal(activeReview);
 
-    bootstrap.Modal.getOrCreateInstance(
-        document.getElementById('paymentReviewModal')
-    ).show();
+    const paymentModal = document.getElementById('paymentReviewModal');
+    const visibleParent = document.querySelector(
+        '#allReviewsModal.show, #allPaymentsModal.show'
+    );
+
+    paymentParentModalId = visibleParent?.id || null;
+
+    if (visibleParent) {
+        bootstrap.Modal.getOrCreateInstance(visibleParent).hide();
+    }
+
+    bootstrap.Modal.getOrCreateInstance(paymentModal).show();
 }
 
 document.querySelectorAll('.review-card').forEach(card => {
@@ -224,9 +236,21 @@ function openScenarioModal(button) {
     const scenario = button.dataset.scenario || 'No scenario provided.';
     const titleEl = document.getElementById('scenarioModalTitle');
     const textEl = document.getElementById('scenarioModalText');
+    const scenarioModal = document.getElementById('scenarioModal');
+    const visibleParent = document.querySelector(
+        '#allReviewsModal.show, #allPaymentsModal.show'
+    );
+
+    scenarioParentModalId = visibleParent?.id || null;
+
     if (titleEl) titleEl.textContent = title;
     if (textEl) textEl.textContent = scenario.trim() || 'No scenario provided.';
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('scenarioModal')).show();
+
+    if (visibleParent) {
+        bootstrap.Modal.getOrCreateInstance(visibleParent).hide();
+    }
+
+    bootstrap.Modal.getOrCreateInstance(scenarioModal).show();
 }
 
 document.addEventListener('click', async event => {
@@ -275,6 +299,44 @@ document.addEventListener('click', async event => {
         if (!id) return;
         openPaymentModal(id).catch(error => alert(error.message));
     }
+});
+
+const scenarioModalElement = document.getElementById('scenarioModal');
+scenarioModalElement?.addEventListener('shown.bs.modal', () => {
+    document.body.classList.add('scenario-modal-open');
+    const backdrop = document.querySelector('.modal-backdrop:last-of-type');
+    if (backdrop) backdrop.classList.add('scenario-backdrop');
+});
+
+scenarioModalElement?.addEventListener('hidden.bs.modal', () => {
+    document.body.classList.remove('scenario-modal-open');
+    const parent = scenarioParentModalId
+        ? document.getElementById(scenarioParentModalId)
+        : null;
+    scenarioParentModalId = null;
+    if (parent) {
+        bootstrap.Modal.getOrCreateInstance(parent).show();
+    }
+});
+
+const paymentModalElement = document.getElementById('paymentReviewModal');
+paymentModalElement?.addEventListener('hidden.bs.modal', () => {
+    const parent = paymentParentModalId
+        ? document.getElementById(paymentParentModalId)
+        : null;
+    paymentParentModalId = null;
+    if (parent) {
+        bootstrap.Modal.getOrCreateInstance(parent).show();
+    }
+});
+
+document.getElementById('allReviewsModal')?.addEventListener('shown.bs.modal', () => {
+    const list = document.getElementById('allReviewsList');
+    if (list) list.scrollTop = 0;
+});
+document.getElementById('allPaymentsModal')?.addEventListener('shown.bs.modal', () => {
+    const list = document.getElementById('allPaymentsList');
+    if (list) list.scrollTop = 0;
 });
 
 function filterReviewQueue() {
