@@ -1318,30 +1318,74 @@
 
         /* =====================================================
            LIVE UPDATES - SIGNALR
-           Uses the shared Admin NotificationHub connection.
-           The task page still joins its project group and keeps
-           the existing TaskStatusChanged behavior unchanged.
         ===================================================== */
 
-        if (projectId > 0) {
+        if (window.signalR && projectId > 0) {
 
-            let adminNotificationConnection = null;
-            let signalRHandlersAttached = false;
+            const adminNotificationConnection =
+                new signalR.HubConnectionBuilder()
+                    .withUrl('/notificationHub')
+                    .withAutomaticReconnect()
+                    .build();
 
 
-            async function attachAdminSignalR(connection) {
+            function adminShowToast(message) {
 
-                if (
-                    !connection ||
-                    signalRHandlersAttached
-                ) {
-                    return;
+                try {
+
+                    const el =
+                        document.createElement('div');
+
+                    el.className =
+                        'admin-status-toast';
+
+                    el.style.position = 'fixed';
+                    el.style.right = '20px';
+                    el.style.top = '20px';
+                    el.style.background = '#2d9cdb';
+                    el.style.color = '#fff';
+                    el.style.padding = '10px 14px';
+                    el.style.borderRadius = '6px';
+                    el.style.boxShadow =
+                        '0 6px 18px rgba(0,0,0,0.12)';
+                    el.style.zIndex = '10000';
+
+                    el.textContent = message;
+
+                    document.body.appendChild(el);
+
+                    setTimeout(
+                        function () {
+
+                            el.style.opacity = '0';
+
+                            setTimeout(
+                                function () {
+                                    el.remove();
+                                },
+                                300
+                            );
+
+                        },
+                        3500
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Toast error:',
+                        error
+                    );
+
                 }
 
+            }
 
-                signalRHandlersAttached = true;
-                adminNotificationConnection = connection;
 
+            /* ==========================================
+               TASK STATUS CHANGED
+            ========================================== */
 
             adminNotificationConnection.on(
                 'TaskStatusChanged',
@@ -1494,9 +1538,6 @@
             );
 
 
-
-
-
             /* ==========================================
                RECONNECT
             ========================================== */
@@ -1538,15 +1579,21 @@
 
 
             /* ==========================================
-               JOIN PROJECT GROUP
+               START SIGNALR
             ========================================== */
 
-            if (
-                adminNotificationConnection.state ===
-                signalR.HubConnectionState.Connected
-            ) {
+            async function startAdminSignalR() {
 
                 try {
+
+                    await adminNotificationConnection
+                        .start();
+
+
+                    console.log(
+                        'Admin SignalR connected.'
+                    );
+
 
                     await adminNotificationConnection
                         .invoke(
@@ -1564,46 +1611,29 @@
                 catch (error) {
 
                     console.error(
-                        'Admin project group join failed:',
+                        'Admin SignalR connection failed:',
                         error
                     );
 
-                }
 
-            }
-
-
-            window.addEventListener(
-                'adminNotificationConnectionReady',
-                function (event) {
-
-                    const connection =
-                        event?.detail?.connection ||
-                        window.__adminNotificationConnection;
-
-                    attachAdminSignalR(connection);
-
-                }
-            );
-
-
-            if (window.__adminNotificationConnection) {
-
-                attachAdminSignalR(
-                    window.__adminNotificationConnection
-                );
-
-            }
-            else if (
-                window.__adminNotificationConnectionReady
-            ) {
-
-                window.__adminNotificationConnectionReady
-                    .then(
-                        attachAdminSignalR
+                    setTimeout(
+                        startAdminSignalR,
+                        5000
                     );
 
+                }
+
             }
+
+
+            startAdminSignalR();
+
+        }
+        else {
+
+            console.error(
+                'SignalR library not loaded.'
+            );
 
         }
 
