@@ -76,9 +76,12 @@ namespace TaskManagement.Web.Controllers
                 });
             }
 
-            var redirectUrl = result.IsAdmin
-                ? "/Admin/Dashboard"
-                : "/User/Dashboard";
+            var redirectUrl = "/User/Dashboard";
+
+            if (result.IsAdmin)
+            {
+                redirectUrl = "/Admin/Dashboard";
+            }
             else if (!string.IsNullOrEmpty(returnUrl)
                      && Url.IsLocalUrl(returnUrl))
             {
