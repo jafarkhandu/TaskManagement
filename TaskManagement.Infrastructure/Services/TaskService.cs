@@ -35,40 +35,36 @@ namespace TaskManagement.Infrastructure.Services
 
         public async Task<List<TaskDto>> GetTasksByProjectIdAsync(int projectId)
         {
-            return await _db.TaskItems
-                .AsNoTracking()
-                .Where(t => t.ProjectId == projectId)
-                .OrderByDescending(t => t.Id)
-                .Select(t => new TaskDto
+            return await (
+                from t in _db.TaskItems.AsNoTracking()
+                where t.ProjectId == projectId
+                from a in _db.TaskAssignments
+                    .Where(a => a.TaskId == t.Id)
+                    .OrderByDescending(a => a.Id)
+                    .Take(1)
+                    .DefaultIfEmpty()
+                join u in _db.Users.AsNoTracking()
+                    on (a == null ? t.AssignedToUserId : a.UserId) equals u.Id
+                    into users
+                from u in users.DefaultIfEmpty()
+                orderby t.Id descending
+                select new TaskDto
                 {
                     Id = t.Id,
                     ProjectId = t.ProjectId,
                     Title = t.Title,
                     Scenario = t.Scenario,
-                    AssignedToUserId = _db.TaskAssignments
-                        .Where(a => a.TaskId == t.Id)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => a.UserId)
-                        .FirstOrDefault() ?? t.AssignedToUserId ?? string.Empty,
+                    AssignedToUserId =
+                        (a == null ? t.AssignedToUserId : a.UserId) ?? string.Empty,
                     // Project to the user's display name (FullName or Email)
-                    AssignedToUserName = _db.Users
-                        .Where(u => u.Id == (_db.TaskAssignments
-                            .Where(a => a.TaskId == t.Id)
-                            .OrderByDescending(a => a.Id)
-                            .Select(a => a.UserId)
-                            .FirstOrDefault() ?? t.AssignedToUserId))
-                        .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
-                        .FirstOrDefault() ?? string.Empty,
-                    AssignmentStatus = _db.TaskAssignments
-                        .Where(a => a.TaskId == t.Id)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => a.Status)
-                        .FirstOrDefault() ?? string.Empty,
-                    CompletionRepositoryUrl = _db.TaskAssignments
-                        .Where(a => a.TaskId == t.Id)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => a.CompletionRepositoryUrl)
-                        .FirstOrDefault(),
+                    AssignedToUserName =
+                        (u != null
+                            ? ((u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                            : null) ?? string.Empty,
+                    AssignmentStatus =
+                        (a == null ? null : a.Status) ?? string.Empty,
+                    CompletionRepositoryUrl =
+                        a == null ? null : a.CompletionRepositoryUrl,
                     Priority = t.Priority,
                     Status = t.Status,
                     StartDate = t.StartDate,
@@ -86,38 +82,34 @@ namespace TaskManagement.Infrastructure.Services
 
         public async Task<TaskDto?> GetByIdAsync(int id)
         {
-            return await _db.TaskItems
-                .AsNoTracking()
-                .Where(x => x.Id == id)
-                .Select(t => new TaskDto
+            return await (
+                from t in _db.TaskItems.AsNoTracking()
+                where t.Id == id
+                from a in _db.TaskAssignments
+                    .Where(a => a.TaskId == t.Id)
+                    .OrderByDescending(a => a.Id)
+                    .Take(1)
+                    .DefaultIfEmpty()
+                join u in _db.Users.AsNoTracking()
+                    on (a == null ? t.AssignedToUserId : a.UserId) equals u.Id
+                    into users
+                from u in users.DefaultIfEmpty()
+                select new TaskDto
                 {
                     Id = t.Id,
                     ProjectId = t.ProjectId,
                     Title = t.Title,
                     Scenario = t.Scenario,
-                    AssignedToUserId = _db.TaskAssignments
-                        .Where(a => a.TaskId == t.Id)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => a.UserId)
-                        .FirstOrDefault() ?? t.AssignedToUserId ?? string.Empty,
-                    AssignedToUserName = _db.Users
-                        .Where(u => u.Id == (_db.TaskAssignments
-                            .Where(a => a.TaskId == t.Id)
-                            .OrderByDescending(a => a.Id)
-                            .Select(a => a.UserId)
-                            .FirstOrDefault() ?? t.AssignedToUserId))
-                        .Select(u => (u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
-                        .FirstOrDefault() ?? string.Empty,
-                    AssignmentStatus = _db.TaskAssignments
-                        .Where(a => a.TaskId == t.Id)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => a.Status)
-                        .FirstOrDefault() ?? string.Empty,
-                    CompletionRepositoryUrl = _db.TaskAssignments
-                        .Where(a => a.TaskId == t.Id)
-                        .OrderByDescending(a => a.Id)
-                        .Select(a => a.CompletionRepositoryUrl)
-                        .FirstOrDefault(),
+                    AssignedToUserId =
+                        (a == null ? t.AssignedToUserId : a.UserId) ?? string.Empty,
+                    AssignedToUserName =
+                        (u != null
+                            ? ((u.FullName != null && u.FullName != "") ? u.FullName : u.Email)
+                            : null) ?? string.Empty,
+                    AssignmentStatus =
+                        (a == null ? null : a.Status) ?? string.Empty,
+                    CompletionRepositoryUrl =
+                        a == null ? null : a.CompletionRepositoryUrl,
                     Priority = t.Priority,
                     Status = t.Status,
                     StartDate = t.StartDate,
