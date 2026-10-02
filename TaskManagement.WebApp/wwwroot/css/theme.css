@@ -1359,3 +1359,130 @@ html.light-theme .notifications-list {
         background: linear-gradient( 180deg, rgba(91,145,255,.55), rgba(139,92,246,.45) );
         border-color: rgba(255,255,255,.5);
     }
+
+/* =========================================================
+   USER TOPBAR — CONSISTENT LIGHT GLASS
+   ========================================================= */
+
+html.light-theme .topbar {
+    background: transparent;
+    color: #17243a;
+}
+
+html.light-theme .top-actions {
+    color: #17243a;
+}
+
+html.light-theme .chat-button .chat-icon {
+    color: #61738d;
+}
+
+html.light-theme .chat-button:hover .chat-icon {
+    color: #405979;
+}
+
+html.light-theme .chat-button .chat-badge {
+    border-color: #eef5ff;
+}
+
+
+/* =========================================================
+   PAYMENT DETAILS — LIGHT THEME
+   ========================================================= */
+
+html.light-theme .payment-page {
+    color: #17243a;
+}
+
+html.light-theme .payment-hero h1,
+html.light-theme .payment-card-header h2,
+html.light-theme .payment-card-header strong,
+html.light-theme .payment-fields label,
+html.light-theme .payment-confirm span {
+    color: #1d2c43;
+}
+
+html.light-theme .payment-hero p,
+html.light-theme .payment-card-header p,
+html.light-theme .field-note,
+html.light-theme .last-updated {
+    color: #71819a;
+    opacity: 1;
+}
+
+html.light-theme .payment-status {
+    border-color: rgba(130,160,200,.20);
+    background: rgba(255,255,255,.60);
+    color: #52647e;
+    box-shadow: 0 8px 24px rgba(65,105,155,.06);
+}
+
+html.light-theme .payment-card {
+    border-color: rgba(255,255,255,.80);
+    background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(239,246,255,.62));
+    box-shadow: 0 18px 50px rgba(61,99,145,.10), inset 0 1px rgba(255,255,255,.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+html.light-theme .payment-card-header {
+    border-bottom-color: rgba(120,150,190,.14);
+}
+
+html.light-theme .method-option {
+    border-color: rgba(120,150,190,.16);
+    background: rgba(255,255,255,.46);
+    color: #263750;
+}
+
+html.light-theme .method-option:hover {
+    border-color: rgba(75,140,255,.42);
+    background: rgba(255,255,255,.72);
+}
+
+html.light-theme .method-option.selected {
+    border-color: rgba(75,140,255,.68);
+    background: linear-gradient(135deg, rgba(75,140,255,.10), rgba(139,92,246,.07));
+}
+
+html.light-theme .method-radio {
+    border-color: rgba(90,115,145,.42);
+}
+
+html.light-theme .method-option.selected .method-radio {
+    border-color: #4d86f5;
+}
+
+html.light-theme .method-option small {
+    color: #7a8ba3;
+    opacity: 1;
+}
+
+html.light-theme .payment-fields input {
+    border-color: rgba(120,150,190,.18);
+    background: rgba(255,255,255,.72);
+    color: #17243a;
+    box-shadow: inset 0 1px rgba(255,255,255,.8);
+}
+
+html.light-theme .payment-fields input::placeholder {
+    color: #91a0b5;
+}
+
+html.light-theme .payment-fields input:focus {
+    border-color: rgba(75,140,255,.70);
+    box-shadow: 0 0 0 4px rgba(75,140,255,.10);
+}
+
+html.light-theme .payment-confirm {
+    border-color: rgba(75,140,255,.16);
+    background: rgba(75,140,255,.055);
+}
+
+html.light-theme .payment-actions {
+    border-top-color: rgba(120,150,190,.14);
+}
+
+html.light-theme #savePaymentButton {
+    box-shadow: 0 10px 25px rgba(70,125,230,.16);
+}
