@@ -389,6 +389,39 @@
 
     /* ================= TASK COMPLETION SUBMISSION ================= */
 
+    function setReviewPendingCardState(card) {
+        if (!card) return;
+
+        card.dataset.status = 'Review Pending';
+        card.classList.add('review-pending-card');
+        card.draggable = false;
+
+        card.querySelector('.task-chat-btn')?.remove();
+
+        const cardTop = card.querySelector('.task-card-top');
+        if (!cardTop) return;
+
+        let badge = cardTop.querySelector('.task-review-pending');
+
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'task-review-pending';
+            cardTop.appendChild(badge);
+        }
+
+        badge.textContent = 'Review Pending';
+    }
+
+    function clearReviewPendingCardState(card) {
+        if (!card) return;
+
+        card.classList.remove('review-pending-card');
+        card.querySelector('.task-review-pending')?.remove();
+
+        const status = String(card.dataset.status || '').trim().toLowerCase();
+        card.draggable = status !== 'completed' && status !== 'review pending';
+    }
+
     function showStatusToast(message, success = true) {
         try {
             const id = 'status-toast-' + Date.now();
@@ -560,21 +593,17 @@
                 throw new Error(json?.message || 'Unable to submit the task for review.');
             }
 
-            card.dataset.status = 'Review Pending';
-            card.draggable = false;
+            const wasAlreadyReviewPending =
+                String(card.dataset.status || '').trim().toLowerCase() === 'review pending';
 
-            const chatButton = card.querySelector('.task-chat-btn');
-            if (chatButton) {
-                chatButton.remove();
-            }
+            setReviewPendingCardState(card);
 
-            card.classList.add('review-pending-card');
             targetList.querySelector('.empty-column')?.remove();
 
-            const reviewBadge = card.querySelector('.review-status-badge');
-            if (reviewBadge) {
-                reviewBadge.textContent = 'Review Pending';
-            }
+            // Put a newly submitted review at the end of the review column,
+            // matching the refreshed board ordering instead of leaving it at
+            // its previous active-task position.
+            targetList.appendChild(card);
 
             const map = {
                 'Pending': 'todoCount',
@@ -583,18 +612,20 @@
                 'Completed': 'completedCount'
             };
 
-            const oldCount = document.getElementById(map[oldStatus]);
-            if (oldCount) {
-                oldCount.textContent = Math.max(
-                    0,
-                    parseInt(oldCount.textContent || '0', 10) - 1
-                );
-            }
+            if (!wasAlreadyReviewPending) {
+                const oldCount = document.getElementById(map[oldStatus]);
+                if (oldCount) {
+                    oldCount.textContent = Math.max(
+                        0,
+                        parseInt(oldCount.textContent || '0', 10) - 1
+                    );
+                }
 
-            const newCount = document.getElementById('progressCount');
-            if (newCount) {
-                newCount.textContent =
-                    Number(newCount.textContent || 0) + 1;
+                const newCount = document.getElementById('progressCount');
+                if (newCount) {
+                    newCount.textContent =
+                        Number(newCount.textContent || 0) + 1;
+                }
             }
 
             try {
@@ -696,8 +727,16 @@
             if (oldStatus === normalized) return;
 
             card.dataset.status = normalized;
-            if (target.firstElementChild) target.insertBefore(card, target.firstElementChild);
-            else target.appendChild(card);
+            if (normalized === 'Review Pending') {
+                setReviewPendingCardState(card);
+                target.appendChild(card);
+            }
+            else {
+                clearReviewPendingCardState(card);
+
+                if (target.firstElementChild) target.insertBefore(card, target.firstElementChild);
+                else target.appendChild(card);
+            }
 
             const countMap = {
                 Pending: 'todoCount',
@@ -885,6 +924,11 @@
 
                 if (!taskId || !oldStatus) return;
 
+                if (String(oldStatus).trim().toLowerCase() === 'review pending') {
+                    showStatusToast('Review Pending tasks cannot be moved.', false);
+                    return;
+                }
+
                 if (oldStatus === newStatus) return;
 
                 if (!(allowedTransitions[oldStatus] && allowedTransitions[oldStatus].includes(newStatus))) {
@@ -1023,11 +1067,21 @@
 
         // Initialize draggable state on cards
         document.querySelectorAll('.task-card').forEach(card => {
-            const status = card.dataset.status || 'Pending';
-            const isCompleted = String(status).toLowerCase() === 'completed';
-            card.draggable = !isCompleted;
+            const status = String(card.dataset.status || 'Pending').trim().toLowerCase();
+            const isLocked = status === 'completed' || status === 'review pending';
+            card.draggable = !isLocked;
 
             card.addEventListener('dragstart', function (e) {
+                const currentStatus = String(card.dataset.status || 'Pending').trim().toLowerCase();
+
+                // Review Pending and Completed tasks are permanently non-draggable
+                // from the user's board.
+                if (currentStatus === 'review pending' || currentStatus === 'completed') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
                 e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: card.dataset.taskId, oldStatus: card.dataset.status }));
                 e.dataTransfer.effectAllowed = 'move';
                 card.classList.add('dragging');
