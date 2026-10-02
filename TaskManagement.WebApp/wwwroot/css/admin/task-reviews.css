@@ -1025,3 +1025,17 @@ body.scenario-modal-open .modal-backdrop{
         max-height:calc(100vh - 60px);
     }
 }
+
+
+/* Small final size correction for the centered full-review modal. */
+#allReviewsModal .all-review-item{
+    min-height:0;
+    padding:7px 9px;
+}
+#allReviewsModal .all-review-item-main>strong{font-size:11px}
+#allReviewsModal .all-review-item-main>small{font-size:8px}
+#allReviewsModal .all-review-item-meta>span{font-size:9px}
+#allReviewsModal .all-review-item-meta small{font-size:7px}
+#allReviewsModal .scenario-open-btn-small{font-size:9px}
+#allReviewsModal .all-review-action{font-size:9px!important}
+#allReviewsModal .all-review-list{padding-top:8px;padding-bottom:10px}
