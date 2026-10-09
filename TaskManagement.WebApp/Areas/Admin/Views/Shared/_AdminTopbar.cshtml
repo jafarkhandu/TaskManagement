@@ -19,11 +19,19 @@
         <input type="text"
                id="adminGlobalSearch"
                placeholder="Search projects, tasks or users..."
-               autocomplete="off" />
+               autocomplete="off"
+               aria-label="Search projects, tasks or users" />
 
         <span class="search-shortcut">
             Ctrl K
         </span>
+
+        <div id="adminGlobalSearchResults"
+             class="admin-search-results"
+             role="listbox"
+             hidden
+             aria-label="Admin search results">
+        </div>
 
     </div>
 
@@ -210,3 +218,4 @@
 
 </header>
 
+<script src="~/js/admin/admin-global-search.js"></script>
