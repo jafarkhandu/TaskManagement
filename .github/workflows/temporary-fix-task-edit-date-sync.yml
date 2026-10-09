@@ -1,0 +1,53 @@
+name: Temporary Fix Task Edit Date Sync
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Fix task edit date timezone conversion' && github.event.head_commit.message != 'Remove temporary date sync workflow'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch date input formatting
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('TaskManagement.WebApp/wwwroot/js/admin/admin-tasks.js')
+          text = path.read_text(encoding='utf-8-sig')
+
+          old = """        function formatInputDate(value) {\n\n            if (!value) {\n                return '';\n            }\n\n            const date = new Date(value);\n\n            if (Number.isNaN(date.getTime())) {\n                return '';\n            }\n\n            return date.toISOString().substring(0, 10);\n        }"""
+
+          new = """        function formatInputDate(value) {\n\n            if (!value) {\n                return '';\n            }\n\n            const raw = String(value).trim();\n            const dateOnlyMatch = /^(\\d{4}-\\d{2}-\\d{2})/.exec(raw);\n\n            if (dateOnlyMatch) {\n                return dateOnlyMatch[1];\n            }\n\n            const date = new Date(raw);\n\n            if (Number.isNaN(date.getTime())) {\n                return '';\n            }\n\n            return date.toISOString().substring(0, 10);\n        }"""
+
+          if old not in text:
+              raise SystemExit('Expected formatInputDate block was not found; refusing to modify the file.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-tasks.js
+          git commit -m "Fix task edit date timezone conversion"
+          git push origin main
+
+      - name: Remove temporary workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/temporary-fix-task-edit-date-sync.yml
+          git commit -m "Remove temporary date sync workflow"
+          git push origin main
