@@ -81,3 +81,19 @@
     .admin-payment-qr-card { width:100%; max-width:none; }
     .admin-payment-qr-frame { width:190px; height:190px; }
 }
+
+/* Admin profile details are read-only. The server also rejects Update posts. */
+form[action*="/Admin/Users/Update"] {
+    pointer-events: none;
+}
+
+form[action*="/Admin/Users/Update"] input,
+form[action*="/Admin/Users/Update"] select {
+    background: #f5f7fb;
+    color: #52617a;
+    cursor: not-allowed;
+}
+
+form[action*="/Admin/Users/Update"] button[type="submit"] {
+    display: none;
+}
