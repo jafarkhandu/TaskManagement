@@ -83,7 +83,8 @@ document.addEventListener("DOMContentLoaded", function () {
             activeRequest.abort();
         }
 
-        activeRequest = new AbortController();
+        const requestController = new AbortController();
+        activeRequest = requestController;
 
         try {
             const response = await fetch(
@@ -92,7 +93,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     method: "GET",
                     credentials: "same-origin",
                     cache: "no-store",
-                    signal: activeRequest.signal,
+                    signal: requestController.signal,
                     headers: {
                         "X-Requested-With": "XMLHttpRequest"
                     }
@@ -104,18 +105,25 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const data = await response.json();
-            renderResults(data);
+
+            if (activeRequest === requestController) {
+                renderResults(data);
+            }
         }
         catch (error) {
             if (error.name === "AbortError") {
                 return;
             }
 
-            console.warn("Admin global search failed:", error);
-            renderMessage("Search is temporarily unavailable.");
+            if (activeRequest === requestController) {
+                console.warn("Admin global search failed:", error);
+                renderMessage("Search is temporarily unavailable.");
+            }
         }
         finally {
-            activeRequest = null;
+            if (activeRequest === requestController) {
+                activeRequest = null;
+            }
         }
     }
 
