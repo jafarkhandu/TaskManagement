@@ -210,6 +210,10 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
         string phoneNumber,
         string role)
         {
+            // Profile details are read-only for administrators.
+            // Keep the endpoint blocked as a server-side safeguard even if a request is crafted manually.
+            return Forbid();
+
             if (string.IsNullOrWhiteSpace(id))
             {
                 return NotFound();
