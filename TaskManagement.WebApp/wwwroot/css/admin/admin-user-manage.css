@@ -82,18 +82,10 @@
     .admin-payment-qr-frame { width:190px; height:190px; }
 }
 
-/* Admin profile details are read-only. The server also rejects Update posts. */
-form[action*="/Admin/Users/Update"] {
-    pointer-events: none;
-}
-
-form[action*="/Admin/Users/Update"] input,
-form[action*="/Admin/Users/Update"] select {
+/* Profile fields are display-only; the Role control and Save button remain active. */
+.user-profile-readonly,
+form[action*="/Admin/Users/Update"] input[readonly] {
     background: #f5f7fb;
     color: #52617a;
     cursor: not-allowed;
-}
-
-form[action*="/Admin/Users/Update"] button[type="submit"] {
-    display: none;
 }
