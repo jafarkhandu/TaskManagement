@@ -160,5 +160,84 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
             return View(model);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Search(string term)
+        {
+            term = term?.Trim() ?? string.Empty;
+
+            if (term.Length < 2)
+            {
+                return Json(new
+                {
+                    projects = Array.Empty<object>(),
+                    tasks = Array.Empty<object>(),
+                    users = Array.Empty<object>()
+                });
+            }
+
+            var projects = await _context.Projects
+                .AsNoTracking()
+                .Where(p =>
+                    EF.Functions.Like(p.ProjectTitle, $"%{term}%") ||
+                    EF.Functions.Like(p.Description, $"%{term}%") ||
+                    EF.Functions.Like(p.Status, $"%{term}%"))
+                .OrderBy(p => p.ProjectTitle)
+                .Take(5)
+                .Select(p => new
+                {
+                    type = "Project",
+                    title = p.ProjectTitle,
+                    status = p.Status,
+                    url = $"/Admin/Tasks/Project/{p.Id}"
+                })
+                .ToListAsync();
+
+            var tasks = await (
+                from t in _context.TaskItems.AsNoTracking()
+                join p in _context.Projects.AsNoTracking()
+                    on t.ProjectId equals p.Id
+                where
+                    EF.Functions.Like(t.Title, $"%{term}%") ||
+                    EF.Functions.Like(t.Scenario, $"%{term}%") ||
+                    EF.Functions.Like(t.Status, $"%{term}%") ||
+                    EF.Functions.Like(t.Priority, $"%{term}%") ||
+                    EF.Functions.Like(p.ProjectTitle, $"%{term}%")
+                orderby t.Title
+                select new
+                {
+                    type = "Task",
+                    title = t.Title,
+                    projectTitle = p.ProjectTitle,
+                    url = $"/Admin/Tasks/Project/{p.Id}?taskId={t.Id}"
+                })
+                .Take(5)
+                .ToListAsync();
+
+            var users = await _context.Users
+                .AsNoTracking()
+                .Where(u =>
+                    EF.Functions.Like(u.FullName ?? string.Empty, $"%{term}%") ||
+                    EF.Functions.Like(u.UserName ?? string.Empty, $"%{term}%") ||
+                    EF.Functions.Like(u.Email ?? string.Empty, $"%{term}%"))
+                .OrderBy(u => u.FullName)
+                .ThenBy(u => u.Email)
+                .Take(5)
+                .Select(u => new
+                {
+                    type = "User",
+                    title = u.FullName ?? u.UserName ?? u.Email ?? "User",
+                    email = u.Email,
+                    url = $"/Admin/Users/Manage/{u.Id}"
+                })
+                .ToListAsync();
+
+            return Json(new
+            {
+                projects,
+                tasks,
+                users
+            });
+        }
     }
 }
