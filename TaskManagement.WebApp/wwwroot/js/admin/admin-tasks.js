@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
 
     'use strict';
 
@@ -95,7 +95,14 @@
                 return '';
             }
 
-            const date = new Date(value);
+            const raw = String(value).trim();
+            const dateOnlyMatch = /^(\d{4}-\d{2}-\d{2})/.exec(raw);
+
+            if (dateOnlyMatch) {
+                return dateOnlyMatch[1];
+            }
+
+            const date = new Date(raw);
 
             if (Number.isNaN(date.getTime())) {
                 return '';
