@@ -1804,6 +1804,36 @@
         );
 
 
+        document.getElementById(
+            'addTaskModal'
+        )?.addEventListener(
+            'hidden.bs.modal',
+            function () {
+                addTaskForm?.reset();
+
+                const addTaskError =
+                    document.getElementById('addTaskError');
+
+                if (addTaskError) {
+                    addTaskError.textContent = '';
+                    addTaskError.style.display = 'none';
+                }
+
+                if (addAssignedToSearch) {
+                    addAssignedToSearch.value = '';
+                }
+
+                if (addAssignedTo) {
+                    addAssignedTo.value = '';
+                }
+
+                if (addAssignedToOptions) {
+                    addAssignedToOptions.classList.remove('show');
+                }
+            }
+        );
+
+
         addTaskForm?.addEventListener(
             'submit',
             async function (event) {
