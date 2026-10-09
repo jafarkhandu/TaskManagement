@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace TaskManagement.Application.DTOs
 {
-    public class TaskDto
+    public class TaskDto : IValidatableObject
     {
         public int Id { get; set; }
 
@@ -46,5 +47,33 @@ namespace TaskManagement.Application.DTOs
         [Required]
         [Range(0, 9999999999.99)]
         public decimal Amount { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var today = DateTime.Today;
+            var startDate = StartDate.Date;
+            var endDate = ExpectedEndDate.Date;
+
+            if (startDate < today)
+            {
+                yield return new ValidationResult(
+                    "Start date cannot be in the past.",
+                    new[] { nameof(StartDate) });
+            }
+
+            if (endDate < today)
+            {
+                yield return new ValidationResult(
+                    "Expected end date cannot be in the past.",
+                    new[] { nameof(ExpectedEndDate) });
+            }
+
+            if (endDate < startDate)
+            {
+                yield return new ValidationResult(
+                    "Expected end date cannot be earlier than the start date.",
+                    new[] { nameof(ExpectedEndDate) });
+            }
+        }
     }
 }
