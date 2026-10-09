@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Data;
@@ -22,10 +23,23 @@ builder.Services.AddAntiforgery(options =>
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
+    var connectionString =
+        builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "The DefaultConnection connection string is not configured.");
+    }
+
+    var connectionStringBuilder =
+        new SqlConnectionStringBuilder(connectionString)
+        {
+            ConnectTimeout = 30
+        };
+
     options.UseSqlServer(
-     builder.Configuration.GetConnectionString(
-         "DefaultConnection"
-     ),
+     connectionStringBuilder.ConnectionString,
      sqlOptions =>
      {
          sqlOptions.EnableRetryOnFailure(
