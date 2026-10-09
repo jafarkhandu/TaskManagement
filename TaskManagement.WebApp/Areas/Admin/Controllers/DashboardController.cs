@@ -239,5 +239,24 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 users
             });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> AllProjects()
+        {
+            var projects = await _context.Projects
+                .AsNoTracking()
+                .OrderByDescending(p => p.StartDate)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.ProjectTitle,
+                    p.Description,
+                    TaskCount = _context.TaskItems.Count(t => t.ProjectId == p.Id),
+                    Url = Url.Action("Project", "Tasks", new { area = "Admin", id = p.Id })
+                })
+                .ToListAsync();
+
+            return Json(projects);
+        }
     }
 }
