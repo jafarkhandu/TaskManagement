@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const stats = {
         projects: {
             title: "Total Projects",
-            subtitle: "Projects currently represented on the dashboard.",
+            subtitle: "All projects currently represented on the dashboard.",
             label: "projects"
         },
         tasks: {
@@ -33,10 +33,59 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value ?? "";
+        return div.innerHTML;
+    }
+
     function closeModal() {
         modal.classList.remove("show");
         modal.setAttribute("aria-hidden", "true");
         document.body.style.overflow = "";
+    }
+
+    async function loadAllProjects() {
+        try {
+            list.innerHTML = '<div class="admin-stat-modal-note"><strong>Loading projects...</strong></div>';
+
+            const response = await fetch("/Admin/Dashboard/AllProjects", {
+                method: "GET",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to load projects.");
+            }
+
+            const projects = await response.json();
+
+            if (!Array.isArray(projects) || projects.length === 0) {
+                list.innerHTML = '<div class="admin-stat-modal-note"><strong>No projects found.</strong></div>';
+                return;
+            }
+
+            list.innerHTML = projects.map(project => `
+                <a class="admin-stat-modal-item"
+                   href="${escapeHtml(project.url || "#")}">
+                    <span class="admin-stat-modal-item-icon">▱</span>
+                    <span class="admin-stat-modal-item-main">
+                        <strong>${escapeHtml(project.projectTitle)}</strong>
+                        <small>${escapeHtml(project.description || "No description available.")}</small>
+                    </span>
+                    <span class="admin-stat-modal-item-meta">${Number(project.taskCount) || 0} tasks</span>
+                </a>
+            `).join("");
+        }
+        catch (error) {
+            console.warn("Admin project summary could not be loaded:", error);
+            const template = data.querySelector('[data-stat-template="projects"]');
+            list.innerHTML = template?.innerHTML || "";
+        }
     }
 
     function openModal(type) {
@@ -56,6 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.classList.add("show");
         modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
+
+        if (type === "projects") {
+            loadAllProjects();
+        }
     }
 
     document.querySelectorAll(".admin-stat-clickable").forEach(card => {
