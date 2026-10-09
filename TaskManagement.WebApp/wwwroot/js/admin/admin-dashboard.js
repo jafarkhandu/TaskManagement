@@ -122,6 +122,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // The dashboard's Recent Projects "View All" link previously pointed to '#',
+    // so it did not open the Admin Projects page. Keep the existing markup and
+    // route the action to the real Admin Projects list here.
+    const viewAllProjectsLink = document.querySelector('.projects-card .card-header a[href="#"]');
+    viewAllProjectsLink?.addEventListener("click", event => {
+        event.preventDefault();
+        window.location.href = "/Admin/Projects";
+    });
+
     closeButton?.addEventListener("click", closeModal);
 
     modal.addEventListener("click", event => {
