@@ -251,12 +251,18 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     p.Id,
                     p.ProjectTitle,
                     p.Description,
-                    TaskCount = _context.TaskItems.Count(t => t.ProjectId == p.Id),
-                    Url = Url.Action("Project", "Tasks", new { area = "Admin", id = p.Id })
+                    TaskCount = _context.TaskItems.Count(t => t.ProjectId == p.Id)
                 })
                 .ToListAsync();
 
-            return Json(projects);
+            return Json(projects.Select(p => new
+            {
+                p.Id,
+                p.ProjectTitle,
+                p.Description,
+                p.TaskCount,
+                Url = Url.Action("Project", "Tasks", new { area = "Admin", id = p.Id })
+            }));
         }
     }
 }
