@@ -105,7 +105,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             });
         }
 
-        // GET: /Admin/Users
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -114,8 +113,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 .ThenBy(u => u.Email)
                 .ToListAsync();
 
-            // Load all user roles in one query so the Users page does not
-            // issue one Identity query per user.
             var userIds = users
                 .Select(u => u.Id)
                 .ToList();
@@ -185,8 +182,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return BadRequest();
             }
 
-            // Standard UPI payment deep-link payload for a static QR.
-            // pa = payee UPI ID, pn = payee name, cu = currency.
             var paymentUri =
                 $"upi://pay?pa={Uri.EscapeDataString(upiId)}&pn={Uri.EscapeDataString("UPI Payment")}&cu=INR";
 
@@ -203,17 +198,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(
-        string id,
-        string fullName,
-        string email,
-        string phoneNumber,
-        string role)
+        public async Task<IActionResult> Update(string id, string role)
         {
-            // Profile details are read-only for administrators.
-            // Keep the endpoint blocked as a server-side safeguard even if a request is crafted manually.
-            return Forbid();
-
             if (string.IsNullOrWhiteSpace(id))
             {
                 return NotFound();
@@ -226,41 +212,29 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            fullName = fullName?.Trim() ?? string.Empty;
-            email = email?.Trim() ?? string.Empty;
-            phoneNumber = phoneNumber?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(fullName))
+            // The profile fields are intentionally read-only on the Admin page.
+            // This endpoint only processes an allowed role change.
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
             {
-                TempData["ErrorMessage"] = "Full Name is required.";
-
                 return RedirectToAction(
                     "Manage",
                     "Users",
                     new { area = "Admin", id });
             }
 
-            if (string.IsNullOrWhiteSpace(email))
+            var desiredRole = string.Equals(role?.Trim(), "Manager", StringComparison.OrdinalIgnoreCase)
+                ? "Manager"
+                : "User";
+
+            if (!await _roleManager.RoleExistsAsync(desiredRole))
             {
-                TempData["ErrorMessage"] = "Email is required.";
+                var createRoleResult = await _roleManager.CreateAsync(new IdentityRole(desiredRole));
 
-                return RedirectToAction(
-                    "Manage",
-                    "Users",
-                    new { area = "Admin", id });
-            }
-
-            if (!string.IsNullOrEmpty(phoneNumber))
-            {
-                var isValidPhone =
-                    phoneNumber.All(char.IsDigit) &&
-                    phoneNumber.Length >= 10 &&
-                    phoneNumber.Length <= 15;
-
-                if (!isValidPhone)
+                if (!createRoleResult.Succeeded)
                 {
-                    TempData["ErrorMessage"] =
-                        "Please enter a valid phone number.";
+                    TempData["ErrorMessage"] = string.Join(
+                        " ",
+                        createRoleResult.Errors.Select(e => e.Description));
 
                     return RedirectToAction(
                         "Manage",
@@ -269,102 +243,40 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 }
             }
 
-            user.FullName = fullName;
+            var currentRoles = await _userManager.GetRolesAsync(user);
 
-            var emailResult =
-                await _userManager.SetEmailAsync(user, email);
-
-            if (!emailResult.Succeeded)
+            if (!currentRoles.Any(r => string.Equals(r, desiredRole, StringComparison.OrdinalIgnoreCase)))
             {
-                TempData["ErrorMessage"] =
-                    string.Join(
-                        " ",
-                        emailResult.Errors.Select(e => e.Description));
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
-                return RedirectToAction(
-                    "Manage",
-                    "Users",
-                    new { area = "Admin", id });
-            }
-
-            user.PhoneNumber =
-                string.IsNullOrWhiteSpace(phoneNumber)
-                    ? null
-                    : phoneNumber;
-
-            var updateResult =
-                await _userManager.UpdateAsync(user);
-
-            if (!updateResult.Succeeded)
-            {
-                TempData["ErrorMessage"] =
-                    string.Join(
-                        " ",
-                        updateResult.Errors.Select(e => e.Description));
-
-                return RedirectToAction(
-                    "Manage",
-                    "Users",
-                    new { area = "Admin", id });
-            }
-
-            TempData["SuccessMessage"] =
-                "User updated successfully.";
-            // Role update handling
-            role = role?.Trim();
-
-            // Protect Admin account from role changes
-            if (await _userManager.IsInRoleAsync(user, "Admin"))
-            {
-                // Do not allow changing Admin role
-                return RedirectToAction(
-                    "Manage",
-                    "Users",
-                    new { area = "Admin", id });
-            }
-
-            // Accept only User or Manager as selectable roles
-            var desiredRole = string.IsNullOrWhiteSpace(role) ? string.Empty : (role == "Manager" ? "Manager" : "User");
-
-            if (!string.IsNullOrWhiteSpace(desiredRole))
-            {
-                // Ensure role exists
-                if (!await _roleManager.RoleExistsAsync(desiredRole))
+                if (!removeResult.Succeeded)
                 {
-                    await _roleManager.CreateAsync(new IdentityRole(desiredRole));
+                    TempData["ErrorMessage"] = string.Join(
+                        " ",
+                        removeResult.Errors.Select(e => e.Description));
+
+                    return RedirectToAction(
+                        "Manage",
+                        "Users",
+                        new { area = "Admin", id });
                 }
 
-                var currentRoles = await _userManager.GetRolesAsync(user);
-                var currentRole = currentRoles.FirstOrDefault();
+                var addResult = await _userManager.AddToRoleAsync(user, desiredRole);
 
-                if (!string.Equals(currentRole, desiredRole, StringComparison.OrdinalIgnoreCase))
+                if (!addResult.Succeeded)
                 {
-                    // Remove any non-admin roles and add the desired one
-                    var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                    TempData["ErrorMessage"] = string.Join(
+                        " ",
+                        addResult.Errors.Select(e => e.Description));
 
-                    if (!removeResult.Succeeded)
-                    {
-                        TempData["ErrorMessage"] = string.Join(" ", removeResult.Errors.Select(e => e.Description));
-
-                        return RedirectToAction(
-                            "Manage",
-                            "Users",
-                            new { area = "Admin", id });
-                    }
-
-                    var addResult = await _userManager.AddToRoleAsync(user, desiredRole);
-
-                    if (!addResult.Succeeded)
-                    {
-                        TempData["ErrorMessage"] = string.Join(" ", addResult.Errors.Select(e => e.Description));
-
-                        return RedirectToAction(
-                            "Manage",
-                            "Users",
-                            new { area = "Admin", id });
-                    }
+                    return RedirectToAction(
+                        "Manage",
+                        "Users",
+                        new { area = "Admin", id });
                 }
             }
+
+            TempData["SuccessMessage"] = "User role updated successfully.";
 
             return RedirectToAction(
                 "Manage",
@@ -390,11 +302,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return RedirectToAction(
                     "Manage",
                     "Users",
-                    new
-                    {
-                        area = "Admin",
-                        id
-                    });
+                    new { area = "Admin", id });
             }
 
             var user = await _userManager.FindByIdAsync(id);
@@ -409,7 +317,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                     new { area = "Admin" });
             }
 
-            // Prevent deleting the system Admin
             if (await _userManager.IsInRoleAsync(user, "Admin"))
             {
                 TempData["ErrorMessage"] = "Unable to delete the system administrator.";
@@ -417,37 +324,27 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 return RedirectToAction(
                     "Manage",
                     "Users",
-                    new
-                    {
-                        area = "Admin",
-                        id
-                    });
+                    new { area = "Admin", id });
             }
 
             var result = await _userManager.DeleteAsync(user);
 
             if (!result.Succeeded)
             {
-                TempData["ErrorMessage"] =
-                    "Unable to delete this user.";
+                TempData["ErrorMessage"] = "Unable to delete this user.";
 
                 return RedirectToAction(
                     "Manage",
                     "Users",
-                    new
-                    {
-                        area = "Admin",
-                        id
-                    });
+                    new { area = "Admin", id });
             }
 
-            TempData["SuccessMessage"] =
-                "User deleted successfully.";
+            TempData["SuccessMessage"] = "User deleted successfully.";
 
             return RedirectToAction(
                 "Index",
                 "Users",
-            new { area = "Admin" });
+                new { area = "Admin" });
         }
 
         [HttpPost]
@@ -470,12 +367,10 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 });
             }
 
-            // Determine whether the account already has a password
             var hasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash);
 
             if (!hasPassword)
             {
-                // FIRST-TIME ACTIVATION: keep existing behaviour (generate password, add role, send password email)
                 user.UserName = user.FullName;
 
                 var password = GenerateSecurePassword();
@@ -540,9 +435,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                         Password: <strong>{password}</strong>
                     </p>
 
-                    <p>
-                        You can now login to TaskManager using these credentials.
-                    </p>
+                    <p>You can now login to TaskManager using these credentials.</p>
 
                     <p>Regards,<br />TaskManager Team</p>
                     """;
@@ -561,10 +454,8 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 });
             }
 
-            // REACTIVATION: account already had a password. Do not change password or roles. Only set IsActive = true and notify.
             if (await _userManager.IsInRoleAsync(user, "Admin"))
             {
-                // Admin should already be active, but protect just in case
                 return BadRequest(new
                 {
                     success = false,
@@ -618,8 +509,6 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
             const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
             const string lower = "abcdefghijkmnopqrstuvwxyz";
             const string numbers = "23456789";
-
-            var random = System.Security.Cryptography.RandomNumberGenerator.Create();
 
             var chars = new List<char>
             {
