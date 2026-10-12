@@ -23,12 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         progress: {
             title: "In Progress",
-            subtitle: "Tasks currently counted as In Progress.",
+            subtitle: "Only tasks currently in In Progress status.",
             label: "tasks"
         },
         overdue: {
             title: "Overdue",
-            subtitle: "Tasks currently counted as overdue.",
+            subtitle: "Only tasks currently past their expected end date and not completed.",
             label: "tasks"
         }
     };
@@ -88,6 +88,85 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    async function loadTaskSummary(filter) {
+        const loadingLabel = filter === "upcoming"
+            ? "Loading upcoming deadlines..."
+            : filter === "inprogress"
+                ? "Loading In Progress tasks..."
+                : "Loading overdue tasks...";
+
+        const emptyLabel = filter === "upcoming"
+            ? "No upcoming deadlines found."
+            : filter === "inprogress"
+                ? "No In Progress tasks found."
+                : "No overdue tasks found.";
+
+        try {
+            list.innerHTML = `<div class="admin-stat-modal-note"><strong>${loadingLabel}</strong></div>`;
+
+            const response = await fetch(
+                `/Admin/Dashboard/TaskSummary?filter=${encodeURIComponent(filter)}`,
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    cache: "no-store",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to load dashboard tasks.");
+            }
+
+            const result = await response.json();
+            const tasks = Array.isArray(result.tasks) ? result.tasks : [];
+
+            count.textContent = String(tasks.length);
+
+            if (tasks.length === 0) {
+                list.innerHTML = `<div class="admin-stat-modal-note"><strong>${emptyLabel}</strong></div>`;
+                return;
+            }
+
+            const iconClass = filter === "upcoming"
+                ? "orange"
+                : filter === "overdue"
+                    ? "red"
+                    : "orange";
+            const icon = filter === "overdue" ? "!" : filter === "inprogress" ? "◷" : "▣";
+
+            list.innerHTML = tasks.map(task => {
+                const date = task.expectedEndDate
+                    ? new Date(task.expectedEndDate).toLocaleDateString(undefined, {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                    })
+                    : "No due date";
+
+                const priority = task.priority || "No priority";
+
+                return `
+                    <a class="admin-stat-modal-item"
+                       href="${escapeHtml(task.url || "#")}">
+                        <span class="admin-stat-modal-item-icon ${iconClass}">${icon}</span>
+                        <span class="admin-stat-modal-item-main">
+                            <strong>${escapeHtml(task.title)}</strong>
+                            <small>${escapeHtml(task.projectTitle)} · Due ${escapeHtml(date)}</small>
+                        </span>
+                        <span class="admin-stat-modal-item-meta">${escapeHtml(priority)}</span>
+                    </a>
+                `;
+            }).join("");
+        }
+        catch (error) {
+            console.warn("Admin dashboard task summary could not be loaded:", error);
+            list.innerHTML = '<div class="admin-stat-modal-note"><strong>Unable to load these tasks right now.</strong><small>Please try again.</small></div>';
+        }
+    }
+
     function openModal(type) {
         const info = stats[type];
         const template = data.querySelector('[data-stat-template="' + type + '"]');
@@ -109,6 +188,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (type === "projects") {
             loadAllProjects();
         }
+        else if (type === "progress") {
+            loadTaskSummary("inprogress");
+        }
+        else if (type === "overdue") {
+            loadTaskSummary("overdue");
+        }
+    }
+
+    function openUpcomingDeadlines() {
+        title.textContent = "Upcoming Deadlines";
+        subtitle.textContent = "All tasks with an expected end date from now onward.";
+        count.textContent = "0";
+        countLabel.textContent = "tasks";
+        list.innerHTML = '<div class="admin-stat-modal-note"><strong>Loading upcoming deadlines...</strong></div>';
+
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+
+        loadTaskSummary("upcoming");
     }
 
     document.querySelectorAll(".admin-stat-clickable").forEach(card => {
@@ -122,13 +221,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // The dashboard's Recent Projects "View All" link previously pointed to '#',
-    // so it did not open the Admin Projects page. Keep the existing markup and
-    // route the action to the real Admin Projects list here.
+    // Recent Projects keeps its existing View All behavior.
     const viewAllProjectsLink = document.querySelector('.projects-card .card-header a[href="#"]');
     viewAllProjectsLink?.addEventListener("click", event => {
         event.preventDefault();
         window.location.href = "/Admin/Projects";
+    });
+
+    // Upcoming Deadlines uses the same accessible dashboard modal so all
+    // upcoming records can be reviewed without leaving the dashboard.
+    const viewAllDeadlinesLink = document.querySelector('.deadlines-card .card-header a[href="#"]');
+    viewAllDeadlinesLink?.addEventListener("click", event => {
+        event.preventDefault();
+        openUpcomingDeadlines();
     });
 
     closeButton?.addEventListener("click", closeModal);
