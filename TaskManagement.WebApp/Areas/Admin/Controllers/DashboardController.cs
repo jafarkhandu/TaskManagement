@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.DTOs;
@@ -32,8 +32,7 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 .Select(g => new
                 {
                     TotalTasks = g.Count(),
-                    InProgressTasks = g.Count(t =>
-                        EF.Functions.Like(t.Status, "%progress%") || t.Status == "In Progress"),
+                    InProgressTasks = g.Count(t => t.Status == "In Progress"),
                     OverdueTasks = g.Count(t =>
                         t.ExpectedEndDate < DateTime.UtcNow &&
                         !EF.Functions.Like(t.Status, "%complete%") &&
@@ -237,6 +236,59 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 projects,
                 tasks,
                 users
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskSummary(string filter)
+        {
+            filter = filter?.Trim().ToLowerInvariant() ?? string.Empty;
+            var now = DateTime.UtcNow;
+
+            if (filter != "upcoming" && filter != "inprogress" && filter != "overdue")
+            {
+                return BadRequest(new { success = false, message = "Invalid dashboard task filter." });
+            }
+
+            var query =
+                from t in _context.TaskItems.AsNoTracking()
+                join p in _context.Projects.AsNoTracking()
+                    on t.ProjectId equals p.Id
+                select new
+                {
+                    Task = t,
+                    ProjectTitle = p.ProjectTitle
+                };
+
+            query = filter switch
+            {
+                "upcoming" => query.Where(x => x.Task.ExpectedEndDate >= now),
+                "inprogress" => query.Where(x => x.Task.Status == "In Progress"),
+                "overdue" => query.Where(x =>
+                    x.Task.ExpectedEndDate < now &&
+                    !EF.Functions.Like(x.Task.Status, "%complete%") &&
+                    !EF.Functions.Like(x.Task.Status, "%done%")),
+                _ => query
+            };
+
+            var tasks = await query
+                .OrderBy(x => x.Task.ExpectedEndDate)
+                .Select(x => new
+                {
+                    taskId = x.Task.Id,
+                    title = x.Task.Title,
+                    projectTitle = x.ProjectTitle,
+                    expectedEndDate = x.Task.ExpectedEndDate,
+                    priority = x.Task.Priority,
+                    status = x.Task.Status,
+                    url = $"/Admin/Tasks/Project/{x.Task.ProjectId}?taskId={x.Task.Id}"
+                })
+                .ToListAsync();
+
+            return Json(new
+            {
+                success = true,
+                tasks
             });
         }
 
