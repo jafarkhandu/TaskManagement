@@ -39,6 +39,27 @@ document.addEventListener("DOMContentLoaded", () => {
         return div.innerHTML;
     }
 
+    function formatTaskDate(value) {
+        if (!value) return "No due date";
+
+        // Treat the persisted calendar date as a calendar date rather than
+        // converting it through UTC. This prevents a one-day shift in the
+        // dashboard modal for users in positive UTC offsets.
+        const datePart = String(value).split("T")[0];
+        const parts = datePart.split("-").map(Number);
+
+        if (parts.length === 3 && parts.every(Number.isFinite)) {
+            const localDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            return localDate.toLocaleDateString(undefined, {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
+        }
+
+        return String(value);
+    }
+
     function closeModal() {
         modal.classList.remove("show");
         modal.setAttribute("aria-hidden", "true");
@@ -138,14 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const icon = filter === "overdue" ? "!" : filter === "inprogress" ? "◷" : "▣";
 
             list.innerHTML = tasks.map(task => {
-                const date = task.expectedEndDate
-                    ? new Date(task.expectedEndDate).toLocaleDateString(undefined, {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric"
-                    })
-                    : "No due date";
-
+                const date = formatTaskDate(task.expectedEndDate);
                 const priority = task.priority || "No priority";
 
                 return `
