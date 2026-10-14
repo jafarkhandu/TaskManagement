@@ -440,6 +440,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     ?.trim()
                     ?.toLowerCase() || '';
 
+            const groupMatchesSearch =
+                !search || groupName.includes(search);
+
             let visibleItems = 0;
 
             items.forEach(function (item) {
@@ -469,9 +472,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         !status.includes('closed');
                 }
 
-                const matchesSearch =
+                const itemMatchesSearch =
                     !search ||
                     text.includes(search);
+
+                const matchesSearch =
+                    !search ||
+                    (groupMatchesSearch ? true : itemMatchesSearch);
 
                 const visible =
                     matchesFilter &&
