@@ -427,7 +427,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 '.admin-chat-student-group'
             ) || [];
 
-        groups.forEach(function (group) {
+        const orderedGroups = hasSearch
+            ? Array.from(groups).sort(function (a, b) {
+                const getName = group =>
+                    group.querySelector('.student-header-content strong')
+                        ?.textContent
+                        ?.trim()
+                        ?.toLowerCase() || '';
+
+                const aName = getName(a);
+                const bName = getName(b);
+
+                const getPriority = name => {
+                    if (name === search) return 0;
+                    if (name.startsWith(search)) return 1;
+                    if (name.includes(search)) return 2;
+                    return 3;
+                };
+
+                return getPriority(aName) - getPriority(bName);
+            })
+            : Array.from(groups);
+
+        orderedGroups.forEach(function (group) {
 
             const items =
                 group.querySelectorAll(
@@ -493,6 +515,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             group.style.display =
                 groupVisible ? '' : 'none';
+
+            if (hasSearch && groupVisible) {
+                adminChatList.appendChild(group);
+            }
 
             const tasks =
                 group.querySelector('.admin-chat-student-tasks');
