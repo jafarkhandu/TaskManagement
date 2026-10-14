@@ -472,14 +472,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         !status.includes('closed');
                 }
 
-                const itemMatchesSearch =
-                    !search ||
-                    text.includes(search);
 
                 const matchesSearch =
                     !search ||
                     groupMatchesSearch ||
-                    itemMatchesSearch;
 
                 const visible =
                     matchesFilter &&
