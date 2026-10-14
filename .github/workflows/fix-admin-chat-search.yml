@@ -20,26 +20,17 @@ jobs:
           css_path = Path('TaskManagement.WebApp/wwwroot/css/admin/admin-chat.css')
 
           js = js_path.read_text(encoding='utf-8-sig')
-          old = """                const matchesSearch =
-                    !search ||
-                    (groupMatchesSearch ? true : itemMatchesSearch);"""
-          new = """                const matchesSearch =
-                    !search ||
-                    groupMatchesSearch ||
-                    itemMatchesSearch;"""
+          old = "                const matchesSearch =\n                    !search ||\n                    (groupMatchesSearch ? true : itemMatchesSearch);"
+          new = "                const matchesSearch =\n                    !search ||\n                    groupMatchesSearch ||\n                    itemMatchesSearch;"
           if old not in js:
               raise SystemExit('Expected chat search block not found')
           js = js.replace(old, new, 1)
           js_path.write_text(js, encoding='utf-8', newline='')
 
           css = css_path.read_text(encoding='utf-8-sig')
-          rule = """\n#adminChatList .admin-chat-item[hidden] {
-    display: none !important;
-}
-"""
+          rule = "\n#adminChatList .admin-chat-item[hidden] {\n    display: none !important;\n}\n"
           if rule.strip() not in css:
               css_path.write_text(css.rstrip() + rule, encoding='utf-8', newline='')
-
           PY
 
           rm -f .github/workflows/fix-admin-chat-search.yml
