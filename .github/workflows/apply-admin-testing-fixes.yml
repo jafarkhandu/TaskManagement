@@ -1,0 +1,86 @@
+name: Apply Admin Testing Fixes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-admin-testing-fixes.yml'
+    branches:
+      - main
+
+jobs:
+  apply-fixes:
+    if: ${{ !contains(github.event.head_commit.message, '[admin-fixes-applied]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Apply fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          # 1) Remove the duplicate payment queue link.
+          dashboard_view = root / 'TaskManagement.WebApp/Areas/Admin/Views/Dashboard/Index.cshtml'
+          text = dashboard_view.read_text(encoding='utf-8-sig')
+          old = '<a href="@Url.Action("Index", "TaskReviews", new { area = "Admin" })#pendingPayments">View Queue</a>'
+          if old not in text:
+              raise SystemExit('Expected View Queue markup was not found.')
+          text = text.replace(old, '', 1)
+          dashboard_view.write_text(text, encoding='utf-8-sig')
+
+          # 2) Add a real Task Overview period endpoint.
+          controller = root / 'TaskManagement.WebApp/Areas/Admin/Controllers/DashboardController.cs'
+          text = controller.read_text(encoding='utf-8-sig')
+          marker = '        [HttpGet]\n        public async Task<IActionResult> TaskSummary(string filter)'
+          if 'public async Task<IActionResult> TaskOverview(string period)' not in text:
+              endpoint = '''        [HttpGet]\n        public async Task<IActionResult> TaskOverview(string period)\n        {\n            period = period?.Trim().ToLowerInvariant() ?? string.Empty;\n\n            var now = DateTime.UtcNow;\n            var today = now.Date;\n\n            DateTime start;\n            DateTime end = today.AddDays(1);\n\n            switch (period)\n            {\n                case "week":\n                    var daysSinceMonday = ((int)today.DayOfWeek + 6) % 7;\n                    start = today.AddDays(-daysSinceMonday);\n                    break;\n\n                case "month":\n                    start = new DateTime(today.Year, today.Month, 1);\n                    break;\n\n                case "year":\n                    start = new DateTime(today.Year, 1, 1);\n                    break;\n\n                default:\n                    return BadRequest(new { success = false, message = "Invalid task overview period." });\n            }\n\n            var createdCount = await _context.TaskItems\n                .AsNoTracking()\n                .CountAsync(t => t.StartDate >= start && t.StartDate < end);\n\n            var completedCount = await _context.TaskItems\n                .AsNoTracking()\n                .CountAsync(t =>\n                    t.CompletedAtUtc.HasValue &&\n                    t.CompletedAtUtc.Value >= start &&\n                    t.CompletedAtUtc.Value < end);\n\n            return Json(new\n            {\n                success = true,\n                period,\n                createdCount,\n                completedCount\n            });\n        }\n\n'''
+              if marker not in text:
+                  raise SystemExit('TaskSummary insertion marker was not found.')
+              text = text.replace(marker, endpoint + marker, 1)
+              controller.write_text(text, encoding='utf-8-sig')
+
+          # 3) Make the dashboard Task Overview select drive real data.
+          dashboard_js = root / 'TaskManagement.WebApp/wwwroot/js/admin/admin-dashboard.js'
+          text = dashboard_js.read_text(encoding='utf-8-sig')
+          if 'TaskOverview?period=' not in text:
+              marker = '    // Recent Projects keeps its existing View All behavior.\n'
+              handler = '''    // Task Overview period selector.\n    const taskOverviewSelect = document.querySelector('.chart-card .chart-select');\n    const taskOverviewLegendValues = document.querySelectorAll('.chart-card .chart-legend strong');\n\n    async function loadTaskOverview(period) {\n        if (!taskOverviewSelect || taskOverviewLegendValues.length < 2) {\n            return;\n        }\n\n        try {\n            taskOverviewSelect.disabled = true;\n\n            const response = await fetch(\n                `/Admin/Dashboard/TaskOverview?period=${encodeURIComponent(period)}`,\n                {\n                    method: 'GET',\n                    credentials: 'same-origin',\n                    cache: 'no-store',\n                    headers: {\n                        'X-Requested-With': 'XMLHttpRequest'\n                    }\n                }\n            );\n\n            if (!response.ok) {\n                throw new Error('Unable to load task overview.');\n            }\n\n            const result = await response.json();\n\n            if (!result?.success) {\n                throw new Error(result?.message || 'Unable to load task overview.');\n            }\n\n            taskOverviewLegendValues[0].textContent = String(result.createdCount ?? 0);\n            taskOverviewLegendValues[1].textContent = String(result.completedCount ?? 0);\n        }\n        catch (error) {\n            console.warn('Task overview could not be loaded:', error);\n        }\n        finally {\n            taskOverviewSelect.disabled = false;\n        }\n    }\n\n    taskOverviewSelect?.addEventListener('change', function () {\n        const periodMap = {\n            'This Week': 'week',\n            'This Month': 'month',\n            'This Year': 'year'\n        };\n\n        loadTaskOverview(periodMap[this.value] || 'month');\n    });\n\n    if (taskOverviewSelect) {\n        const initialPeriod = taskOverviewSelect.value === 'This Week'\n            ? 'week'\n            : taskOverviewSelect.value === 'This Year'\n                ? 'year'\n                : 'month';\n\n        loadTaskOverview(initialPeriod);\n    }\n\n'''
+              if marker not in text:
+                  raise SystemExit('Dashboard JS insertion marker was not found.')
+              text = text.replace(marker, handler + marker, 1)
+              dashboard_js.write_text(text, encoding='utf-8-sig')
+
+          # 4) Fix Admin Chat unread/search visibility for collapsed user groups.
+          chat_js = root / 'TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js'
+          text = chat_js.read_text(encoding='utf-8-sig')
+          pattern = re.compile(r"    function applyChatFilters\(\) \{.*?\n    \}\n\n\n    /\* =========================================================\n       CHAT LIST CLICK", re.S)
+          replacement = '''    function applyChatFilters() {\n\n        const search =\n            chatSearchInput?.value\n                ?.trim()\n                .toLowerCase() || '';\n\n        const hasActiveFilter = activeFilter !== 'all';\n        const hasSearch = Boolean(search);\n\n        const groups =\n            adminChatList?.querySelectorAll(\n                '.admin-chat-student-group'\n            ) || [];\n\n        groups.forEach(function (group) {\n\n            const items =\n                group.querySelectorAll(\n                    '.admin-chat-item'\n                );\n\n            const groupName =\n                group.querySelector('.student-header-content strong')\n                    ?.textContent\n                    ?.trim()\n                    ?.toLowerCase() || '';\n\n            const groupMatchesSearch =\n                !search || groupName.includes(search);\n\n            let visibleItems = 0;\n\n            items.forEach(function (item) {\n\n                const text =\n                    item.textContent.toLowerCase();\n\n                const status =\n                    (item.dataset.status || '').toLowerCase();\n\n                const unread =\n                    parseInt(item.dataset.unread || '0', 10) || 0;\n\n                let matchesFilter = true;\n\n                if (activeFilter === 'unread') {\n                    matchesFilter = unread > 0;\n                }\n                else if (activeFilter === 'hold') {\n                    matchesFilter = status.includes('hold');\n                }\n                else if (activeFilter === 'open') {\n                    matchesFilter =\n                        !status.includes('hold') &&\n                        !status.includes('pending') &&\n                        !status.includes('completed') &&\n                        !status.includes('closed');\n                }\n\n                const matchesSearch =\n                    !search ||\n                    groupMatchesSearch ||\n                    text.includes(search);\n\n                const visible =\n                    matchesFilter &&\n                    matchesSearch;\n\n                item.style.display =\n                    visible ? '' : 'none';\n\n                if (visible) {\n                    visibleItems++;\n                }\n            });\n\n            const groupVisible = visibleItems > 0;\n\n            group.style.display =\n                groupVisible ? '' : 'none';\n\n            const tasks =\n                group.querySelector('.admin-chat-student-tasks');\n\n            const header =\n                group.querySelector('.admin-chat-student-header');\n\n            if (tasks && header) {\n                if (groupVisible && (hasActiveFilter || hasSearch)) {\n                    group.classList.remove('collapsed');\n                    tasks.hidden = false;\n                    header.setAttribute('aria-expanded', 'true');\n                }\n                else if (!hasActiveFilter && !hasSearch) {\n                    // Preserve the user's normal collapsed/expanded state.\n                    tasks.hidden = group.classList.contains('collapsed');\n                    header.setAttribute(\n                        'aria-expanded',\n                        String(!group.classList.contains('collapsed'))\n                    );\n                }\n            }\n        });\n    }\n\n\n    /* =========================================================\n       CHAT LIST CLICK'''
+          new_text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit('Admin chat filter function was not found exactly once.')
+          chat_js.write_text(new_text, encoding='utf-8-sig')
+
+          # Remove this temporary workflow in the same commit after applying fixes.
+          workflow = root / '.github/workflows/apply-admin-testing-fixes.yml'
+          workflow.unlink()
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/Areas/Admin/Views/Dashboard/Index.cshtml \
+                  TaskManagement.WebApp/Areas/Admin/Controllers/DashboardController.cs \
+                  TaskManagement.WebApp/wwwroot/js/admin/admin-dashboard.js \
+                  TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js \
+                  .github/workflows/apply-admin-testing-fixes.yml
+          git diff --cached --check
+          git diff --cached --quiet && exit 0 || true
+          git commit -m "Fix admin testing dashboard and chat issues [admin-fixes-applied]"
+          git push origin HEAD:main
