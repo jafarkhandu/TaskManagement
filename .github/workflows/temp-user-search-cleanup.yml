@@ -1,0 +1,24 @@
+name: Clean User Search Scope
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove task text from user search
+        run: |
+          python3 -c "from pathlib import Path; p=Path('TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js'); s=p.read_text(encoding='utf-8'); old='                const text =\\n                    item.textContent.toLowerCase();\\n\\n'; assert s.count(old)==1; p.write_text(s.replace(old,'',1),encoding='utf-8')"
+          rm -f .github/workflows/temp-user-search-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js .github/workflows/temp-user-search-cleanup.yml
+          git commit -m "Remove task text from admin chat user search"
+          git push origin main
