@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
 
     const adminChatList = document.getElementById('adminChatList');
     const adminChatDrawer = document.getElementById('adminChatDrawer');
@@ -440,9 +440,6 @@
                     ?.trim()
                     ?.toLowerCase() || '';
 
-            const groupMatchesSearch =
-                !search || groupName.includes(search);
-
             let visibleItems = 0;
 
             items.forEach(function (item) {
@@ -474,15 +471,14 @@
 
                 const matchesSearch =
                     !search ||
-                    groupMatchesSearch ||
                     text.includes(search);
 
                 const visible =
                     matchesFilter &&
                     matchesSearch;
 
-                item.style.display =
-                    visible ? '' : 'none';
+                item.hidden = !visible;
+                item.setAttribute('aria-hidden', String(!visible));
 
                 if (visible) {
                     visibleItems++;
