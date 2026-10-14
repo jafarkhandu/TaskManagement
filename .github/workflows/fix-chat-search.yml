@@ -1,0 +1,44 @@
+name: Fix Chat Search
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix chat search filtering
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js')
+          text = path.read_text(encoding='utf-8-sig')
+          old = '''                const groupMatchesSearch =\n                !search || groupName.includes(search);\n\n            let visibleItems = 0;'''
+          new = '''            let visibleItems = 0;'''
+          if old not in text:
+              raise SystemExit('Expected group search block not found')
+          text = text.replace(old, new, 1)
+          old = '''                const matchesSearch =\n                    !search ||\n                    groupMatchesSearch ||\n                    text.includes(search);'''
+          new = '''                const matchesSearch =\n                    !search ||\n                    text.includes(search);'''
+          if old not in text:
+              raise SystemExit('Expected matchesSearch block not found')
+          text = text.replace(old, new, 1)
+          old = '''                item.style.display =\n                    visible ? '' : 'none';'''
+          new = '''                item.hidden = !visible;\n                item.setAttribute('aria-hidden', String(!visible));'''
+          if old not in text:
+              raise SystemExit('Expected item display block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8', newline='')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js
+          git diff --cached --check || true
+          git commit -m "Fix admin chat search filtering" || exit 0
+          git push origin main
