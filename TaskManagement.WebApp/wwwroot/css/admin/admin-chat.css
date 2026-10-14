@@ -1632,3 +1632,6 @@ html.light-theme .admin-chat-messages {
         min-height: 58px !important;
     }
 }
+#adminChatList .admin-chat-item[hidden] {
+    display: none !important;
+}

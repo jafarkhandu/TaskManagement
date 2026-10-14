@@ -478,7 +478,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const matchesSearch =
                     !search ||
-                    (groupMatchesSearch ? true : itemMatchesSearch);
+                    groupMatchesSearch ||
+                    itemMatchesSearch;
 
                 const visible =
                     matchesFilter &&
