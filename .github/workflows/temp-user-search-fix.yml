@@ -1,0 +1,171 @@
+name: Apply User Search Fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply scoped user search
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js')
+          text = path.read_text(encoding='utf-8')
+
+          start = text.index('    function applyChatFilters() {')
+          end_marker = '\n\n\n    /* =========================================================\n       CHAT LIST CLICK'
+          end = text.index(end_marker, start)
+
+          replacement = '''    function applyChatFilters() {
+
+        const search =
+            chatSearchInput?.value
+                ?.trim()
+                .toLowerCase() || '';
+
+        const hasActiveFilter = activeFilter !== 'all';
+        const hasSearch = Boolean(search);
+
+        const groups = Array.from(
+            adminChatList?.querySelectorAll(
+                '.admin-chat-student-group'
+            ) || []
+        );
+
+        const matchedGroups = [];
+
+        groups.forEach(function (group, index) {
+
+            const groupName =
+                group.querySelector('.student-header-content strong')
+                    ?.textContent
+                    ?.trim() || '';
+
+            const normalizedGroupName =
+                groupName.toLowerCase();
+
+            const matchesUserSearch =
+                !search ||
+                normalizedGroupName.includes(search);
+
+            let visibleItems = 0;
+
+            group.querySelectorAll('.admin-chat-item').forEach(function (item) {
+
+                const status =
+                    (item.dataset.status || '').toLowerCase();
+
+                const unread =
+                    parseInt(item.dataset.unread || '0', 10) || 0;
+
+                let matchesFilter = true;
+
+                if (activeFilter === 'unread') {
+                    matchesFilter = unread > 0;
+                }
+                else if (activeFilter === 'hold') {
+                    matchesFilter = status.includes('hold');
+                }
+                else if (activeFilter === 'open') {
+                    matchesFilter =
+                        !status.includes('hold') &&
+                        !status.includes('pending') &&
+                        !status.includes('completed') &&
+                        !status.includes('closed');
+                }
+
+                // Search is ONLY by user name. Never inspect task/message text.
+                const visible =
+                    matchesFilter &&
+                    matchesUserSearch;
+
+                item.hidden = !visible;
+                item.setAttribute('aria-hidden', String(!visible));
+
+                if (visible) {
+                    visibleItems++;
+                }
+            });
+
+            const groupVisible = visibleItems > 0;
+
+            group.style.display =
+                groupVisible ? '' : 'none';
+
+            const tasks =
+                group.querySelector('.admin-chat-student-tasks');
+
+            const header =
+                group.querySelector('.admin-chat-student-header');
+
+            if (tasks && header) {
+                if (groupVisible && (hasActiveFilter || hasSearch)) {
+                    group.classList.remove('collapsed');
+                    tasks.hidden = false;
+                    header.setAttribute('aria-expanded', 'true');
+                }
+                else if (!hasActiveFilter && !hasSearch) {
+                    tasks.hidden = group.classList.contains('collapsed');
+                    header.setAttribute(
+                        'aria-expanded',
+                        String(!group.classList.contains('collapsed'))
+                    );
+                }
+            }
+
+            if (hasSearch && groupVisible) {
+                let priority = 3;
+
+                if (normalizedGroupName === search) {
+                    priority = 0;
+                }
+                else if (normalizedGroupName.startsWith(search)) {
+                    priority = 1;
+                }
+                else {
+                    priority = 2;
+                }
+
+                matchedGroups.push({ group, priority, index });
+            }
+        });
+
+        // Put the best matching user at the top. When search is cleared,
+        // keep the original server-rendered order unchanged.
+        if (hasSearch && adminChatList) {
+            matchedGroups
+                .sort((a, b) =>
+                    a.priority - b.priority ||
+                    a.index - b.index
+                )
+                .forEach(function (entry) {
+                    adminChatList.appendChild(entry.group);
+                });
+        }
+    }'''
+
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
+          PY
+
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/temp-user-search-fix.yml
+
+      - name: Commit user search fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js .github/workflows/temp-user-search-fix.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix admin chat search to target users only"
+          git push origin main
