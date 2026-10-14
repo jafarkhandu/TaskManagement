@@ -1,0 +1,47 @@
+name: Fix Admin Chat Search Scope
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply scoped chat search
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js')
+          text = path.read_text(encoding='utf-8-sig')
+
+          old = """            let visibleItems = 0;\n\n            items.forEach(function (item) {"""
+          new = """            const groupMatchesSearch =\n                !search || groupName.includes(search);\n\n            let visibleItems = 0;\n\n            items.forEach(function (item) {"""
+          if old not in text:
+              raise SystemExit('Expected visibleItems block not found')
+          text = text.replace(old, new, 1)
+
+          old = """                const matchesSearch =\n                    !search ||\n                    text.includes(search);"""
+          new = """                const itemMatchesSearch =\n                    !search ||\n                    text.includes(search);\n\n                const matchesSearch =\n                    !search ||\n                    (groupMatchesSearch ? true : itemMatchesSearch);"""
+          if old not in text:
+              raise SystemExit('Expected search block not found')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8', newline='')
+          PY
+
+          rm -f .github/workflows/fix-admin-chat-search.yml
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js .github/workflows/fix-admin-chat-search.yml
+          git diff --cached --check || true
+          git commit -m "Fix admin chat search scope"
+          git push origin main
