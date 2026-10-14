@@ -19,46 +19,14 @@ jobs:
       - name: Apply user-only search fix
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          js_path = Path('TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js')
-          view_path = Path('TaskManagement.WebApp/Areas/Admin/Views/Chat/Index.cshtml')
-
-          js = js_path.read_text(encoding='utf-8')
-          old = """                const itemMatchesSearch =
-                    !search ||
-                    text.includes(search);
-
-                const matchesSearch =
-                    !search ||
-                    groupMatchesSearch ||
-                    itemMatchesSearch;
-"""
-          new = """                const matchesSearch =
-                    !search ||
-                    groupMatchesSearch;
-"""
-
-          if old not in js:
-              raise SystemExit('Expected chat search block was not found.')
-
-          js_path.write_text(js.replace(old, new, 1), encoding='utf-8')
-
-          view = view_path.read_text(encoding='utf-8')
-          old_placeholder = 'placeholder="Search chats..."'
-          new_placeholder = 'placeholder="Search users..."'
-
-          if old_placeholder not in view:
-              raise SystemExit('Expected chat search placeholder was not found.')
-
-          view_path.write_text(view.replace(old_placeholder, new_placeholder, 1), encoding='utf-8')
-          PY
+          sed -i '/const itemMatchesSearch =/,/text.includes(search);/d' TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js
+          sed -i '/                    itemMatchesSearch;/d' TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js
+          sed -i 's/placeholder="Search chats..."/placeholder="Search users..."/' TaskManagement.WebApp/Areas/Admin/Views/Chat/Index.cshtml
 
       - name: Verify and commit
         shell: bash
         run: |
-          grep -n -A8 -B4 "const matchesSearch" TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js
+          grep -n -A6 -B3 "const matchesSearch" TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js
           grep -n "Search users" TaskManagement.WebApp/Areas/Admin/Views/Chat/Index.cshtml
           rm .github/workflows/temp-admin-chat-user-search.yml
           git config user.name "github-actions[bot]"
