@@ -469,9 +469,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             items.forEach(function (item) {
 
-                const text =
-                    item.textContent.toLowerCase();
-
                 const status =
                     (item.dataset.status || '').toLowerCase();
 
