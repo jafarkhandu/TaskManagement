@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
 
     const adminChatList = document.getElementById('adminChatList');
     const adminChatDrawer = document.getElementById('adminChatDrawer');
@@ -419,6 +419,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 ?.trim()
                 .toLowerCase() || '';
 
+        const hasActiveFilter = activeFilter !== 'all';
+        const hasSearch = Boolean(search);
+
         const groups =
             adminChatList?.querySelectorAll(
                 '.admin-chat-student-group'
@@ -431,6 +434,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     '.admin-chat-item'
                 );
 
+            const groupName =
+                group.querySelector('.student-header-content strong')
+                    ?.textContent
+                    ?.trim()
+                    ?.toLowerCase() || '';
+
+            const groupMatchesSearch =
+                !search || groupName.includes(search);
+
             let visibleItems = 0;
 
             items.forEach(function (item) {
@@ -439,15 +451,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     item.textContent.toLowerCase();
 
                 const status =
-                    (
-                        item.dataset.status || ''
-                    ).toLowerCase();
+                    (item.dataset.status || '').toLowerCase();
 
                 const unread =
-                    parseInt(
-                        item.dataset.unread || '0',
-                        10
-                    ) || 0;
+                    parseInt(item.dataset.unread || '0', 10) || 0;
 
                 let matchesFilter = true;
 
@@ -467,10 +474,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const matchesSearch =
                     !search ||
-                    text.includes(search) ||
-                    group.textContent
-                        .toLowerCase()
-                        .includes(search);
+                    groupMatchesSearch ||
+                    text.includes(search);
 
                 const visible =
                     matchesFilter &&
@@ -484,8 +489,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
+            const groupVisible = visibleItems > 0;
+
             group.style.display =
-                visibleItems > 0 ? '' : 'none';
+                groupVisible ? '' : 'none';
+
+            const tasks =
+                group.querySelector('.admin-chat-student-tasks');
+
+            const header =
+                group.querySelector('.admin-chat-student-header');
+
+            if (tasks && header) {
+                if (groupVisible && (hasActiveFilter || hasSearch)) {
+                    group.classList.remove('collapsed');
+                    tasks.hidden = false;
+                    header.setAttribute('aria-expanded', 'true');
+                }
+                else if (!hasActiveFilter && !hasSearch) {
+                    tasks.hidden = group.classList.contains('collapsed');
+                    header.setAttribute(
+                        'aria-expanded',
+                        String(!group.classList.contains('collapsed'))
+                    );
+                }
+            }
         });
     }
 

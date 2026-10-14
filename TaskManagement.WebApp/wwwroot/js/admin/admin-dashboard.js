@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
     const modal = document.getElementById("adminStatModal");
     const closeButton = document.getElementById("adminStatModalClose");
     const title = document.getElementById("adminStatModalTitle");
@@ -234,6 +234,71 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // Task Overview period selector.
+    const taskOverviewSelect = document.querySelector('.chart-card .chart-select');
+    const taskOverviewLegendValues = document.querySelectorAll('.chart-card .chart-legend strong');
+
+    async function loadTaskOverview(period) {
+        if (!taskOverviewSelect || taskOverviewLegendValues.length < 2) {
+            return;
+        }
+
+        try {
+            taskOverviewSelect.disabled = true;
+
+            const response = await fetch(
+                `/Admin/Dashboard/TaskOverview?period=${encodeURIComponent(period)}`,
+                {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Unable to load task overview.');
+            }
+
+            const result = await response.json();
+
+            if (!result?.success) {
+                throw new Error(result?.message || 'Unable to load task overview.');
+            }
+
+            taskOverviewLegendValues[0].textContent = String(result.createdCount ?? 0);
+            taskOverviewLegendValues[1].textContent = String(result.completedCount ?? 0);
+        }
+        catch (error) {
+            console.warn('Task overview could not be loaded:', error);
+        }
+        finally {
+            taskOverviewSelect.disabled = false;
+        }
+    }
+
+    taskOverviewSelect?.addEventListener('change', function () {
+        const periodMap = {
+            'This Week': 'week',
+            'This Month': 'month',
+            'This Year': 'year'
+        };
+
+        loadTaskOverview(periodMap[this.value] || 'month');
+    });
+
+    if (taskOverviewSelect) {
+        const initialPeriod = taskOverviewSelect.value === 'This Week'
+            ? 'week'
+            : taskOverviewSelect.value === 'This Year'
+                ? 'year'
+                : 'month';
+
+        loadTaskOverview(initialPeriod);
+    }
 
     // Recent Projects keeps its existing View All behavior.
     const viewAllProjectsLink = document.querySelector('.projects-card .card-header a[href="#"]');

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.DTOs;
@@ -236,6 +236,56 @@ namespace TaskManagement.WebApp.Areas.Admin.Controllers
                 projects,
                 tasks,
                 users
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskOverview(string period)
+        {
+            period = period?.Trim().ToLowerInvariant() ?? string.Empty;
+
+            var now = DateTime.UtcNow;
+            var today = now.Date;
+
+            DateTime start;
+            DateTime end = today.AddDays(1);
+
+            switch (period)
+            {
+                case "week":
+                    var daysSinceMonday = ((int)today.DayOfWeek + 6) % 7;
+                    start = today.AddDays(-daysSinceMonday);
+                    break;
+
+                case "month":
+                    start = new DateTime(today.Year, today.Month, 1);
+                    break;
+
+                case "year":
+                    start = new DateTime(today.Year, 1, 1);
+                    break;
+
+                default:
+                    return BadRequest(new { success = false, message = "Invalid task overview period." });
+            }
+
+            var createdCount = await _context.TaskItems
+                .AsNoTracking()
+                .CountAsync(t => t.StartDate >= start && t.StartDate < end);
+
+            var completedCount = await _context.TaskItems
+                .AsNoTracking()
+                .CountAsync(t =>
+                    t.CompletedAtUtc.HasValue &&
+                    t.CompletedAtUtc.Value >= start &&
+                    t.CompletedAtUtc.Value < end);
+
+            return Json(new
+            {
+                success = true,
+                period,
+                createdCount,
+                completedCount
             });
         }
 
