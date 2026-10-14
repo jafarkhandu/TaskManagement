@@ -23,9 +23,7 @@ jobs:
           old = """                const matchesSearch =
                     !search ||
                     (groupMatchesSearch ? true : itemMatchesSearch);"""
-          new = """                // Searching a user shows that user's group.
-                // Searching a task/message shows only the matching conversation.
-                const matchesSearch =
+          new = """                const matchesSearch =
                     !search ||
                     groupMatchesSearch ||
                     itemMatchesSearch;"""
@@ -40,8 +38,11 @@ jobs:
 }
 """
           if rule.strip() not in css:
-              css += rule
-              css_path.write_text(css, encoding='utf-8', newline='')
+              css_path.write_text(css.rstrip() + rule, encoding='utf-8', newline='')
+
+          PY
+
+          rm -f .github/workflows/fix-admin-chat-search.yml
 
       - name: Commit fix
         run: |
