@@ -10,6 +10,10 @@ namespace TaskManagement.Application.DTOs
 
         public string UserFullName { get; set; } = string.Empty;
 
+        public string UserName { get; set; } = string.Empty;
+
+        public string UserEmail { get; set; } = string.Empty;
+
         public int TaskId { get; set; }
 
         public string TaskTitle { get; set; } = string.Empty;
