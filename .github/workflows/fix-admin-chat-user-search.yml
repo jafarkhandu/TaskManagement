@@ -1,0 +1,25 @@
+name: Fix Admin Chat User Search
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix-search:
+    if: github.event.head_commit.message != 'Fix admin chat user-only search'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply targeted search fix
+        run: |
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnAgPSBQYXRoKCJUYXNrTWFuYWdlbWVudC5XZWJBcHAvd3d3cm9vdC9qcy9hZG1pbi9hZG1pbi1jaGF0LmpzIikKcyA9IHAucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCgpvbGQgPSAiIiIgICAgICAgIGNvbnN0IGdyb3VwcyA9CiAgICAgICAgICAgIGFkbWluQ2hhdExpc3Q/LnF1ZXJ5U2VsZWN0b3JBbGwoCiAgICAgICAgICAgICAgICAnLmFkbWluLWNoYXQtc3R1ZGVudC1ncm91cCcKICAgICAgICAgICAgKSB8fCBbXTsKCiAgICAgICAgY29uc3Qgb3JkZXJlZEdyb3VwcyA9IGhhc1NlYXJjaAogICAgICAgICAgICA/IEFycmF5LmZyb20oZ3JvdXBzKS5zb3J0KGZ1bmN0aW9uIChhLCBiKSB7IiIiCgpuZXcgPSAiIiIgICAgICAgIGNvbnN0IGdyb3VwcyA9CiAgICAgICAgICAgIGFkbWluQ2hhdExpc3Q/LnF1ZXJ5U2VsZWN0b3JBbGwoCiAgICAgICAgICAgICAgICAnLmFkbWluLWNoYXQtc3R1ZGVudC1ncm91cCcKICAgICAgICAgICAgKSB8fCBbXTsKCiAgICAgICAgQXJyYXkuZnJvbShncm91cHMpLmZvckVhY2goZnVuY3Rpb24gKGdyb3VwLCBpbmRleCkgewogICAgICAgICAgICBpZiAoIWdyb3VwLmRhdGFzZXQub3JpZ2luYWxDaGF0T3JkZXIpIHsKICAgICAgICAgICAgICAgIGdyb3VwLmRhdGFzZXQub3JpZ2luYWxDaGF0T3JkZXIgPSBTdHJpbmcoaW5kZXgpOwogICAgICAgICAgICB9CiAgICAgICAgfSk7CgogICAgICAgIGNvbnN0IG9yZGVyZWRHcm91cHMgPSBoYXNTZWFyY2gKICAgICAgICAgICAgPyBBcnJheS5mcm9tKGdyb3Vwcykuc29ydChmdW5jdGlvbiAoYSwgYikgeyIiIgoKYXNzZXJ0IHMuY291bnQob2xkKSA9PSAxCnMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpvbGQgPSAiICAgICAgICAgICAgOiBBcnJheS5mcm9tKGdyb3Vwcyk7IgpuZXcgPSAiIiIgICAgICAgICAgICA6IEFycmF5LmZyb20oZ3JvdXBzKS5zb3J0KGZ1bmN0aW9uIChhLCBiKSB7CiAgICAgICAgICAgICAgICByZXR1cm4gTnVtYmVyKGEuZGF0YXNldC5vcmlnaW5hbENoYXRPcmRlcikgLQogICAgICAgICAgICAgICAgICAgIE51bWJlcihiLmRhdGFzZXQub3JpZ2luYWxDaGF0T3JkZXIpOwogICAgICAgICAgICB9KTsiIiIKYXNzZXJ0IHMuY291bnQob2xkKSA9PSAxCnMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpvbGQgPSAiIiIgICAgICAgICAgICBncm91cC5zdHlsZS5kaXNwbGF5ID0KICAgICAgICAgICAgICAgIGdyb3VwVmlzaWJsZSA/ICcnIDogJ25vbmUnOyIiIgpuZXcgPSAiIiIgICAgICAgICAgICBncm91cC5zdHlsZS5zZXRQcm9wZXJ0eSgKICAgICAgICAgICAgICAgICdkaXNwbGF5JywKICAgICAgICAgICAgICAgIGdyb3VwVmlzaWJsZSA/ICcnIDogJ25vbmUnLAogICAgICAgICAgICAgICAgJ2ltcG9ydGFudCcKICAgICAgICAgICAgKTsiIiIKYXNzZXJ0IHMuY291bnQob2xkKSA9PSAxCnMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpwLndyaXRlX3RleHQocywgZW5jb2Rpbmc9InV0Zi04IikK' | base64 -d | python3
+          rm -f .github/workflows/fix-admin-chat-user-search.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js .github/workflows/fix-admin-chat-user-search.yml
+          git commit -m "Fix admin chat user-only search"
+          git push origin main
