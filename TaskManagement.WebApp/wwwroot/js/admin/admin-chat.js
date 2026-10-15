@@ -433,27 +433,28 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        const getIdentityValues = group => [
+            group.querySelector('.student-header-content strong')
+                ?.textContent?.trim()?.toLowerCase() || '',
+            (group.dataset.userName || '').trim().toLowerCase(),
+            (group.dataset.userEmail || '').trim().toLowerCase()
+        ];
+
+        const exactMatchExists = hasSearch && Array.from(groups).some(group =>
+            getIdentityValues(group).some(value => value === search)
+        );
+
         const orderedGroups = hasSearch
             ? Array.from(groups).sort(function (a, b) {
-                const getName = group =>
-                    group.querySelector('.student-header-content strong')
-                        ?.textContent
-                        ?.trim()
-                        ?.toLowerCase() || '';
-
-                const aName = getName(a);
-                const bName = getName(b);
-
-                const getPriority = name => {
-                    if (name === search) return 0;
-                    if (name.startsWith(search)) return 1;
-                    if (name.includes(search)) return 2;
+                const getPriority = group => {
+                    const values = getIdentityValues(group);
+                    if (values.some(value => value === search)) return 0;
+                    if (values.some(value => value.startsWith(search))) return 1;
+                    if (values.some(value => value.includes(search))) return 2;
                     return 3;
                 };
-
-                return getPriority(aName) - getPriority(bName);
-            })
-            : Array.from(groups).sort(function (a, b) {
+                return getPriority(a) - getPriority(b);
+            })            : Array.from(groups).sort(function (a, b) {
                 return Number(a.dataset.originalChatOrder) -
                     Number(b.dataset.originalChatOrder);
             });
@@ -465,14 +466,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     '.admin-chat-item'
                 );
 
-            const groupName =
-                group.querySelector('.student-header-content strong')
-                    ?.textContent
-                    ?.trim()
-                    ?.toLowerCase() || '';
-
-            const groupMatchesSearch =
-                !search || groupName.includes(search);
+            const identityValues = getIdentityValues(group);
+            const groupMatchesSearch = !search ||
+                (exactMatchExists
+                    ? identityValues.some(value => value === search)
+                    : identityValues.some(value => value.includes(search)));
 
             let visibleItems = 0;
 
