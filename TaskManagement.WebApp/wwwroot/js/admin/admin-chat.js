@@ -427,6 +427,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 '.admin-chat-student-group'
             ) || [];
 
+        Array.from(groups).forEach(function (group, index) {
+            if (!group.dataset.originalChatOrder) {
+                group.dataset.originalChatOrder = String(index);
+            }
+        });
+
         const orderedGroups = hasSearch
             ? Array.from(groups).sort(function (a, b) {
                 const getName = group =>
@@ -447,7 +453,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 return getPriority(aName) - getPriority(bName);
             })
-            : Array.from(groups);
+            : Array.from(groups).sort(function (a, b) {
+                return Number(a.dataset.originalChatOrder) -
+                    Number(b.dataset.originalChatOrder);
+            });
 
         orderedGroups.forEach(function (group) {
 
@@ -510,8 +519,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const groupVisible = visibleItems > 0;
 
-            group.style.display =
-                groupVisible ? '' : 'none';
+            group.style.setProperty(
+                'display',
+                groupVisible ? '' : 'none',
+                'important'
+            );
 
             if (hasSearch && groupVisible) {
                 adminChatList.appendChild(group);
