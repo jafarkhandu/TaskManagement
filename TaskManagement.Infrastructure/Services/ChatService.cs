@@ -36,6 +36,8 @@ namespace TaskManagement.Infrastructure.Services
                                       ChatSessionId = s.Id,
                                       UserId = s.UserId,
                                       UserFullName = u.FullName ?? u.UserName ?? string.Empty,
+                                      UserName = u.UserName ?? string.Empty,
+                                      UserEmail = u.Email ?? string.Empty,
                                       TaskId = t.Id,
                                       TaskTitle = t.Title,
                                       TaskStatus = t.Status,
