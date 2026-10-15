@@ -140,7 +140,9 @@
                                 var userUnread = group.Sum(x => x.UnreadCount);
 
                                 <section class="admin-chat-student-group collapsed"
-                                         data-user-id="@group.Key.UserId">
+                                         data-user-id="@group.Key.UserId"
+                                         data-user-name="@group.First().UserName"
+                                         data-user-email="@group.First().UserEmail">
 
                                     <button type="button"
                                             class="admin-chat-student-header"
