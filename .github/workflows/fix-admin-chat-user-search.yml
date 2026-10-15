@@ -1,0 +1,193 @@
+name: Fix Admin Chat User Search
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix-search:
+    if: github.event.head_commit.message != 'Fix admin chat user-only search'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix user-only chat search
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js')
+          source = path.read_text(encoding='utf-8')
+
+          start_marker = '    function applyChatFilters() {'
+          end_marker = '    /* =========================================================\n       CHAT LIST CLICK'
+
+          start = source.index(start_marker)
+          end = source.index(end_marker, start)
+
+          replacement = r'''    function applyChatFilters() {
+
+        const search =
+            chatSearchInput?.value
+                ?.trim()
+                .toLowerCase() || '';
+
+        const normalizedSearch =
+            search.replace(/\s+/g, '');
+
+        const hasActiveFilter = activeFilter !== 'all';
+        const hasSearch = Boolean(search);
+
+        const groups =
+            adminChatList?.querySelectorAll(
+                '.admin-chat-student-group'
+            ) || [];
+
+        const getUserName = group =>
+            group.querySelector('.student-header-content strong')
+                ?.textContent
+                ?.trim()
+                ?.toLowerCase() || '';
+
+        const normalizeName = name =>
+            name.replace(/\s+/g, '');
+
+        const orderedGroups = Array.from(groups);
+
+        if (hasSearch) {
+            orderedGroups.sort(function (a, b) {
+                const aName = getUserName(a);
+                const bName = getUserName(b);
+
+                const aNormalized = normalizeName(aName);
+                const bNormalized = normalizeName(bName);
+
+                const getPriority = name => {
+                    const normalizedName = normalizeName(name);
+
+                    if (normalizedName === normalizedSearch) return 0;
+                    if (normalizedName.startsWith(normalizedSearch)) return 1;
+                    if (normalizedName.includes(normalizedSearch)) return 2;
+                    return 3;
+                };
+
+                const priorityDifference =
+                    getPriority(aName) - getPriority(bName);
+
+                if (priorityDifference !== 0) {
+                    return priorityDifference;
+                }
+
+                return aNormalized.localeCompare(bNormalized);
+            });
+        }
+
+        orderedGroups.forEach(function (group) {
+
+            const items =
+                group.querySelectorAll(
+                    '.admin-chat-item'
+                );
+
+            const groupName = getUserName(group);
+            const normalizedGroupName = normalizeName(groupName);
+
+            const groupMatchesSearch =
+                !hasSearch ||
+                normalizedGroupName.includes(normalizedSearch);
+
+            let visibleItems = 0;
+
+            items.forEach(function (item) {
+
+                const status =
+                    (item.dataset.status || '').toLowerCase();
+
+                const unread =
+                    parseInt(item.dataset.unread || '0', 10) || 0;
+
+                let matchesFilter = true;
+
+                if (activeFilter === 'unread') {
+                    matchesFilter = unread > 0;
+                }
+                else if (activeFilter === 'hold') {
+                    matchesFilter = status.includes('hold');
+                }
+                else if (activeFilter === 'open') {
+                    matchesFilter =
+                        !status.includes('hold') &&
+                        !status.includes('pending') &&
+                        !status.includes('completed') &&
+                        !status.includes('closed');
+                }
+
+                const visible =
+                    matchesFilter &&
+                    groupMatchesSearch;
+
+                item.hidden = !visible;
+                item.setAttribute('aria-hidden', String(!visible));
+
+                if (visible) {
+                    visibleItems++;
+                }
+            });
+
+            const groupVisible = visibleItems > 0;
+
+            group.hidden = !groupVisible;
+            group.setAttribute('aria-hidden', String(!groupVisible));
+            group.style.setProperty(
+                'display',
+                groupVisible ? '' : 'none',
+                'important'
+            );
+
+            if (hasSearch && groupVisible) {
+                adminChatList.appendChild(group);
+            }
+
+            const tasks =
+                group.querySelector('.admin-chat-student-tasks');
+
+            const header =
+                group.querySelector('.admin-chat-student-header');
+
+            if (tasks && header) {
+                if (groupVisible && (hasActiveFilter || hasSearch)) {
+                    group.classList.remove('collapsed');
+                    tasks.hidden = false;
+                    header.setAttribute('aria-expanded', 'true');
+                }
+                else if (!hasActiveFilter && !hasSearch) {
+                    tasks.hidden = group.classList.contains('collapsed');
+                    header.setAttribute(
+                        'aria-expanded',
+                        String(!group.classList.contains('collapsed'))
+                    );
+                }
+            }
+        });
+    }
+
+
+'''
+
+          path.write_text(
+              source[:start] + replacement + source[end:],
+              encoding='utf-8'
+          )
+          PY
+
+          rm -f .github/workflows/fix-admin-chat-user-search.yml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TaskManagement.WebApp/wwwroot/js/admin/admin-chat.js .github/workflows/fix-admin-chat-user-search.yml
+          git commit -m "Fix admin chat user-only search"
+          git push origin main
